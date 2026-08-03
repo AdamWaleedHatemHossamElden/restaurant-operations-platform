@@ -1,0 +1,50 @@
+# Java and Maven
+backend/target/
+*.class
+*.jar
+*.war
+*.ear
+*.log
+.flattened-pom.xml
+pom.xml.versionsBackup
+dependency-reduced-pom.xml
+
+# Node and Vite
+node_modules/
+frontend/node_modules/
+frontend/dist/
+*.tsbuildinfo
+
+# Environment and secrets (examples remain tracked)
+.env
+.env.*
+!.env.example
+!**/.env.example
+
+# Test and analysis output
+coverage/
+test-results/
+surefire-reports/
+failsafe-reports/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+.classpath
+.project
+.settings/
+
+# Operating systems
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Logs and temporary files
+logs/
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+.cache/
