@@ -5,9 +5,9 @@ export function NotFoundPage() {
     <section className="page not-found" aria-labelledby="not-found-title">
       <p className="eyebrow">404</p>
       <h1 id="not-found-title">Page not found</h1>
-      <p>The requested foundation page does not exist.</p>
-      <Link className="button button--link" to="/">
-        Return home
+      <p>The requested workspace page does not exist.</p>
+      <Link className="button button--link" to="/dashboard">
+        Return to dashboard
       </Link>
     </section>
   )

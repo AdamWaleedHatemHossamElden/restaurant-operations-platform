@@ -8,6 +8,8 @@ The refresh token is an HttpOnly cookie restricted to `/api/v1/auth`. Local HTTP
 
 Implemented controls also include MySQL-serialized refresh rotation and family revocation, safe authentication audit persistence, generic login failures, disabled-user refresh rejection and family revocation, dev-only non-overwriting bootstrap, and a development OpenAPI Bearer scheme for `/me`.
 
+Phase 2B keeps the browser access token only in module memory. It is attached as a Bearer credential by Axios and is never written to localStorage, sessionStorage, IndexedDB, or a script-readable cookie. The backend-managed HttpOnly refresh cookie is sent only through credentialed refresh and logout requests with `X-CSRF-Protection: 1`. Startup recovery rotates the cookie and validates the returned access token through `/me` before protected content renders. Concurrent 401 responses share one refresh operation and each original request is retried at most once; failed recovery clears the in-memory identity. Logout immediately advances a session generation, disables 401 recovery, and clears local authentication before the network request, so stale refresh or current-user responses cannot restore a signed-out session. API payloads are schema-validated and user-facing failures remain generic.
+
 ## Remaining controls
 
 - Apply role-based authorization at request and application-service boundaries; restaurant scope must be checked independently of role.

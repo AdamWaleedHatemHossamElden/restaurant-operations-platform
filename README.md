@@ -1,10 +1,10 @@
 # Restaurant Operations Platform
 
-A new independent portfolio project establishing the technical base for a modern restaurant operations system. The current feature branch adds **Phase 2A: Backend Authentication Core**; it does not yet include a frontend login or restaurant business workflows.
+A new independent portfolio project establishing the technical base for a modern restaurant operations system. The current feature branch adds **Phase 2B: Frontend Authentication** on top of the merged backend authentication core; restaurant business workflows remain intentionally out of scope.
 
 ## Current status
 
-- React + TypeScript frontend with routing, API client, server-state management, responsive styling, and health states
+- React + TypeScript frontend with a responsive login, startup session recovery, protected routing, authenticated dashboard, and health states
 - Java 21 + Spring Boot modular-monolith backend foundation
 - Versioned `/api/v1/health` endpoint and Actuator health endpoint
 - Deny-by-default, stateless Spring Security configuration
@@ -16,6 +16,7 @@ A new independent portfolio project establishing the technical base for a modern
 - Development-only, environment-driven initial administrator bootstrap
 - Required-claim JWT validation, timing-resistant login failure handling, and database-serialized refresh rotation
 - Development OpenAPI Bearer authorization for the protected current-user endpoint
+- Memory-only frontend access tokens, credentialed HttpOnly refresh-cookie requests, and single-flight 401 recovery
 
 ## Technology stack
 
@@ -52,7 +53,7 @@ A global Maven installation is not required; use the included wrapper.
 ## Environment setup
 
 1. Copy `.env.example` to `.env` and replace both example database passwords for local use.
-2. Copy `frontend/.env.example` to `frontend/.env.local` if the API does not use the default URL.
+2. Copy `frontend/.env.example` to `frontend/.env.local` if the API does not use the default `http://localhost:8080/api/v1` URL. Set `VITE_API_BASE_URL` to the API's versioned base URL; do not place secrets in any `VITE_` variable because Vite exposes them to browser code.
 3. Set backend variables if their defaults do not match your local environment:
    - `MYSQL_HOST_PORT` (defaults to `3307` for the host; MySQL remains on `3306` inside the container)
    - `DB_URL`
@@ -119,6 +120,16 @@ npm run build
 npm run dev
 ```
 
+The frontend starts at `http://localhost:5173`. Vite uses `VITE_API_BASE_URL` when present and otherwise calls `http://localhost:8080/api/v1`.
+
+## Frontend authentication flow
+
+On startup, the client shows a session-initialization screen while it calls `/auth/refresh` with credentials and `X-CSRF-Protection: 1`. If the backend refresh cookie is valid, the rotated response supplies a short-lived access token, `/auth/me` validates the current user, and the protected dashboard renders. If recovery fails, the in-memory session is cleared and protected routes redirect to `/login` while preserving the requested internal destination.
+
+Login uses React Hook Form and Zod, sends credentials only to `/auth/login`, and shows the same generic error for invalid credentials, disabled users, malformed responses, unavailable services, and unexpected failures. The returned access token exists only in JavaScript memory. Axios attaches it as a Bearer credential to API requests; one shared refresh operation may retry simultaneous 401 responses once. A failed refresh clears authentication and cannot loop indefinitely.
+
+The browser never writes access or refresh tokens to localStorage, sessionStorage, IndexedDB, or script-readable cookies. The backend alone creates, rotates, and clears the HttpOnly refresh cookie. Logout calls `/auth/logout` with the CSRF header and always clears local memory, even if the network request fails.
+
 ## Health and API documentation
 
 - Application health: `GET http://localhost:8080/api/v1/health`
@@ -129,7 +140,7 @@ npm run dev
 
 ## Current limitations
 
-There is no frontend login, public registration, account recovery, user administration, restaurant management, reservation, menu, ordering, kitchen, inventory, staffing, payment, notification, or reporting feature. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
+There is no public registration, account recovery, user administration, restaurant management, reservation, menu, ordering, kitchen, inventory, staffing, payment, notification, or reporting feature. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
 
 ## Documentation
 
@@ -139,6 +150,7 @@ There is no frontend login, public registration, account recovery, user administ
 - [Security plan](docs/security-plan.md)
 - [Roadmap](docs/roadmap.md)
 - [Phase 2A authentication testing](docs/testing/phase-2a-authentication.md)
+- [Phase 2B frontend authentication testing](docs/testing/phase-2b-frontend-authentication.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign

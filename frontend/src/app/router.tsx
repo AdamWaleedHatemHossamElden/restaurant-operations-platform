@@ -1,16 +1,28 @@
-import { createBrowserRouter, type RouteObject } from 'react-router-dom'
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router-dom'
 
 import { AppLayout } from '../components/layout/AppLayout'
-import { HomePage } from '../pages/HomePage'
+import { AnonymousOnlyRoute, ProtectedRoute } from '../features/auth/AuthRoutes'
+import { DashboardPage } from '../pages/DashboardPage'
+import { LoginPage } from '../pages/LoginPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 
 export const routes: RouteObject[] = [
   {
-    path: '/',
-    element: <AppLayout />,
+    element: <AnonymousOnlyRoute />,
+    children: [{ path: '/login', element: <LoginPage /> }],
+  },
+  {
+    element: <ProtectedRoute />,
     children: [
-      { index: true, element: <HomePage /> },
-      { path: '*', element: <NotFoundPage /> },
+      {
+        path: '/',
+        element: <AppLayout />,
+        children: [
+          { index: true, element: <Navigate to="/dashboard" replace /> },
+          { path: 'dashboard', element: <DashboardPage /> },
+          { path: '*', element: <NotFoundPage /> },
+        ],
+      },
     ],
   },
 ]
