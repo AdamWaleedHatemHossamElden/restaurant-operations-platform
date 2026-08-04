@@ -1,6 +1,6 @@
 # Restaurant Operations Platform
 
-A new independent portfolio project establishing the technical base for a modern restaurant operations system. The current feature branch adds **Phase 2B: Frontend Authentication** on top of the merged backend authentication core; restaurant business workflows remain intentionally out of scope.
+A modern full-stack restaurant operations platform. The current feature branch adds **Phase 3A: Restaurant Table Management** on top of the merged authentication foundation.
 
 ## Current status
 
@@ -17,6 +17,8 @@ A new independent portfolio project establishing the technical base for a modern
 - Required-claim JWT validation, timing-resistant login failure handling, and database-serialized refresh rotation
 - Development OpenAPI Bearer authorization for the protected current-user endpoint
 - Memory-only frontend access tokens, credentialed HttpOnly refresh-cookie requests, and single-flight 401 recovery
+- ADMIN-only restaurant table CRUD, filtering, sorting, soft activation, optimistic locking, and audit events
+- Responsive table-management workspace with validated create/edit forms and safe conflict handling
 
 ## Technology stack
 
@@ -135,12 +137,19 @@ The browser never writes access or refresh tokens to localStorage, sessionStorag
 - Application health: `GET http://localhost:8080/api/v1/health`
 - Actuator health: `GET http://localhost:8080/actuator/health`
 - Development Swagger UI: `http://localhost:8080/swagger-ui.html` when the `dev` profile is active
-- Swagger Authorize uses the Bearer JWT returned by login; only `GET /api/v1/auth/me` is marked as Bearer-protected
+- Swagger Authorize uses the Bearer JWT returned by login; `/api/v1/auth/me` and table-management operations are marked as Bearer-protected
 - Authentication: `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, and `GET /api/v1/auth/me`
+- Table management: `GET/POST /api/v1/tables`, `GET/PUT /api/v1/tables/{id}`, and `PATCH /api/v1/tables/{id}/activation`
+
+## Restaurant table management
+
+Authenticated administrators can open `/tables` to search by table number, filter by active state, operational status, and section, and create or edit table records. Deactivation is a soft state change: records and their audit history remain available and can be reactivated.
+
+Table numbers are unique and normalized to uppercase. Every update and activation request includes the version returned by the latest read. A stale version returns HTTP 409 so a concurrent change is never silently overwritten. Write operations record `TABLE_CREATED`, `TABLE_UPDATED`, `TABLE_DEACTIVATED`, or `TABLE_REACTIVATED` without storing request bodies or sensitive session data.
 
 ## Current limitations
 
-There is no public registration, account recovery, user administration, restaurant management, reservation, menu, ordering, kitchen, inventory, staffing, payment, notification, or reporting feature. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
+There is no public registration, account recovery, user administration, multi-restaurant tenancy, reservation, menu, ordering, kitchen, inventory, staffing, payment, notification, or reporting feature. Phase 3A assumes one logical restaurant and does not hard-delete table records. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
 
 ## Documentation
 
@@ -151,6 +160,7 @@ There is no public registration, account recovery, user administration, restaura
 - [Roadmap](docs/roadmap.md)
 - [Phase 2A authentication testing](docs/testing/phase-2a-authentication.md)
 - [Phase 2B frontend authentication testing](docs/testing/phase-2b-frontend-authentication.md)
+- [Phase 3A table-management testing](docs/testing/phase-3a-table-management.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign

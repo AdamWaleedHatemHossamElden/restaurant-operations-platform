@@ -68,6 +68,7 @@ public class SecurityConfig {
                                 "/api/v1/auth/logout/")
                         .permitAll()
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").authenticated()
+                        .requestMatchers("/api/v1/tables", "/api/v1/tables/**").hasRole("ADMIN")
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").denyAll()
                         .anyRequest().denyAll());
         return http.build();

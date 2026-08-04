@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.adam.restaurantoperations.auth.service.AuthException;
+import com.adam.restaurantoperations.tables.TableManagementException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -17,6 +18,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -25,6 +27,13 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuthException.class)
     ResponseEntity<ApiError> handleAuthentication(AuthException exception, HttpServletRequest request) {
+        return response(exception.getStatus(), exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(TableManagementException.class)
+    ResponseEntity<ApiError> handleTableManagement(
+            TableManagementException exception,
+            HttpServletRequest request) {
         return response(exception.getStatus(), exception.getMessage(), request, Map.of());
     }
 
@@ -43,6 +52,13 @@ public class GlobalExceptionHandler {
             ConstraintViolationException exception,
             HttpServletRequest request) {
         return response(HttpStatus.BAD_REQUEST, exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    ResponseEntity<ApiError> handleTypeMismatch(
+            MethodArgumentTypeMismatchException exception,
+            HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, "Invalid request parameter", request, Map.of());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)

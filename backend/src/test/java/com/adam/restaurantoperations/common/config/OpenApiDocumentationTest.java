@@ -1,8 +1,10 @@
 package com.adam.restaurantoperations.common.config;
 
 import com.adam.restaurantoperations.audit.AuthenticationAuditService;
+import com.adam.restaurantoperations.audit.TableAuditService;
 import com.adam.restaurantoperations.auth.service.AuthenticationService;
 import com.adam.restaurantoperations.roles.RoleRepository;
+import com.adam.restaurantoperations.tables.RestaurantTableService;
 import com.adam.restaurantoperations.users.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,14 +42,28 @@ class OpenApiDocumentationTest {
     @MockitoBean
     private AuthenticationAuditService auditService;
 
+    @MockitoBean
+    private RestaurantTableService restaurantTableService;
+
+    @MockitoBean
+    private TableAuditService tableAuditService;
+
     @Test
-    void generatedDocumentDefinesBearerSchemeOnlyForCurrentUserOperation() throws Exception {
+    void generatedDocumentDefinesBearerSchemeForAuthenticatedOperations() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.type").value("http"))
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.scheme").value("bearer"))
                 .andExpect(jsonPath("$.components.securitySchemes.bearerAuth.bearerFormat").value("JWT"))
                 .andExpect(jsonPath("$.paths['/api/v1/auth/me'].get.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.paths['/api/v1/tables'].get.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.paths['/api/v1/tables'].post.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.paths['/api/v1/tables/{id}'].put.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath(
+                        "$.paths['/api/v1/tables/{id}/activation'].patch.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.paths['/api/v1/tables'].post.responses['201']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/tables'].post.responses['409']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/tables/{id}'].put.responses['409']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/login'].post.security").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/refresh'].post.security").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/logout'].post.security").doesNotExist())
