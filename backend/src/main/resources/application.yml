@@ -23,6 +23,15 @@ server:
 
 app:
   frontend-origin: ${FRONTEND_ORIGIN:http://localhost:5173}
+  auth:
+    jwt-secret: ${JWT_SECRET}
+    access-token-ttl: ${JWT_ACCESS_TOKEN_TTL:15m}
+    refresh-token-ttl: ${JWT_REFRESH_TOKEN_TTL:7d}
+    cookie-secure: ${AUTH_COOKIE_SECURE:false}
+    cookie-same-site: ${AUTH_COOKIE_SAME_SITE:Lax}
+    bootstrap-email: ${BOOTSTRAP_ADMIN_EMAIL:}
+    bootstrap-password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+    bootstrap-display-name: ${BOOTSTRAP_ADMIN_DISPLAY_NAME:Development Administrator}
 
 management:
   endpoints:

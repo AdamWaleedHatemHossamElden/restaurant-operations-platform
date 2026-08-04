@@ -7,6 +7,7 @@ springdoc:
 spring:
   flyway:
     locations: classpath:db/migration,classpath:db/dev
+    out-of-order: true
 
 logging:
   level:

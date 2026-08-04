@@ -4,12 +4,16 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import com.adam.restaurantoperations.auth.service.AuthException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,6 +22,11 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+    @ExceptionHandler(AuthException.class)
+    ResponseEntity<ApiError> handleAuthentication(AuthException exception, HttpServletRequest request) {
+        return response(exception.getStatus(), exception.getMessage(), request, Map.of());
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> handleValidation(
@@ -34,6 +43,23 @@ public class GlobalExceptionHandler {
             ConstraintViolationException exception,
             HttpServletRequest request) {
         return response(HttpStatus.BAD_REQUEST, exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    ResponseEntity<ApiError> handleUnreadableMessage(
+            HttpMessageNotReadableException exception,
+            HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, "Malformed or unreadable JSON", request, Map.of());
+    }
+
+    @ExceptionHandler({PessimisticLockingFailureException.class, DataIntegrityViolationException.class})
+    ResponseEntity<ApiError> handleAuthenticationContention(Exception exception, HttpServletRequest request) {
+        LOGGER.warn("Authentication persistence contention for {}", request.getRequestURI());
+        return response(
+                HttpStatus.CONFLICT,
+                "Authentication request could not be completed; retry",
+                request,
+                Map.of());
     }
 
     @ExceptionHandler(Exception.class)

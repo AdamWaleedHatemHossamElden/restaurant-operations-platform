@@ -1,17 +1,19 @@
 # Security plan
 
-Phase 1 deliberately provides a deny-by-default security boundary without implementing authentication. Health endpoints are public, development-only API documentation is profile-gated, sessions are stateless, form login and HTTP Basic are disabled, and CORS accepts only the configured frontend origin.
+Phase 2A adds backend authentication inside the existing deny-by-default boundary. Passwords use BCrypt strength 12. Unknown-user login performs the same single BCrypt verification step against a fixed, non-persisted dummy hash as a wrong-password login performs against a stored hash. Short-lived HS256 access tokens are validated by Spring Security for signature, timestamps, access-token type, and required claims, and are never persisted. Opaque refresh tokens are random, stored only as SHA-256 hashes, rotated on every use, and grouped into families so reuse of a revoked token invalidates active descendants.
 
-## Phase 2 and later controls
+The refresh token is an HttpOnly cookie restricted to `/api/v1/auth`. Local HTTP normally uses `SameSite=Lax` and `Secure=false`; production requires HTTPS, `Secure=true`, and an environment-appropriate SameSite setting. Refresh and logout, including trailing-slash, matrix-parameter, and context-path equivalents, require `X-CSRF-Protection: 1`. The semicolon exception is limited to POST requests that normalize to those two cookie endpoints; unrelated routes retain the default strict firewall and deny-by-default authorization. Browsers must pass the configured credentialed CORS origin and custom-header preflight, preventing a cross-site simple request from exercising cookie authentication. Bearer-token requests remain stateless.
 
-- Authenticate with short-lived signed JWT access tokens and a carefully designed refresh-token lifecycle.
+`JWT_SECRET` is required and must contain at least 32 UTF-8 bytes. Access and refresh lifetimes default to 15 minutes and 7 days. The dev-only bootstrap runs only when both admin email and password are supplied, hashes the password, assigns the existing ADMIN role, and never overwrites an account or logs credentials.
+
+Implemented controls also include MySQL-serialized refresh rotation and family revocation, safe authentication audit persistence, generic login failures, disabled-user refresh rejection and family revocation, dev-only non-overwriting bootstrap, and a development OpenAPI Bearer scheme for `/me`.
+
+## Remaining controls
+
 - Apply role-based authorization at request and application-service boundaries; restaurant scope must be checked independently of role.
-- Hash passwords with an adaptive algorithm such as Argon2id or bcrypt and an appropriate work factor. Never store plaintext passwords.
 - Validate request structure and domain invariants server-side, even when the frontend also validates forms with Zod and React Hook Form.
-- Keep CORS origins explicit per environment and never use credentialed wildcard origins.
 - Add rate limits to authentication and abuse-sensitive endpoints using infrastructure appropriate to the deployment model.
-- Record security-relevant actions in append-focused audit logs without leaking secrets or unnecessary personal data.
 - Supply database passwords, signing keys, and third-party credentials through environment-specific secret management. Rotate them and keep them out of source control and logs.
 - Require TLS, secure headers, least-privilege database users, restricted Actuator exposure, production-safe logging, and dependency scanning before deployment.
 
-JWT key management, logout semantics, token revocation, account recovery, multi-restaurant authorization, and privacy retention rules must be decided before authentication is considered production-ready.
+Production secret management and rotation, authentication rate limiting, account recovery, MFA, multi-restaurant authorization, and privacy retention rules remain required before production readiness.
