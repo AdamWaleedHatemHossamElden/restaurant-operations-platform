@@ -11,7 +11,11 @@ export function AppLayout() {
             </span>
             <span>Restaurant Operations</span>
           </NavLink>
-          <span className="phase-chip">Secure workspace</span>
+          <div className="nav-links">
+            <NavLink to="/dashboard">Dashboard</NavLink>
+            <NavLink to="/tables">Tables</NavLink>
+          </div>
+          <span className="phase-chip">Admin workspace</span>
         </nav>
       </header>
       <main>

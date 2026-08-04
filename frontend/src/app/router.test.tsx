@@ -24,6 +24,10 @@ vi.mock('../features/health/HealthStatus', () => ({
   HealthStatus: () => <section aria-label="Backend connection">Connected</section>,
 }))
 
+vi.mock('../pages/TablesPage', () => ({
+  TablesPage: () => <h1>Restaurant tables</h1>,
+}))
+
 const mockedCurrentUser = vi.mocked(currentUserRequest)
 const mockedLogin = vi.mocked(loginRequest)
 const mockedLogout = vi.mocked(logoutRequest)
@@ -60,6 +64,17 @@ describe('authentication routing', () => {
     renderRoute('/dashboard')
 
     expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+  })
+
+  it('protects the table-management route and renders it after recovery', async () => {
+    const unauthenticated = renderRoute('/tables')
+    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+    unauthenticated.dispose()
+
+    mockedRefresh.mockResolvedValue(testSession)
+    mockedCurrentUser.mockResolvedValue(testUser)
+    renderRoute('/tables')
+    expect(await screen.findByRole('heading', { name: 'Restaurant tables' })).toBeInTheDocument()
   })
 
   it('renders an authenticated route after startup recovery', async () => {

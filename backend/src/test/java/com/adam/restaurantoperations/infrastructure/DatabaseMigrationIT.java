@@ -39,14 +39,21 @@ class DatabaseMigrationIT {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void startsMySqlAndAppliesAllAuthenticationMigrations() {
+    void startsMySqlAndAppliesAllMigrations() {
         assertThat(MYSQL.isRunning()).isTrue();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("3");
         Integer tableCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables "
                         + "WHERE table_schema = DATABASE() AND table_name IN "
-                        + "('roles', 'users', 'user_roles', 'restaurants', 'audit_logs', 'refresh_tokens')",
+                        + "('roles', 'users', 'user_roles', 'restaurants', 'audit_logs', 'refresh_tokens', "
+                        + "'restaurant_tables')",
                 Integer.class);
-        assertThat(tableCount).isEqualTo(6);
+        assertThat(tableCount).isEqualTo(7);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns "
+                        + "WHERE table_schema = DATABASE() AND table_name = 'restaurant_tables' "
+                        + "AND column_name IN ('table_number', 'display_name', 'capacity', 'section', "
+                        + "'status', 'active', 'created_at', 'updated_at', 'version')",
+                Integer.class)).isEqualTo(9);
     }
 }

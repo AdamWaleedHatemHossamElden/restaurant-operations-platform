@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 
 import { useAuth } from '../features/auth/authContext'
 import { HealthStatus } from '../features/health/HealthStatus'
@@ -73,12 +74,22 @@ export function DashboardPage() {
 
       <HealthStatus />
 
-      <section className="phase-notice" aria-labelledby="phase-notice-title">
-        <p className="eyebrow">Phase 2B</p>
-        <h2 id="phase-notice-title">Your secure foundation is ready.</h2>
+      <section className="phase-notice" aria-labelledby="tables-workspace-title">
+        <p className="eyebrow">Phase 3A</p>
+        <h2 id="tables-workspace-title">Shape the dining room.</h2>
         <p>
-          This dashboard intentionally stops at authenticated identity. Restaurant operations and
-          authorization workflows are not part of this phase.
+          Manage table capacity, sections, service status, and active records from one workspace.
+        </p>
+        <Link className="button button--primary button--link" to="/tables">
+          Manage tables
+        </Link>
+      </section>
+
+      <section className="phase-notice" aria-labelledby="phase-notice-title">
+        <p className="eyebrow">Secure foundation</p>
+        <h2 id="phase-notice-title">Your authenticated workspace is ready.</h2>
+        <p>
+          Access remains protected by memory-only access tokens and backend-managed refresh cookies.
         </p>
       </section>
     </div>

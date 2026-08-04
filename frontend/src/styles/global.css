@@ -41,7 +41,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -323,6 +324,16 @@ main {
   color: var(--ink);
 }
 
+.form-field select {
+  width: 100%;
+  min-height: 48px;
+  border: 1px solid #bfc4bf;
+  border-radius: 9px;
+  padding: 0.72rem 0.82rem;
+  background: #fff;
+  color: var(--ink);
+}
+
 .form-field input:hover {
   border-color: #828c85;
 }
@@ -513,6 +524,278 @@ main {
   line-height: 1.6;
 }
 
+.phase-notice .button {
+  margin-top: 1rem;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.nav-links a {
+  border-radius: 8px;
+  padding: 0.55rem 0.75rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.nav-links a:hover,
+.nav-links a.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.tables-page {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.tables-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 2rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 2rem;
+}
+
+.tables-hero h1 {
+  margin: 0.2rem 0 0.75rem;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.6rem, 6vw, 4.9rem);
+  font-weight: 500;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.tables-hero p:last-child {
+  max-width: 680px;
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.table-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1.4fr) repeat(3, minmax(150px, 1fr));
+  gap: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.25rem;
+  background: var(--paper);
+}
+
+.table-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.table-card {
+  display: grid;
+  align-content: start;
+  gap: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.35rem;
+  background: var(--paper);
+  box-shadow: 0 12px 34px rgba(31, 42, 34, 0.06);
+}
+
+.table-card--inactive {
+  background: #efede6;
+  color: #505851;
+}
+
+.table-card__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.table-card__heading h2 {
+  margin: 0.2rem 0 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.5rem;
+  font-weight: 500;
+}
+
+.table-card__number {
+  margin: 0;
+  color: var(--accent);
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.status-pill {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0.35rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 800;
+}
+
+.status-pill--available {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.status-pill--out_of_service {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.table-card__details {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+}
+
+.table-card__details > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: 1px solid #e8e5dc;
+  padding-bottom: 0.55rem;
+}
+
+.table-card__details dt {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.table-card__details dd {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 700;
+  text-align: right;
+}
+
+.table-card__actions {
+  display: flex;
+  gap: 0.65rem;
+}
+
+.table-card__actions .button {
+  flex: 1;
+}
+
+.button--danger {
+  border-color: #d79089;
+  background: transparent;
+  color: var(--danger);
+}
+
+.button--danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+}
+
+.table-state {
+  border: 1px dashed #bfc4bf;
+  border-radius: 16px;
+  padding: 3rem 1.5rem;
+  background: rgba(255, 253, 248, 0.55);
+  color: var(--muted);
+  text-align: center;
+}
+
+.table-state h2,
+.table-state p {
+  margin-top: 0;
+}
+
+.table-state--error {
+  border-color: #e5aaa4;
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border: 1px solid #a9c7b8;
+  border-radius: 11px;
+  padding: 0.8rem 1rem;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-weight: 700;
+}
+
+.notice button,
+.icon-button {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 1.5rem;
+}
+
+.dialog-backdrop {
+  position: fixed;
+  z-index: 20;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  overflow-y: auto;
+  padding: 1rem;
+  background: rgba(13, 32, 23, 0.64);
+}
+
+.table-dialog {
+  width: min(100%, 660px);
+  max-height: calc(100vh - 2rem);
+  overflow-y: auto;
+  border-radius: 20px;
+  padding: clamp(1.4rem, 4vw, 2rem);
+  background: var(--paper);
+  box-shadow: var(--shadow);
+}
+
+.table-dialog__heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.table-dialog__heading h2 {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2rem;
+  font-weight: 500;
+}
+
+.table-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.table-form .form-field:nth-child(2),
+.dialog-actions {
+  grid-column: 1 / -1;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  border-top: 1px solid var(--line);
+  margin-top: 0.5rem;
+  padding-top: 1rem;
+}
+
 .not-found {
   max-width: 760px;
 }
@@ -602,6 +885,14 @@ main {
   .dashboard-page {
     grid-template-columns: 1fr;
   }
+
+  .table-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .table-grid {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 @media (max-width: 600px) {
@@ -620,11 +911,37 @@ main {
   }
 
   .phase-chip {
-    font-size: 0.68rem;
+    display: none;
   }
 
   .nav .brand > span:last-child {
     display: none;
+  }
+
+  .nav-links a {
+    padding-inline: 0.55rem;
+    font-size: 0.8rem;
+  }
+
+  .tables-hero {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .table-filters,
+  .table-grid,
+  .table-form {
+    grid-template-columns: 1fr;
+  }
+
+  .table-form .form-field:nth-child(2),
+  .dialog-actions {
+    grid-column: auto;
+  }
+
+  .table-card__actions,
+  .dialog-actions {
+    flex-direction: column;
   }
 }
 
