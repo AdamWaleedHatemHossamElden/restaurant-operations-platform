@@ -1,8 +1,8 @@
 # Restaurant Operations Platform
 
-A new independent portfolio project establishing the technical base for a modern restaurant operations system. The current repository contains **Phase 1: Foundation** only; it does not claim to implement authentication or restaurant business workflows.
+A new independent portfolio project establishing the technical base for a modern restaurant operations system. The current feature branch adds **Phase 2A: Backend Authentication Core**; it does not yet include a frontend login or restaurant business workflows.
 
-## Phase 1 status
+## Current status
 
 - React + TypeScript frontend with routing, API client, server-state management, responsive styling, and health states
 - Java 21 + Spring Boot modular-monolith backend foundation
@@ -11,6 +11,11 @@ A new independent portfolio project establishing the technical base for a modern
 - MySQL 8.4 local service and Flyway schema migrations
 - Unit, MVC, frontend, and opt-in Testcontainers integration-test foundations
 - Architecture, database, security, scope, and roadmap documentation
+- BCrypt password storage, HS256 JWT access tokens, hashed rotating refresh tokens, and authentication audit events
+- Backend login, refresh, logout, and current-user endpoints
+- Development-only, environment-driven initial administrator bootstrap
+- Required-claim JWT validation, timing-resistant login failure handling, and database-serialized refresh rotation
+- Development OpenAPI Bearer authorization for the protected current-user endpoint
 
 ## Technology stack
 
@@ -55,6 +60,11 @@ A global Maven installation is not required; use the included wrapper.
    - `DB_PASSWORD`
    - `SERVER_PORT`
    - `FRONTEND_ORIGIN`
+   - `JWT_SECRET` (required; at least 32 UTF-8 bytes)
+   - `JWT_ACCESS_TOKEN_TTL` (default `15m`)
+   - `JWT_REFRESH_TOKEN_TTL` (default `7d`)
+   - `AUTH_COOKIE_SECURE` and `AUTH_COOKIE_SAME_SITE`
+   - optional dev-only `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`, and `BOOTSTRAP_ADMIN_DISPLAY_NAME`
 
 Do not commit real environment files.
 
@@ -114,10 +124,12 @@ npm run dev
 - Application health: `GET http://localhost:8080/api/v1/health`
 - Actuator health: `GET http://localhost:8080/actuator/health`
 - Development Swagger UI: `http://localhost:8080/swagger-ui.html` when the `dev` profile is active
+- Swagger Authorize uses the Bearer JWT returned by login; only `GET /api/v1/auth/me` is marked as Bearer-protected
+- Authentication: `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, and `GET /api/v1/auth/me`
 
 ## Current limitations
 
-There are no login, user-management, restaurant-management, reservation, menu, ordering, kitchen, inventory, staffing, payment, notification, or reporting features. Spring WebSocket and form libraries are dependencies for later controlled phases, not evidence of implemented features. Production deployment and Playwright end-to-end tests are also deferred.
+There is no frontend login, public registration, account recovery, user administration, restaurant management, reservation, menu, ordering, kitchen, inventory, staffing, payment, notification, or reporting feature. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
 
 ## Documentation
 
@@ -126,6 +138,7 @@ There are no login, user-management, restaurant-management, reservation, menu, o
 - [Database plan](docs/database-plan.md)
 - [Security plan](docs/security-plan.md)
 - [Roadmap](docs/roadmap.md)
+- [Phase 2A authentication testing](docs/testing/phase-2a-authentication.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign

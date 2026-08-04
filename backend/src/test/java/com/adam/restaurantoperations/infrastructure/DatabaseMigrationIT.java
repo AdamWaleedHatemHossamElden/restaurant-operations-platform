@@ -28,6 +28,8 @@ class DatabaseMigrationIT {
         registry.add("spring.datasource.url", MYSQL::getJdbcUrl);
         registry.add("spring.datasource.username", MYSQL::getUsername);
         registry.add("spring.datasource.password", MYSQL::getPassword);
+        registry.add("app.auth.jwt-secret", () -> "integration-test-only-jwt-key-with-at-least-32-bytes");
+        registry.add("app.frontend-origin", () -> "http://localhost:5173");
     }
 
     @Autowired
@@ -37,14 +39,14 @@ class DatabaseMigrationIT {
     private JdbcTemplate jdbcTemplate;
 
     @Test
-    void startsMySqlAndAppliesTheFoundationMigration() {
+    void startsMySqlAndAppliesAllAuthenticationMigrations() {
         assertThat(MYSQL.isRunning()).isTrue();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("1");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("2");
         Integer tableCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables "
                         + "WHERE table_schema = DATABASE() AND table_name IN "
-                        + "('roles', 'users', 'user_roles', 'restaurants', 'audit_logs')",
+                        + "('roles', 'users', 'user_roles', 'restaurants', 'audit_logs', 'refresh_tokens')",
                 Integer.class);
-        assertThat(tableCount).isEqualTo(5);
+        assertThat(tableCount).isEqualTo(6);
     }
 }
