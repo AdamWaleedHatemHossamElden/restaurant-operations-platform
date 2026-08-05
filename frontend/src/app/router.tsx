@@ -5,6 +5,7 @@ import { AnonymousOnlyRoute, ProtectedRoute } from '../features/auth/AuthRoutes'
 import { DashboardPage } from '../pages/DashboardPage'
 import { LoginPage } from '../pages/LoginPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { ReservationsPage } from '../pages/ReservationsPage'
 import { TablesPage } from '../pages/TablesPage'
 
 export const routes: RouteObject[] = [
@@ -22,6 +23,7 @@ export const routes: RouteObject[] = [
           { index: true, element: <Navigate to="/dashboard" replace /> },
           { path: 'dashboard', element: <DashboardPage /> },
           { path: 'tables', element: <TablesPage /> },
+          { path: 'reservations', element: <ReservationsPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

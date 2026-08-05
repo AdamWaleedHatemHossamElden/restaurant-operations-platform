@@ -41,19 +41,26 @@ class DatabaseMigrationIT {
     @Test
     void startsMySqlAndAppliesAllMigrations() {
         assertThat(MYSQL.isRunning()).isTrue();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("3");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
         Integer tableCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables "
                         + "WHERE table_schema = DATABASE() AND table_name IN "
                         + "('roles', 'users', 'user_roles', 'restaurants', 'audit_logs', 'refresh_tokens', "
-                        + "'restaurant_tables')",
+                        + "'restaurant_tables', 'reservations')",
                 Integer.class);
-        assertThat(tableCount).isEqualTo(7);
+        assertThat(tableCount).isEqualTo(8);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.columns "
                         + "WHERE table_schema = DATABASE() AND table_name = 'restaurant_tables' "
                         + "AND column_name IN ('table_number', 'display_name', 'capacity', 'section', "
                         + "'status', 'active', 'created_at', 'updated_at', 'version')",
                 Integer.class)).isEqualTo(9);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns "
+                        + "WHERE table_schema = DATABASE() AND table_name = 'reservations' "
+                        + "AND column_name IN ('reservation_code', 'guest_name', 'guest_phone', 'guest_email', "
+                        + "'party_size', 'start_at', 'duration_minutes', 'restaurant_table_id', 'status', "
+                        + "'notes', 'created_at', 'updated_at', 'version')",
+                Integer.class)).isEqualTo(13);
     }
 }

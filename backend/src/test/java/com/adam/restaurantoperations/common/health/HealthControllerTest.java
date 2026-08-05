@@ -1,8 +1,10 @@
 package com.adam.restaurantoperations.common.health;
 
 import com.adam.restaurantoperations.audit.AuthenticationAuditService;
+import com.adam.restaurantoperations.audit.ReservationAuditService;
 import com.adam.restaurantoperations.audit.TableAuditService;
 import com.adam.restaurantoperations.auth.service.AuthenticationService;
+import com.adam.restaurantoperations.reservations.ReservationService;
 import com.adam.restaurantoperations.tables.RestaurantTableService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +43,12 @@ class HealthControllerTest {
 
     @MockitoBean
     private TableAuditService tableAuditService;
+
+    @MockitoBean
+    private ReservationService reservationService;
+
+    @MockitoBean
+    private ReservationAuditService reservationAuditService;
 
     @Test
     void returnsTypedHealthResponseWithoutAuthentication() throws Exception {

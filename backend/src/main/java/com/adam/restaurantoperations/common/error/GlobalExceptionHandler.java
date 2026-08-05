@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.adam.restaurantoperations.auth.service.AuthException;
+import com.adam.restaurantoperations.reservations.ReservationManagementException;
 import com.adam.restaurantoperations.tables.TableManagementException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -33,6 +34,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(TableManagementException.class)
     ResponseEntity<ApiError> handleTableManagement(
             TableManagementException exception,
+            HttpServletRequest request) {
+        return response(exception.getStatus(), exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(ReservationManagementException.class)
+    ResponseEntity<ApiError> handleReservationManagement(
+            ReservationManagementException exception,
             HttpServletRequest request) {
         return response(exception.getStatus(), exception.getMessage(), request, Map.of());
     }
