@@ -1,4 +1,4 @@
-package com.adam.restaurantoperations.tables;
+package com.adam.restaurantoperations.reservations;
 
 import java.time.Instant;
 import java.util.List;
@@ -7,9 +7,7 @@ import com.adam.restaurantoperations.audit.AuthenticationAuditService;
 import com.adam.restaurantoperations.audit.ReservationAuditService;
 import com.adam.restaurantoperations.audit.TableAuditService;
 import com.adam.restaurantoperations.auth.service.AuthenticationService;
-import com.adam.restaurantoperations.reservations.ReservationService;
-import com.adam.restaurantoperations.tables.dto.CreateTableRequest;
-import com.adam.restaurantoperations.tables.dto.TableResponse;
+import com.adam.restaurantoperations.tables.RestaurantTableService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -31,13 +29,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "app.frontend-origin=http://localhost:5173")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class RestaurantTableControllerSecurityTest {
+class ReservationControllerSecurityTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private RestaurantTableService service;
+    private ReservationService service;
 
     @MockitoBean
     private AuthenticationService authenticationService;
@@ -49,102 +47,71 @@ class RestaurantTableControllerSecurityTest {
     private TableAuditService tableAuditService;
 
     @MockitoBean
-    private ReservationService reservationService;
+    private RestaurantTableService restaurantTableService;
 
     @MockitoBean
     private ReservationAuditService reservationAuditService;
 
     @Test
-    void everyTableEndpointRequiresAdminRole() throws Exception {
-        mockMvc.perform(get("/api/v1/tables"))
+    void reservationEndpointsRequireAdmin() throws Exception {
+        mockMvc.perform(get("/api/v1/reservations"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401));
 
-        mockMvc.perform(get("/api/v1/tables").with(jwt().jwt(token -> token
+        mockMvc.perform(get("/api/v1/reservations").with(jwt().jwt(token -> token
                                 .subject("7")
                                 .claim("roles", List.of("SERVER")))
                         .authorities(new SimpleGrantedAuthority("ROLE_SERVER"))))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403));
 
-        given(service.list(any(), any(), any(), any(), any(), any())).willReturn(List.of());
-        mockMvc.perform(get("/api/v1/tables").with(adminJwt()))
+        given(service.list(any(), any(), any(), any(), any(), any(), any(), any(), any()))
+                .willReturn(List.of());
+        mockMvc.perform(get("/api/v1/reservations").with(adminJwt()))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void createValidatesInputAndMalformedJsonSafely() throws Exception {
-        mockMvc.perform(post("/api/v1/tables")
+    void createValidatesPayloadAndMalformedJsonSafely() throws Exception {
+        mockMvc.perform(post("/api/v1/reservations")
                         .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("""
                                 {
-                                  "tableNumber": "",
-                                  "displayName": "",
-                                  "capacity": 0,
-                                  "section": "",
-                                  "status": null
+                                  "guestName": "",
+                                  "guestPhone": "bad",
+                                  "partySize": 0,
+                                  "startAt": "2030-04-12T18:00:00Z",
+                                  "durationMinutes": 5
                                 }
                                 """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.fieldErrors.tableNumber").exists())
-                .andExpect(jsonPath("$.fieldErrors.displayName").exists())
-                .andExpect(jsonPath("$.fieldErrors.section").exists())
-                .andExpect(jsonPath("$.fieldErrors.status").exists());
+                .andExpect(jsonPath("$.fieldErrors.guestName").exists())
+                .andExpect(jsonPath("$.fieldErrors.guestPhone").exists())
+                .andExpect(jsonPath("$.fieldErrors.partySize").exists())
+                .andExpect(jsonPath("$.fieldErrors.durationMinutes").exists());
 
-        mockMvc.perform(post("/api/v1/tables")
+        mockMvc.perform(post("/api/v1/reservations")
                         .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"tableNumber\":not-json}"))
+                        .content("{\"guestName\":not-json}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Malformed or unreadable JSON"))
-                .andExpect(jsonPath("$.trace").doesNotExist());
-
-        mockMvc.perform(get("/api/v1/tables")
-                        .with(adminJwt())
-                        .queryParam("status", "NOT_A_STATUS"))
-                .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Invalid request parameter"));
+                .andExpect(jsonPath("$.message").value("Malformed or unreadable JSON"));
     }
 
     @Test
-    void adminCanCreateAndReceivesLocation() throws Exception {
-        given(service.create(any(CreateTableRequest.class), any(), any())).willReturn(table());
-
-        mockMvc.perform(post("/api/v1/tables")
+    void availabilityValidatesSupportedRanges() throws Exception {
+        mockMvc.perform(get("/api/v1/reservations/availability")
                         .with(adminJwt())
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "tableNumber": "T-01",
-                                  "displayName": "Window",
-                                  "capacity": 4,
-                                  "section": "Main",
-                                  "status": "AVAILABLE"
-                                }
-                                """))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.id").value(12))
-                .andExpect(jsonPath("$.tableNumber").value("T-01"));
+                        .queryParam("startAt", Instant.parse("2030-04-12T18:00:00Z").toString())
+                        .queryParam("durationMinutes", "5")
+                        .queryParam("partySize", "0"))
+                .andExpect(status().isBadRequest());
     }
 
     private org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor
             adminJwt() {
         return jwt().jwt(token -> token.subject("7").claim("roles", List.of("ADMIN")))
                 .authorities(new SimpleGrantedAuthority("ROLE_ADMIN"));
-    }
-
-    private TableResponse table() {
-        return new TableResponse(
-                12L,
-                "T-01",
-                "Window",
-                4,
-                "Main",
-                TableStatus.AVAILABLE,
-                true,
-                Instant.parse("2026-08-04T10:00:00Z"),
-                Instant.parse("2026-08-04T10:00:00Z"),
-                0L);
     }
 }

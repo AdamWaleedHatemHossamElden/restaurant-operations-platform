@@ -10,9 +10,12 @@ Implemented controls also include MySQL-serialized refresh rotation and family r
 
 Phase 2B keeps the browser access token only in module memory. It is attached as a Bearer credential by Axios and is never written to localStorage, sessionStorage, IndexedDB, or a script-readable cookie. The backend-managed HttpOnly refresh cookie is sent only through credentialed refresh and logout requests with `X-CSRF-Protection: 1`. Startup recovery rotates the cookie and validates the returned access token through `/me` before protected content renders. Concurrent 401 responses share one refresh operation and each original request is retried at most once; failed recovery clears the in-memory identity. Logout immediately advances a session generation, disables 401 recovery, and clears local authentication before the network request, so stale refresh or current-user responses cannot restore a signed-out session. API payloads are schema-validated and user-facing failures remain generic.
 
+Phase 3B keeps reservation authorization inside the existing deny-by-default Bearer boundary and requires `ADMIN` for every reservation endpoint. Assignment writes lock the target restaurant-table row in MySQL before checking blocking overlaps and writing the reservation, which serializes concurrent contenders without trusting an earlier availability read. Reservation optimistic locking prevents stale edits and status changes. Audit details contain reservation and table identifiers only; guest phone, email, notes, request bodies, cookies, and authorization data are excluded. Reservation times are persisted as UTC instants, while local-time conversion occurs only at the browser input and display boundary.
+
 ## Remaining controls
 
 - Apply role-based authorization at request and application-service boundaries; restaurant scope must be checked independently of role.
+- Add scoped host or manager roles before delegating reservation operations beyond administrators.
 - Validate request structure and domain invariants server-side, even when the frontend also validates forms with Zod and React Hook Form.
 - Add rate limits to authentication and abuse-sensitive endpoints using infrastructure appropriate to the deployment model.
 - Supply database passwords, signing keys, and third-party credentials through environment-specific secret management. Rotate them and keep them out of source control and logs.

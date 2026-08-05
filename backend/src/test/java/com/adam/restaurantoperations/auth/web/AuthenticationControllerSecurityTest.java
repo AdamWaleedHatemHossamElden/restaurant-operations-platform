@@ -4,6 +4,7 @@ import java.time.Instant;
 import java.util.List;
 
 import com.adam.restaurantoperations.audit.AuthenticationAuditService;
+import com.adam.restaurantoperations.audit.ReservationAuditService;
 import com.adam.restaurantoperations.audit.TableAuditService;
 import com.adam.restaurantoperations.auth.dto.AuthResponse;
 import com.adam.restaurantoperations.auth.dto.CurrentUserResponse;
@@ -12,6 +13,7 @@ import com.adam.restaurantoperations.auth.service.AuthException;
 import com.adam.restaurantoperations.auth.service.AuthSession;
 import com.adam.restaurantoperations.auth.service.AuthenticationService;
 import com.adam.restaurantoperations.auth.service.RequestMetadata;
+import com.adam.restaurantoperations.reservations.ReservationService;
 import com.adam.restaurantoperations.tables.RestaurantTableService;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
@@ -58,6 +60,12 @@ class AuthenticationControllerSecurityTest {
 
     @MockitoBean
     private TableAuditService tableAuditService;
+
+    @MockitoBean
+    private ReservationService reservationService;
+
+    @MockitoBean
+    private ReservationAuditService reservationAuditService;
 
     @Test
     void loginReturnsAccessTokenAndHttpOnlyCookieWithoutRefreshTokenInJson() throws Exception {

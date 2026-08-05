@@ -1,6 +1,6 @@
 # Restaurant Operations Platform
 
-A modern full-stack restaurant operations platform. The current feature branch adds **Phase 3A: Restaurant Table Management** on top of the merged authentication foundation.
+A modern full-stack restaurant operations platform. The current feature branch adds **Phase 3B: Reservation Management** on top of authentication and restaurant table management.
 
 ## Current status
 
@@ -19,6 +19,9 @@ A modern full-stack restaurant operations platform. The current feature branch a
 - Memory-only frontend access tokens, credentialed HttpOnly refresh-cookie requests, and single-flight 401 recovery
 - ADMIN-only restaurant table CRUD, filtering, sorting, soft activation, optimistic locking, and audit events
 - Responsive table-management workspace with validated create/edit forms and safe conflict handling
+- ADMIN-only reservation creation, filtering, assignment, status workflow, optimistic locking, and audit events
+- MySQL-serialized table availability checks with UTC storage and browser-local time display
+- Responsive reservation agenda with live suitable-table loading and safe conflict recovery
 
 ## Technology stack
 
@@ -140,6 +143,7 @@ The browser never writes access or refresh tokens to localStorage, sessionStorag
 - Swagger Authorize uses the Bearer JWT returned by login; `/api/v1/auth/me` and table-management operations are marked as Bearer-protected
 - Authentication: `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, and `GET /api/v1/auth/me`
 - Table management: `GET/POST /api/v1/tables`, `GET/PUT /api/v1/tables/{id}`, and `PATCH /api/v1/tables/{id}/activation`
+- Reservation management: `GET/POST /api/v1/reservations`, `GET/PUT /api/v1/reservations/{id}`, `PATCH /api/v1/reservations/{id}/status`, and `GET /api/v1/reservations/availability`
 
 ## Restaurant table management
 
@@ -147,9 +151,15 @@ Authenticated administrators can open `/tables` to search by table number, filte
 
 Table numbers are unique and normalized to uppercase. Every update and activation request includes the version returned by the latest read. A stale version returns HTTP 409 so a concurrent change is never silently overwritten. Write operations record `TABLE_CREATED`, `TABLE_UPDATED`, `TABLE_DEACTIVATED`, or `TABLE_REACTIVATED` without storing request bodies or sensitive session data.
 
+## Reservation management
+
+Authenticated administrators can open `/reservations` to create unassigned or table-assigned reservations, search and filter an agenda, edit guest and timing details, reassign tables, and apply the controlled pending, confirmed, seated, completed, cancelled, and no-show workflow.
+
+Reservation instants are stored in UTC and converted at the browser boundary for local input and display. A table is suitable only when it is active, operationally available, large enough, and free of overlapping `CONFIRMED` or `SEATED` reservations. The write transaction locks the target table row before its final overlap check, so simultaneous assignments are serialized by MySQL rather than trusted to frontend state. `PENDING`, `COMPLETED`, `CANCELLED`, and `NO_SHOW` reservations do not block availability. Every edit and status request carries the latest optimistic-lock version.
+
 ## Current limitations
 
-There is no public registration, account recovery, user administration, multi-restaurant tenancy, reservation, menu, ordering, kitchen, inventory, staffing, payment, notification, or reporting feature. Phase 3A assumes one logical restaurant and does not hard-delete table records. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
+There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, automated notification, occupancy, menu, ordering, kitchen, inventory, staffing, payment, or reporting feature. Phase 3B assumes one logical restaurant and does not hard-delete table or reservation records. Host and manager roles remain pending; ADMIN is the only current application role. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
 
 ## Documentation
 
@@ -161,6 +171,7 @@ There is no public registration, account recovery, user administration, multi-re
 - [Phase 2A authentication testing](docs/testing/phase-2a-authentication.md)
 - [Phase 2B frontend authentication testing](docs/testing/phase-2b-frontend-authentication.md)
 - [Phase 3A table-management testing](docs/testing/phase-3a-table-management.md)
+- [Phase 3B reservation-management testing](docs/testing/phase-3b-reservation-management.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign

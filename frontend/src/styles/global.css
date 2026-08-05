@@ -334,6 +334,24 @@ main {
   color: var(--ink);
 }
 
+.form-field textarea {
+  width: 100%;
+  border: 1px solid #bfc4bf;
+  border-radius: 9px;
+  padding: 0.72rem 0.82rem;
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  resize: vertical;
+}
+
+.field-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
 .form-field input:hover {
   border-color: #828c85;
 }
@@ -787,6 +805,155 @@ main {
   grid-column: 1 / -1;
 }
 
+.reservations-page {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.reservation-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+}
+
+.reservation-summary > div {
+  display: grid;
+  gap: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 1.1rem;
+  background: var(--paper);
+}
+
+.reservation-summary strong {
+  color: var(--accent);
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 2rem;
+  font-weight: 500;
+}
+
+.reservation-summary span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 750;
+  text-transform: uppercase;
+}
+
+.reservation-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.25rem;
+  background: var(--paper);
+}
+
+.reservation-agenda {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.reservation-card {
+  display: grid;
+  grid-template-columns: minmax(170px, 0.8fr) minmax(200px, 1.2fr) minmax(150px, 0.8fr) minmax(
+      240px,
+      1.2fr
+    );
+  align-items: center;
+  gap: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.15rem;
+  background: var(--paper);
+  box-shadow: 0 9px 28px rgba(31, 42, 34, 0.05);
+}
+
+.reservation-card__time,
+.reservation-card__guest,
+.reservation-card__assignment {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.reservation-card__time time,
+.reservation-card__assignment strong {
+  font-weight: 800;
+}
+
+.reservation-card__time span,
+.reservation-card__guest p:last-child,
+.reservation-card__assignment > span:last-child {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.reservation-card__guest h2 {
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 1.35rem;
+  font-weight: 500;
+}
+
+.reservation-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
+.reservation-card__actions .button {
+  min-height: 40px;
+  padding: 0.55rem 0.72rem;
+  font-size: 0.78rem;
+}
+
+.reservation-status {
+  justify-self: start;
+  border-radius: 999px;
+  padding: 0.3rem 0.55rem;
+  background: #e7e4da;
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.reservation-status--confirmed,
+.reservation-status--seated {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.reservation-status--cancelled,
+.reservation-status--no_show {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.reservation-status--completed {
+  background: #e0e4e1;
+  color: #4a554e;
+}
+
+.reservation-dialog {
+  width: min(100%, 760px);
+}
+
+.reservation-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.reservation-form__wide {
+  grid-column: 1 / -1;
+}
+
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
@@ -890,6 +1057,19 @@ main {
     grid-template-columns: 1fr 1fr;
   }
 
+  .reservation-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .reservation-card {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .reservation-card__actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
+  }
+
   .table-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -930,8 +1110,28 @@ main {
 
   .table-filters,
   .table-grid,
-  .table-form {
+  .table-form,
+  .reservation-filters,
+  .reservation-form,
+  .reservation-card {
     grid-template-columns: 1fr;
+  }
+
+  .reservation-summary {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .reservation-form__wide,
+  .reservation-card__actions {
+    grid-column: auto;
+  }
+
+  .reservation-card__actions {
+    flex-direction: column;
+  }
+
+  .reservation-card__actions .button {
+    width: 100%;
   }
 
   .table-form .form-field:nth-child(2),
