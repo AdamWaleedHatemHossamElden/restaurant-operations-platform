@@ -21,8 +21,8 @@ The product roadmap covers identity and role assignment; employee and shift coor
 
 The modular monolith is planned around `auth`, `users`, `employees`, `tables`, `reservations`, `menu`, `orders`, `kitchen`, `inventory`, `suppliers`, `payments`, `reports`, `notifications`, and `audit`. A module will be added only when its phase is implemented; Phase 1 does not create empty classes for these future areas.
 
-## Phase 1 boundaries
+## Current delivery boundary
 
-Phase 1 includes project structure, runtime configuration, a health API, restricted security defaults, migration infrastructure, five foundation tables, local MySQL orchestration, frontend connection status, tests, and planning documentation.
+Phases 1 through 3B are merged. Phase 4A adds ADMIN-only menu configuration for categories, menu items, reusable modifier groups and options, ordered assignments, soft activation, and sale availability.
 
-Authentication, user administration, restaurant CRUD, reservations, orders, kitchen screens, inventory, schedules, payments, reporting, production deployment, and real-time business events are explicitly out of scope.
+Order capture, carts, pricing snapshots, customer ordering, kitchen behavior, inventory consumption, payments, image uploads, public menu publishing, and multi-currency behavior are explicitly outside Phase 4A. Those workflows begin in Phase 4B or later phases.

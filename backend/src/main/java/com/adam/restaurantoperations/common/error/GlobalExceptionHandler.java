@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.adam.restaurantoperations.auth.service.AuthException;
 import com.adam.restaurantoperations.reservations.ReservationManagementException;
+import com.adam.restaurantoperations.menu.MenuManagementException;
 import com.adam.restaurantoperations.tables.TableManagementException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -45,6 +46,11 @@ public class GlobalExceptionHandler {
         return response(exception.getStatus(), exception.getMessage(), request, Map.of());
     }
 
+    @ExceptionHandler(MenuManagementException.class)
+    ResponseEntity<ApiError> handleMenuManagement(MenuManagementException exception, HttpServletRequest request) {
+        return response(exception.getStatus(), exception.getMessage(), request, Map.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> handleValidation(
             MethodArgumentNotValidException exception,
@@ -77,11 +83,11 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler({PessimisticLockingFailureException.class, DataIntegrityViolationException.class})
-    ResponseEntity<ApiError> handleAuthenticationContention(Exception exception, HttpServletRequest request) {
-        LOGGER.warn("Authentication persistence contention for {}", request.getRequestURI());
+    ResponseEntity<ApiError> handlePersistenceContention(Exception exception, HttpServletRequest request) {
+        LOGGER.warn("Persistence contention for {}", request.getRequestURI());
         return response(
                 HttpStatus.CONFLICT,
-                "Authentication request could not be completed; retry",
+                "Request could not be completed; retry",
                 request,
                 Map.of());
     }

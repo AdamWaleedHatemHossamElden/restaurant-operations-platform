@@ -70,6 +70,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/auth/me").authenticated()
                         .requestMatchers("/api/v1/tables", "/api/v1/tables/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/reservations", "/api/v1/reservations/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/menu", "/api/v1/menu/**").hasRole("ADMIN")
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").denyAll()
                         .anyRequest().denyAll());
         return http.build();

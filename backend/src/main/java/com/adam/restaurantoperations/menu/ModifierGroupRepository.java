@@ -1,0 +1,18 @@
+package com.adam.restaurantoperations.menu;
+
+import java.util.Optional;
+import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+public interface ModifierGroupRepository extends JpaRepository<ModifierGroupEntity, Long>, JpaSpecificationExecutor<ModifierGroupEntity> {
+    boolean existsByNameIgnoreCase(String name);
+    boolean existsByNameIgnoreCaseAndIdNot(String name, Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select modifierGroup from ModifierGroupEntity modifierGroup where modifierGroup.id = :id")
+    Optional<ModifierGroupEntity> findByIdForUpdate(@Param("id") Long id);
+}
