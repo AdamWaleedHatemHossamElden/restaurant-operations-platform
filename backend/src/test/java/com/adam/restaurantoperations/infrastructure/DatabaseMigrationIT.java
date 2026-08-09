@@ -41,14 +41,15 @@ class DatabaseMigrationIT {
     @Test
     void startsMySqlAndAppliesAllMigrations() {
         assertThat(MYSQL.isRunning()).isTrue();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("4");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
         Integer tableCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables "
                         + "WHERE table_schema = DATABASE() AND table_name IN "
                         + "('roles', 'users', 'user_roles', 'restaurants', 'audit_logs', 'refresh_tokens', "
-                        + "'restaurant_tables', 'reservations')",
+                        + "'restaurant_tables', 'reservations', 'menu_categories', 'menu_items', "
+                        + "'modifier_groups', 'modifier_options', 'menu_item_modifier_groups')",
                 Integer.class);
-        assertThat(tableCount).isEqualTo(8);
+        assertThat(tableCount).isEqualTo(13);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.columns "
                         + "WHERE table_schema = DATABASE() AND table_name = 'restaurant_tables' "
@@ -62,5 +63,18 @@ class DatabaseMigrationIT {
                         + "'party_size', 'start_at', 'duration_minutes', 'restaurant_table_id', 'status', "
                         + "'notes', 'created_at', 'updated_at', 'version')",
                 Integer.class)).isEqualTo(13);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns "
+                        + "WHERE table_schema = DATABASE() AND table_name = 'menu_items' "
+                        + "AND column_name IN ('category_id', 'code', 'name', 'base_price', 'active', "
+                        + "'available_for_sale', 'version')",
+                Integer.class)).isEqualTo(7);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.table_constraints "
+                        + "WHERE table_schema = DATABASE() AND table_name IN "
+                        + "('menu_categories', 'menu_items', 'modifier_groups', 'modifier_options', "
+                        + "'menu_item_modifier_groups') AND constraint_type IN "
+                        + "('UNIQUE', 'FOREIGN KEY', 'CHECK')",
+                Integer.class)).isGreaterThanOrEqualTo(17);
     }
 }

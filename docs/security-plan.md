@@ -12,6 +12,8 @@ Phase 2B keeps the browser access token only in module memory. It is attached as
 
 Phase 3B keeps reservation authorization inside the existing deny-by-default Bearer boundary and requires `ADMIN` for every reservation endpoint. Assignment writes lock the target restaurant-table row in MySQL before checking blocking overlaps and writing the reservation, which serializes concurrent contenders without trusting an earlier availability read. Reservation optimistic locking prevents stale edits and status changes. Audit details contain reservation and table identifiers only; guest phone, email, notes, request bodies, cookies, and authorization data are excluded. Reservation times are persisted as UTC instants, while local-time conversion occurs only at the browser input and display boundary.
 
+Phase 4A requires authenticated `ADMIN` authority for every `/api/v1/menu` operation. Controllers bind validated DTOs rather than entities; sorting fields are allowlisted; database constraints and optimistic versions backstop normalized uniqueness, non-negative prices, selection rules, and concurrent writes. Unsafe actively assigned modifier configurations return a safe 409. Menu audit events contain actor, action, entity type and identifier, timestamp, and source IP only—not prices, request bodies, authorization headers, tokens, or cookies. The frontend reuses the existing memory-only Bearer client and adds no authentication state or browser token persistence.
+
 ## Remaining controls
 
 - Apply role-based authorization at request and application-service boundaries; restaurant scope must be checked independently of role.

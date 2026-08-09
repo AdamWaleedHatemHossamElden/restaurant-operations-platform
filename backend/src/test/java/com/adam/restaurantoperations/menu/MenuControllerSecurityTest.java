@@ -1,6 +1,5 @@
-package com.adam.restaurantoperations.reservations;
+package com.adam.restaurantoperations.menu;
 
-import java.time.Instant;
 import java.util.List;
 
 import com.adam.restaurantoperations.audit.AuthenticationAuditService;
@@ -8,7 +7,7 @@ import com.adam.restaurantoperations.audit.MenuAuditService;
 import com.adam.restaurantoperations.audit.ReservationAuditService;
 import com.adam.restaurantoperations.audit.TableAuditService;
 import com.adam.restaurantoperations.auth.service.AuthenticationService;
-import com.adam.restaurantoperations.menu.MenuService;
+import com.adam.restaurantoperations.reservations.ReservationService;
 import com.adam.restaurantoperations.tables.RestaurantTableService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,13 +30,16 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "app.frontend-origin=http://localhost:5173")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class ReservationControllerSecurityTest {
+class MenuControllerSecurityTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockitoBean
-    private ReservationService service;
+    private MenuService menuService;
+
+    @MockitoBean
+    private MenuAuditService menuAuditService;
 
     @MockitoBean
     private AuthenticationService authenticationService;
@@ -46,75 +48,57 @@ class ReservationControllerSecurityTest {
     private AuthenticationAuditService authenticationAuditService;
 
     @MockitoBean
+    private RestaurantTableService restaurantTableService;
+
+    @MockitoBean
     private TableAuditService tableAuditService;
 
     @MockitoBean
-    private RestaurantTableService restaurantTableService;
+    private ReservationService reservationService;
 
     @MockitoBean
     private ReservationAuditService reservationAuditService;
 
-    @MockitoBean
-    private MenuService menuService;
-
-    @MockitoBean
-    private MenuAuditService menuAuditService;
-
     @Test
-    void reservationEndpointsRequireAdmin() throws Exception {
-        mockMvc.perform(get("/api/v1/reservations"))
+    void menuEndpointsRequireAuthenticationAndAdminRole() throws Exception {
+        mockMvc.perform(get("/api/v1/menu/categories"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401));
 
-        mockMvc.perform(get("/api/v1/reservations").with(jwt().jwt(token -> token
-                                .subject("7")
-                                .claim("roles", List.of("SERVER")))
+        mockMvc.perform(get("/api/v1/menu/categories").with(jwt()
+                        .jwt(token -> token.subject("7").claim("roles", List.of("SERVER")))
                         .authorities(new SimpleGrantedAuthority("ROLE_SERVER"))))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403));
 
-        given(service.list(any(), any(), any(), any(), any(), any(), any(), any(), any()))
-                .willReturn(List.of());
-        mockMvc.perform(get("/api/v1/reservations").with(adminJwt()))
+        given(menuService.listCategories(any(), any(), any(), any())).willReturn(List.of());
+        mockMvc.perform(get("/api/v1/menu/categories").with(adminJwt()))
                 .andExpect(status().isOk());
     }
 
     @Test
-    void createValidatesPayloadAndMalformedJsonSafely() throws Exception {
-        mockMvc.perform(post("/api/v1/reservations")
+    void validationMalformedJsonAndInvalidFiltersReturnSafeBadRequests() throws Exception {
+        mockMvc.perform(post("/api/v1/menu/categories")
                         .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {
-                                  "guestName": "",
-                                  "guestPhone": "bad",
-                                  "partySize": 0,
-                                  "startAt": "2030-04-12T18:00:00Z",
-                                  "durationMinutes": 5
-                                }
-                                """))
+                        .content("{\"name\":\"\",\"displayOrder\":-1}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.fieldErrors.guestName").exists())
-                .andExpect(jsonPath("$.fieldErrors.guestPhone").exists())
-                .andExpect(jsonPath("$.fieldErrors.partySize").exists())
-                .andExpect(jsonPath("$.fieldErrors.durationMinutes").exists());
+                .andExpect(jsonPath("$.fieldErrors.name").exists())
+                .andExpect(jsonPath("$.fieldErrors.displayOrder").exists());
 
-        mockMvc.perform(post("/api/v1/reservations")
+        mockMvc.perform(post("/api/v1/menu/items")
                         .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"guestName\":not-json}"))
+                        .content("{\"categoryId\":not-json}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.message").value("Malformed or unreadable JSON"));
-    }
+                .andExpect(jsonPath("$.message").value("Malformed or unreadable JSON"))
+                .andExpect(jsonPath("$.trace").doesNotExist());
 
-    @Test
-    void availabilityValidatesSupportedRanges() throws Exception {
-        mockMvc.perform(get("/api/v1/reservations/availability")
+        mockMvc.perform(get("/api/v1/menu/modifier-groups")
                         .with(adminJwt())
-                        .queryParam("startAt", Instant.parse("2030-04-12T18:00:00Z").toString())
-                        .queryParam("durationMinutes", "5")
-                        .queryParam("partySize", "0"))
-                .andExpect(status().isBadRequest());
+                        .queryParam("selectionType", "UNKNOWN"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid request parameter"));
     }
 
     private org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor

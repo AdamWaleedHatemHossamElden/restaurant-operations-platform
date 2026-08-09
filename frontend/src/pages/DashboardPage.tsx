@@ -74,6 +74,17 @@ export function DashboardPage() {
 
       <HealthStatus />
 
+      <section className="phase-notice" aria-labelledby="menu-workspace-title">
+        <p className="eyebrow">Phase 4A</p>
+        <h2 id="menu-workspace-title">Shape the menu catalog.</h2>
+        <p>
+          Configure categories, decimal prices, sale availability, and reusable modifier choices.
+        </p>
+        <Link className="button button--primary button--link" to="/menu">
+          Manage menu
+        </Link>
+      </section>
+
       <section className="phase-notice" aria-labelledby="reservations-workspace-title">
         <p className="eyebrow">Phase 3B</p>
         <h2 id="reservations-workspace-title">Plan the next arrival.</h2>

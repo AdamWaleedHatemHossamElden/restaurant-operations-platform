@@ -1,6 +1,6 @@
 # Restaurant Operations Platform
 
-A modern full-stack restaurant operations platform. The current feature branch adds **Phase 3B: Reservation Management** on top of authentication and restaurant table management.
+A modern full-stack restaurant operations platform. Phases 1 through 3B are merged into `main`; the current `phase-4a-menu-management` feature branch adds the menu catalog used by later order workflows.
 
 ## Current status
 
@@ -22,6 +22,9 @@ A modern full-stack restaurant operations platform. The current feature branch a
 - ADMIN-only reservation creation, filtering, assignment, status workflow, optimistic locking, and audit events
 - MySQL-serialized table availability checks with UTC storage and browser-local time display
 - Responsive reservation agenda with live suitable-table loading and safe conflict recovery
+- ADMIN-only menu category, item, modifier-group, modifier-option, and ordered assignment management
+- Decimal-string EUR pricing, effective item availability, optimistic locking, and safe menu audit events
+- Responsive protected menu workspace with categories, menu items, and modifiers sections
 
 ## Technology stack
 
@@ -140,10 +143,11 @@ The browser never writes access or refresh tokens to localStorage, sessionStorag
 - Application health: `GET http://localhost:8080/api/v1/health`
 - Actuator health: `GET http://localhost:8080/actuator/health`
 - Development Swagger UI: `http://localhost:8080/swagger-ui.html` when the `dev` profile is active
-- Swagger Authorize uses the Bearer JWT returned by login; `/api/v1/auth/me` and table-management operations are marked as Bearer-protected
+- Swagger Authorize uses the Bearer JWT returned by login; current-user and restaurant-management operations are marked as Bearer-protected
 - Authentication: `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, and `GET /api/v1/auth/me`
 - Table management: `GET/POST /api/v1/tables`, `GET/PUT /api/v1/tables/{id}`, and `PATCH /api/v1/tables/{id}/activation`
 - Reservation management: `GET/POST /api/v1/reservations`, `GET/PUT /api/v1/reservations/{id}`, `PATCH /api/v1/reservations/{id}/status`, and `GET /api/v1/reservations/availability`
+- Menu management: category, item, modifier-group, modifier-option, activation, availability, and ordered-assignment operations below `/api/v1/menu`
 
 ## Restaurant table management
 
@@ -157,9 +161,15 @@ Authenticated administrators can open `/reservations` to create unassigned or ta
 
 Reservation instants are stored in UTC and converted at the browser boundary for local input and display. A table is suitable only when it is active, operationally available, large enough, and free of overlapping `CONFIRMED` or `SEATED` reservations. The write transaction locks the target table row before its final overlap check, so simultaneous assignments are serialized by MySQL rather than trusted to frontend state. `PENDING`, `COMPLETED`, `CANCELLED`, and `NO_SHOW` reservations do not block availability. Every edit and status request carries the latest optimistic-lock version.
 
+## Menu management
+
+Authenticated administrators can open `/menu` to manage normalized categories, uniquely coded menu items, reusable modifier groups, and their options. Records use soft activation and versioned updates. Item activation and `availableForSale` are independent; effective availability also requires an active category. Category deactivation therefore hides its items from effective sale without rewriting them.
+
+Prices and adjustments travel through the API as decimal strings and are stored as `DECIMAL(12,2)`. The frontend formats them centrally in EUR without floating-point calculations. Modifier groups support `SINGLE` and `MULTIPLE` selection rules, ordered reusable assignments, and active-option validation. An unsafe assigned configuration returns HTTP 409 instead of becoming unusable.
+
 ## Current limitations
 
-There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, automated notification, occupancy, menu, ordering, kitchen, inventory, staffing, payment, or reporting feature. Phase 3B assumes one logical restaurant and does not hard-delete table or reservation records. Host and manager roles remain pending; ADMIN is the only current application role. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
+There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, automated notification, occupancy workflow, ordering, kitchen, inventory, staffing, payment, or reporting feature. The system assumes one logical restaurant and does not hard-delete tables, reservations, or menu records. EUR is the single display currency until restaurant configuration and payment phases define currency ownership. Host and manager roles remain pending; ADMIN is the only current application role. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
 
 ## Documentation
 
@@ -172,6 +182,7 @@ There is no public registration, account recovery, user administration, customer
 - [Phase 2B frontend authentication testing](docs/testing/phase-2b-frontend-authentication.md)
 - [Phase 3A table-management testing](docs/testing/phase-3a-table-management.md)
 - [Phase 3B reservation-management testing](docs/testing/phase-3b-reservation-management.md)
+- [Phase 4A menu-management testing](docs/testing/phase-4a-menu-management.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign
