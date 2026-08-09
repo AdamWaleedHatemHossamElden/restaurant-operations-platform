@@ -12,6 +12,14 @@ The development profile has a separate migration that seeds role names only. Pro
 
 Reusable `modifier_groups` store `SINGLE` or `MULTIPLE` selection rules. `modifier_options` belong to one group and have group-scoped unique names, non-negative `DECIMAL(12,2)` adjustments, display order, soft activation, and versions. `menu_item_modifier_groups` is an ordered many-to-many assignment with a composite primary key. All five tables use InnoDB, `utf8mb4`, checks, useful list indexes, and restrictive deletion behavior. No menu record is hard-deleted by the API.
 
+## Implemented order management (Flyway V6)
+
+`orders` stores a backend-generated unique order number, required restaurant-table reference, optional reservation reference, lifecycle status, optional notes, `DECIMAL(12,2)` subtotal and total, lifecycle timestamps, and an optimistic-lock version. Existing table, reservation, and menu records use restrictive foreign keys and are never deleted through an order operation.
+
+`order_items` belongs to an order and records the source menu-item ID together with immutable code, name, base-price, unit-total, and line-total snapshots. `order_item_modifiers` records source modifier-group and option IDs plus immutable group-name, option-name, and price-adjustment snapshots in deterministic display order. Physically removing a draft line is allowed only while its order is `OPEN`; submitted content cannot be edited or deleted.
+
+`order_status_history` stores every transition chronologically, including the initial `OPEN` state, previous and next states, change time, and actor. All four V6 tables use InnoDB, `utf8mb4`, checks, indexes for supported filters and ordering, and exact decimal money. Order-row write locks serialize item, metadata, and status mutations so aggregate totals and commercial immutability remain consistent.
+
 ## Planned domain relationships
 
 - **Users and roles:** users receive many roles through `user_roles`; identity credentials remain distinct from employee records.
@@ -20,8 +28,8 @@ Reusable `modifier_groups` store `SINGLE` or `MULTIPLE` selection rules. `modifi
 - **Restaurant tables:** physical tables belong to a restaurant, have capacity and availability state, and may participate in temporary combinations.
 - **Reservations:** reservations link customers, restaurants, time ranges, party size, and table assignments. Status history should preserve lifecycle transitions.
 - **Menu categories and items:** the Phase 4A single-restaurant catalog is implemented. Restaurant ownership, price history, tax rules, and currency configuration remain future extensions.
-- **Orders and order items:** an order belongs to a restaurant and service context; items snapshot names and prices so historical receipts remain accurate.
-- **Order status history:** immutable transitions capture previous state, new state, actor, timestamp, and optional reason.
+- **Orders and order items:** the Phase 4B single-restaurant table-service aggregate is implemented with optional seated-reservation traceability and immutable item/modifier pricing snapshots. Restaurant ownership, taxes, discounts, service charges, tips, and payment allocation remain future extensions.
+- **Order status history:** immutable transitions capture previous state, new state, actor, and timestamp. Kitchen-specific status history remains a Phase 5 concern.
 - **Inventory:** inventory items hold units and thresholds per location. Counts should be derived or reconciled from stock movements.
 - **Recipes and recipe ingredients:** recipes connect menu items to inventory quantities and units, enabling consumption calculations.
 - **Suppliers:** suppliers provide inventory items through purchase relationships with lead times and supplier-specific references.

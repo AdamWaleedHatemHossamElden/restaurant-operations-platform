@@ -41,15 +41,16 @@ class DatabaseMigrationIT {
     @Test
     void startsMySqlAndAppliesAllMigrations() {
         assertThat(MYSQL.isRunning()).isTrue();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("5");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("6");
         Integer tableCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables "
                         + "WHERE table_schema = DATABASE() AND table_name IN "
                         + "('roles', 'users', 'user_roles', 'restaurants', 'audit_logs', 'refresh_tokens', "
                         + "'restaurant_tables', 'reservations', 'menu_categories', 'menu_items', "
-                        + "'modifier_groups', 'modifier_options', 'menu_item_modifier_groups')",
+                        + "'modifier_groups', 'modifier_options', 'menu_item_modifier_groups', 'orders', "
+                        + "'order_items', 'order_item_modifiers', 'order_status_history')",
                 Integer.class);
-        assertThat(tableCount).isEqualTo(13);
+        assertThat(tableCount).isEqualTo(17);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.columns "
                         + "WHERE table_schema = DATABASE() AND table_name = 'restaurant_tables' "
@@ -76,5 +77,17 @@ class DatabaseMigrationIT {
                         + "'menu_item_modifier_groups') AND constraint_type IN "
                         + "('UNIQUE', 'FOREIGN KEY', 'CHECK')",
                 Integer.class)).isGreaterThanOrEqualTo(17);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns "
+                        + "WHERE table_schema = DATABASE() AND table_name = 'orders' "
+                        + "AND column_name IN ('order_number', 'restaurant_table_id', 'reservation_id', "
+                        + "'status', 'subtotal', 'total', 'submitted_at', 'completed_at', 'cancelled_at', 'version')",
+                Integer.class)).isEqualTo(10);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.table_constraints "
+                        + "WHERE table_schema = DATABASE() AND table_name IN "
+                        + "('orders', 'order_items', 'order_item_modifiers', 'order_status_history') "
+                        + "AND constraint_type IN ('UNIQUE', 'FOREIGN KEY', 'CHECK')",
+                Integer.class)).isGreaterThanOrEqualTo(22);
     }
 }

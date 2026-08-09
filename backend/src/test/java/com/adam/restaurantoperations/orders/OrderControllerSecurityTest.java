@@ -1,4 +1,4 @@
-package com.adam.restaurantoperations.menu;
+package com.adam.restaurantoperations.orders;
 
 import java.util.List;
 
@@ -8,8 +8,8 @@ import com.adam.restaurantoperations.audit.OrderAuditService;
 import com.adam.restaurantoperations.audit.ReservationAuditService;
 import com.adam.restaurantoperations.audit.TableAuditService;
 import com.adam.restaurantoperations.auth.service.AuthenticationService;
+import com.adam.restaurantoperations.menu.MenuService;
 import com.adam.restaurantoperations.reservations.ReservationService;
-import com.adam.restaurantoperations.orders.OrderService;
 import com.adam.restaurantoperations.tables.RestaurantTableService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,79 +32,56 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "app.frontend-origin=http://localhost:5173")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
-class MenuControllerSecurityTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @MockitoBean
-    private MenuService menuService;
-
-    @MockitoBean
-    private MenuAuditService menuAuditService;
-
-    @MockitoBean
-    private AuthenticationService authenticationService;
-
-    @MockitoBean
-    private AuthenticationAuditService authenticationAuditService;
-
-    @MockitoBean
-    private RestaurantTableService restaurantTableService;
-
-    @MockitoBean
-    private TableAuditService tableAuditService;
-
-    @MockitoBean
-    private ReservationService reservationService;
-
-    @MockitoBean
-    private ReservationAuditService reservationAuditService;
-
-    @MockitoBean
-    private OrderService orderService;
-
-    @MockitoBean
-    private OrderAuditService orderAuditService;
+class OrderControllerSecurityTest {
+    @Autowired private MockMvc mockMvc;
+    @MockitoBean private OrderService orderService;
+    @MockitoBean private OrderAuditService orderAuditService;
+    @MockitoBean private AuthenticationService authenticationService;
+    @MockitoBean private AuthenticationAuditService authenticationAuditService;
+    @MockitoBean private RestaurantTableService restaurantTableService;
+    @MockitoBean private TableAuditService tableAuditService;
+    @MockitoBean private ReservationService reservationService;
+    @MockitoBean private ReservationAuditService reservationAuditService;
+    @MockitoBean private MenuService menuService;
+    @MockitoBean private MenuAuditService menuAuditService;
 
     @Test
-    void menuEndpointsRequireAuthenticationAndAdminRole() throws Exception {
-        mockMvc.perform(get("/api/v1/menu/categories"))
+    void orderEndpointsRequireAuthenticationAndAdminRole() throws Exception {
+        mockMvc.perform(get("/api/v1/orders"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.status").value(401));
 
-        mockMvc.perform(get("/api/v1/menu/categories").with(jwt()
+        mockMvc.perform(get("/api/v1/orders").with(jwt()
                         .jwt(token -> token.subject("7").claim("roles", List.of("SERVER")))
                         .authorities(new SimpleGrantedAuthority("ROLE_SERVER"))))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.status").value(403));
 
-        given(menuService.listCategories(any(), any(), any(), any())).willReturn(List.of());
-        mockMvc.perform(get("/api/v1/menu/categories").with(adminJwt()))
-                .andExpect(status().isOk());
+        given(orderService.list(any(), any(), any(), any(), any(), any(), any(), any()))
+                .willReturn(List.of());
+        mockMvc.perform(get("/api/v1/orders").with(adminJwt())).andExpect(status().isOk());
     }
 
     @Test
-    void validationMalformedJsonAndInvalidFiltersReturnSafeBadRequests() throws Exception {
-        mockMvc.perform(post("/api/v1/menu/categories")
+    void validationMalformedJsonAndInvalidFiltersAreSafe() throws Exception {
+        mockMvc.perform(post("/api/v1/orders")
                         .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"\",\"displayOrder\":-1}"))
+                        .content("{\"notes\":\"missing table\"}"))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.fieldErrors.name").exists())
-                .andExpect(jsonPath("$.fieldErrors.displayOrder").exists());
+                .andExpect(jsonPath("$.fieldErrors.restaurantTableId").exists());
 
-        mockMvc.perform(post("/api/v1/menu/items")
+        mockMvc.perform(post("/api/v1/orders")
                         .with(adminJwt())
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"categoryId\":not-json}"))
+                        .content("{\"restaurantTableId\":not-json}"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Malformed or unreadable JSON"))
                 .andExpect(jsonPath("$.trace").doesNotExist());
 
-        mockMvc.perform(get("/api/v1/menu/modifier-groups")
+        mockMvc.perform(get("/api/v1/orders")
                         .with(adminJwt())
-                        .queryParam("selectionType", "UNKNOWN"))
+                        .queryParam("status", "COOKING"))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value("Invalid request parameter"));
     }

@@ -1,0 +1,343 @@
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter, Route, Routes } from 'react-router-dom'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+
+import { listCategories, listGroups, listItems } from '../features/menu/menuApi'
+import type { MenuCategory, MenuItem, ModifierGroup } from '../features/menu/menuTypes'
+import {
+  addOrderItem,
+  getOrder,
+  removeOrderItem,
+  transitionOrder,
+  updateOrder,
+  updateOrderItem,
+} from '../features/orders/ordersApi'
+import type { RestaurantOrder } from '../features/orders/orderTypes'
+import { listReservations } from '../features/reservations/reservationsApi'
+import { listTables } from '../features/tables/tablesApi'
+import { OrderDetailPage } from './OrderDetailPage'
+
+vi.mock('../features/orders/ordersApi', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../features/orders/ordersApi')>()
+  return {
+    ...original,
+    addOrderItem: vi.fn(),
+    getOrder: vi.fn(),
+    removeOrderItem: vi.fn(),
+    transitionOrder: vi.fn(),
+    updateOrder: vi.fn(),
+    updateOrderItem: vi.fn(),
+  }
+})
+vi.mock('../features/menu/menuApi', () => ({
+  listCategories: vi.fn(),
+  listGroups: vi.fn(),
+  listItems: vi.fn(),
+}))
+vi.mock('../features/tables/tablesApi', () => ({ listTables: vi.fn() }))
+vi.mock('../features/reservations/reservationsApi', () => ({ listReservations: vi.fn() }))
+
+const category: MenuCategory = {
+  id: 1,
+  name: 'Mains',
+  description: null,
+  displayOrder: 0,
+  active: true,
+  createdAt: '',
+  updatedAt: '',
+  version: 0,
+}
+const group: ModifierGroup = {
+  id: 4,
+  name: 'Size',
+  description: null,
+  selectionType: 'SINGLE',
+  minimumSelections: 1,
+  maximumSelections: 1,
+  displayOrder: 0,
+  active: true,
+  assignedItemCount: 1,
+  options: [
+    {
+      id: 5,
+      modifierGroupId: 4,
+      name: 'Regular',
+      priceAdjustment: '0.00',
+      displayOrder: 0,
+      active: true,
+      createdAt: '',
+      updatedAt: '',
+      version: 0,
+    },
+    {
+      id: 6,
+      modifierGroupId: 4,
+      name: 'Large',
+      priceAdjustment: '2.00',
+      displayOrder: 1,
+      active: true,
+      createdAt: '',
+      updatedAt: '',
+      version: 0,
+    },
+  ],
+  createdAt: '',
+  updatedAt: '',
+  version: 0,
+}
+const menuItem: MenuItem = {
+  id: 3,
+  category: { id: 1, name: 'Mains', active: true },
+  code: 'BURGER',
+  name: 'Burger',
+  description: 'House burger',
+  basePrice: '10.00',
+  displayOrder: 0,
+  active: true,
+  availableForSale: true,
+  effectivelyAvailable: true,
+  modifierGroups: [
+    {
+      modifierGroupId: 4,
+      name: 'Size',
+      selectionType: 'SINGLE',
+      minimumSelections: 1,
+      maximumSelections: 1,
+      displayOrder: 0,
+      active: true,
+    },
+  ],
+  createdAt: '',
+  updatedAt: '',
+  version: 0,
+}
+const order: RestaurantOrder = {
+  id: 7,
+  orderNumber: 'ORD-20300101-ABC123',
+  status: 'OPEN',
+  version: 2,
+  restaurantTable: { id: 2, tableNumber: 'T-2', displayName: 'Two', section: 'Main' },
+  reservation: null,
+  notes: null,
+  subtotal: '10.00',
+  total: '10.00',
+  itemCount: 1,
+  createdAt: '2030-01-01T10:00:00Z',
+  updatedAt: '2030-01-01T10:00:00Z',
+  submittedAt: null,
+  completedAt: null,
+  cancelledAt: null,
+  items: [
+    {
+      id: 8,
+      menuItemId: 3,
+      itemCode: 'BURGER',
+      itemName: 'Burger snapshot',
+      basePrice: '10.00',
+      quantity: 1,
+      notes: null,
+      unitTotal: '10.00',
+      lineTotal: '10.00',
+      displayOrder: 0,
+      modifiers: [
+        {
+          id: 9,
+          modifierGroupId: 4,
+          modifierOptionId: 5,
+          groupName: 'Size snapshot',
+          optionName: 'Regular snapshot',
+          priceAdjustment: '0.00',
+          displayOrder: 0,
+        },
+      ],
+      createdAt: '2030-01-01T10:00:00Z',
+      updatedAt: '2030-01-01T10:00:00Z',
+    },
+  ],
+  history: [
+    {
+      id: 1,
+      fromStatus: null,
+      toStatus: 'OPEN',
+      changedAt: '2030-01-01T10:00:00Z',
+      changedByUserId: 1,
+    },
+  ],
+}
+
+const mockedGet = vi.mocked(getOrder)
+const mockedAdd = vi.mocked(addOrderItem)
+const mockedUpdateItem = vi.mocked(updateOrderItem)
+const mockedRemove = vi.mocked(removeOrderItem)
+const mockedTransition = vi.mocked(transitionOrder)
+
+function renderPage() {
+  const client = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  })
+  return render(
+    <QueryClientProvider client={client}>
+      <MemoryRouter initialEntries={['/orders/7']}>
+        <Routes>
+          <Route path="/orders/:orderId" element={<OrderDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>,
+  )
+}
+
+describe('order detail page', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    mockedGet.mockResolvedValue(order)
+    vi.mocked(listCategories).mockResolvedValue([category])
+    vi.mocked(listItems).mockResolvedValue([menuItem])
+    vi.mocked(listGroups).mockResolvedValue([group])
+    vi.mocked(listTables).mockResolvedValue([])
+    vi.mocked(listReservations).mockResolvedValue([])
+    mockedAdd.mockResolvedValue({ ...order, version: 3 })
+    mockedUpdateItem.mockResolvedValue({ ...order, version: 3 })
+    mockedRemove.mockResolvedValue({
+      ...order,
+      items: [],
+      itemCount: 0,
+      subtotal: '0.00',
+      total: '0.00',
+      version: 3,
+    })
+    mockedTransition.mockResolvedValue({
+      ...order,
+      status: 'SUBMITTED',
+      version: 3,
+      submittedAt: '2030-01-01T10:10:00Z',
+    })
+    vi.mocked(updateOrder).mockResolvedValue({ ...order, version: 3 })
+  })
+
+  it('renders stored snapshots, menu browser, total, and local status history', async () => {
+    renderPage()
+    expect(await screen.findByRole('heading', { name: order.orderNumber })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Burger snapshot' })).toBeInTheDocument()
+    expect(screen.getByText(/Size snapshot: Regular snapshot/)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Menu browser' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Status timeline' })).toBeInTheDocument()
+  })
+
+  it('validates required modifiers and adds only business inputs', async () => {
+    renderPage()
+    await screen.findByRole('heading', { name: order.orderNumber })
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Add' }))
+    const dialog = screen.getByRole('dialog')
+    await user.click(within(dialog).getByRole('button', { name: 'Add item' }))
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent(
+      'Size requires 1 to 1 selections',
+    )
+    await user.click(within(dialog).getByRole('radio', { name: /Large/ }))
+    await user.click(within(dialog).getByRole('button', { name: 'Add item' }))
+    await waitFor(() =>
+      expect(mockedAdd).toHaveBeenCalledWith(order, {
+        menuItemId: 3,
+        quantity: 1,
+        notes: null,
+        modifierSelections: [{ modifierGroupId: 4, optionIds: [6] }],
+      }),
+    )
+  })
+
+  it('preserves snapshots for quantity-only edits and reprices modifier changes', async () => {
+    renderPage()
+    await screen.findByRole('heading', { name: order.orderNumber })
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    let dialog = screen.getByRole('dialog')
+    const quantity = within(dialog).getByLabelText('Quantity')
+    await user.clear(quantity)
+    await user.type(quantity, '2')
+    await user.click(within(dialog).getByRole('button', { name: 'Save item' }))
+    await waitFor(() =>
+      expect(mockedUpdateItem).toHaveBeenLastCalledWith(order, order.items[0], {
+        quantity: 2,
+        notes: null,
+      }),
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    dialog = screen.getByRole('dialog')
+    await user.click(within(dialog).getByRole('radio', { name: /Large/ }))
+    await user.click(within(dialog).getByRole('button', { name: 'Save item' }))
+    await waitFor(() =>
+      expect(mockedUpdateItem).toHaveBeenLastCalledWith(
+        expect.anything(),
+        expect.anything(),
+        expect.objectContaining({ modifierSelections: [{ modifierGroupId: 4, optionIds: [6] }] }),
+      ),
+    )
+  })
+
+  it('allows a quantity-only edit when the current menu gained a required group', async () => {
+    const newRequiredGroup: ModifierGroup = {
+      ...group,
+      id: 7,
+      name: 'Preparation',
+      options: group.options.map((option) => ({
+        ...option,
+        id: option.id + 10,
+        modifierGroupId: 7,
+      })),
+    }
+    vi.mocked(listItems).mockResolvedValue([
+      {
+        ...menuItem,
+        modifierGroups: [
+          ...menuItem.modifierGroups,
+          {
+            modifierGroupId: 7,
+            name: 'Preparation',
+            selectionType: 'SINGLE',
+            minimumSelections: 1,
+            maximumSelections: 1,
+            displayOrder: 1,
+            active: true,
+          },
+        ],
+      },
+    ])
+    vi.mocked(listGroups).mockResolvedValue([group, newRequiredGroup])
+
+    renderPage()
+    await screen.findByRole('heading', { name: order.orderNumber })
+    const user = userEvent.setup()
+    await user.click(screen.getByRole('button', { name: 'Edit' }))
+    const dialog = screen.getByRole('dialog')
+    const quantity = within(dialog).getByLabelText('Quantity')
+    await user.clear(quantity)
+    await user.type(quantity, '2')
+    await user.click(within(dialog).getByRole('button', { name: 'Save item' }))
+
+    await waitFor(() =>
+      expect(mockedUpdateItem).toHaveBeenCalledWith(order, order.items[0], {
+        quantity: 2,
+        notes: null,
+      }),
+    )
+    expect(within(dialog).queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('confirms item removal and submission', async () => {
+    vi.spyOn(window, 'confirm').mockReturnValue(true)
+    renderPage()
+    await screen.findByRole('heading', { name: order.orderNumber })
+    await userEvent.click(screen.getByRole('button', { name: 'Remove' }))
+    await waitFor(() => expect(mockedRemove).toHaveBeenCalledWith(order, order.items[0]))
+    await userEvent.click(screen.getByRole('button', { name: 'Submit order' }))
+    await waitFor(() =>
+      expect(mockedTransition).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 7 }),
+        'SUBMITTED',
+      ),
+    )
+  })
+})

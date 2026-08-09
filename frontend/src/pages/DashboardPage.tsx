@@ -74,6 +74,18 @@ export function DashboardPage() {
 
       <HealthStatus />
 
+      <section className="phase-notice" aria-labelledby="orders-workspace-title">
+        <p className="eyebrow">Phase 4B</p>
+        <h2 id="orders-workspace-title">Capture service without losing price history.</h2>
+        <p>
+          Create table orders, select menu modifiers, preserve pricing snapshots, and progress each
+          order through its controlled lifecycle.
+        </p>
+        <Link className="button button--primary button--link" to="/orders">
+          Manage orders
+        </Link>
+      </section>
+
       <section className="phase-notice" aria-labelledby="menu-workspace-title">
         <p className="eyebrow">Phase 4A</p>
         <h2 id="menu-workspace-title">Shape the menu catalog.</h2>

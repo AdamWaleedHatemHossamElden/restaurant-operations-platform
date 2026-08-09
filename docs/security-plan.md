@@ -14,6 +14,8 @@ Phase 3B keeps reservation authorization inside the existing deny-by-default Bea
 
 Phase 4A requires authenticated `ADMIN` authority for every `/api/v1/menu` operation. Controllers bind validated DTOs rather than entities; sorting fields are allowlisted; database constraints and optimistic versions backstop normalized uniqueness, non-negative prices, selection rules, and concurrent writes. Unsafe actively assigned modifier configurations return a safe 409. Menu audit events contain actor, action, entity type and identifier, timestamp, and source IP only—not prices, request bodies, authorization headers, tokens, or cookies. The frontend reuses the existing memory-only Bearer client and adds no authentication state or browser token persistence.
 
+Phase 4B requires authenticated `ADMIN` authority for every `/api/v1/orders` operation and continues to use validated DTOs and allowlisted sorting. The server ignores client pricing authority: item names, prices, modifier prices, line totals, and order totals are derived from locked current menu state and stored as exact snapshots. Order-row pessimistic write locks serialize aggregate mutations and lifecycle transitions; request versions reject stale clients. Safe 400, 404, and 409 responses do not disclose persistence details. Order audits contain identifiers and concise action summaries only, while business-visible status history stores states, actor, and timestamps rather than credentials, request bodies, or free-text notes.
+
 ## Remaining controls
 
 - Apply role-based authorization at request and application-service boundaries; restaurant scope must be checked independently of role.

@@ -3,7 +3,7 @@
 1. **Phase 1 — Foundation:** project structure, React/Spring Boot foundations, MySQL and Flyway, security defaults, health checks, test tooling, and architecture documentation.
 2. **Phase 2 — Authentication and roles:** backend and frontend authentication are merged, including rotating refresh sessions, memory-only access tokens, protected routes, and safe logout. Later user-management slices remain pending.
 3. **Phase 3 — Restaurant tables and reservations:** Phase 3A table management and Phase 3B reservation management are merged into `main`, including UTC scheduling, live suitability, serialized overlap protection, optimistic locking, controlled transitions, audit events, and responsive workspaces.
-4. **Phase 4 — Menu and order management:** Phase 4A menu configuration is implemented on `phase-4a-menu-management` with categories, items, reusable modifiers, ordered assignments, decimal pricing, and effective availability. Phase 4B order capture, pricing snapshots, and order status history remain deferred.
+4. **Phase 4 — Menu and order management:** Phase 4A menu configuration is merged into `main`. Phase 4B is implemented on `phase-4b-order-management` with table-service order capture, immutable pricing snapshots, exact totals, controlled lifecycle transitions, and chronological status history.
 5. **Phase 5 — Kitchen display and real-time updates:** kitchen queues, authenticated WebSocket/STOMP events, preparation states, and reconnection behavior.
 6. **Phase 6 — Inventory, recipes, and suppliers:** inventory ledger, recipe consumption, stock alerts, suppliers, and purchasing foundations.
 7. **Phase 7 — Staff scheduling:** employee records, availability, shifts, scheduling constraints, and staff views.

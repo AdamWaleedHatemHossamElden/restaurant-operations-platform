@@ -36,6 +36,14 @@ vi.mock('../pages/MenuPage', () => ({
   MenuPage: () => <h1>Menu management</h1>,
 }))
 
+vi.mock('../pages/OrdersPage', () => ({
+  OrdersPage: () => <h1>Orders</h1>,
+}))
+
+vi.mock('../pages/OrderDetailPage', () => ({
+  OrderDetailPage: () => <h1>Order detail</h1>,
+}))
+
 const mockedCurrentUser = vi.mocked(currentUserRequest)
 const mockedLogin = vi.mocked(loginRequest)
 const mockedLogout = vi.mocked(logoutRequest)
@@ -105,6 +113,20 @@ describe('authentication routing', () => {
     mockedCurrentUser.mockResolvedValue(testUser)
     renderRoute('/menu')
     expect(await screen.findByRole('heading', { name: 'Menu management' })).toBeInTheDocument()
+  })
+
+  it.each([
+    ['/orders', 'Orders'],
+    ['/orders/42', 'Order detail'],
+  ])('protects the order route %s and renders it after recovery', async (path, heading) => {
+    const unauthenticated = renderRoute(path)
+    expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
+    unauthenticated.dispose()
+
+    mockedRefresh.mockResolvedValue(testSession)
+    mockedCurrentUser.mockResolvedValue(testUser)
+    renderRoute(path)
+    expect(await screen.findByRole('heading', { name: heading })).toBeInTheDocument()
   })
 
   it('renders an authenticated route after startup recovery', async () => {
