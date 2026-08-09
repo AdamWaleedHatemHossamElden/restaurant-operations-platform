@@ -7,6 +7,7 @@ import java.util.Map;
 import com.adam.restaurantoperations.auth.service.AuthException;
 import com.adam.restaurantoperations.reservations.ReservationManagementException;
 import com.adam.restaurantoperations.menu.MenuManagementException;
+import com.adam.restaurantoperations.orders.OrderManagementException;
 import com.adam.restaurantoperations.tables.TableManagementException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
@@ -48,6 +49,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MenuManagementException.class)
     ResponseEntity<ApiError> handleMenuManagement(MenuManagementException exception, HttpServletRequest request) {
+        return response(exception.getStatus(), exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(OrderManagementException.class)
+    ResponseEntity<ApiError> handleOrderManagement(OrderManagementException exception, HttpServletRequest request) {
         return response(exception.getStatus(), exception.getMessage(), request, Map.of());
     }
 

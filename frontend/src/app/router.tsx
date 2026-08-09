@@ -6,6 +6,8 @@ import { DashboardPage } from '../pages/DashboardPage'
 import { LoginPage } from '../pages/LoginPage'
 import { MenuPage } from '../pages/MenuPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
+import { OrderDetailPage } from '../pages/OrderDetailPage'
+import { OrdersPage } from '../pages/OrdersPage'
 import { ReservationsPage } from '../pages/ReservationsPage'
 import { TablesPage } from '../pages/TablesPage'
 
@@ -26,6 +28,8 @@ export const routes: RouteObject[] = [
           { path: 'tables', element: <TablesPage /> },
           { path: 'reservations', element: <ReservationsPage /> },
           { path: 'menu', element: <MenuPage /> },
+          { path: 'orders', element: <OrdersPage /> },
+          { path: 'orders/:orderId', element: <OrderDetailPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

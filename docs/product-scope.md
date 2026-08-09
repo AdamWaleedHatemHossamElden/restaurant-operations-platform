@@ -23,6 +23,6 @@ The modular monolith is planned around `auth`, `users`, `employees`, `tables`, `
 
 ## Current delivery boundary
 
-Phases 1 through 3B are merged. Phase 4A adds ADMIN-only menu configuration for categories, menu items, reusable modifier groups and options, ordered assignments, soft activation, and sale availability.
+Phases 1 through 4A are merged. Phase 4B adds ADMIN-only table-service order capture, optional seated-reservation traceability, immutable item and modifier pricing snapshots, exact totals, controlled order transitions, and business-visible status history.
 
-Order capture, carts, pricing snapshots, customer ordering, kitchen behavior, inventory consumption, payments, image uploads, public menu publishing, and multi-currency behavior are explicitly outside Phase 4A. Those workflows begin in Phase 4B or later phases.
+Phase 4B does not include customer ordering, delivery, kitchen behavior, WebSocket order events, live occupancy, inventory consumption, payments, invoices, taxes, discounts, service charges, tips, split bills, refunds, image uploads, public menu publishing, or multi-currency behavior. Those workflows remain later phases.

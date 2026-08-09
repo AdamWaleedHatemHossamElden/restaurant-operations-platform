@@ -1,6 +1,6 @@
 # Restaurant Operations Platform
 
-A modern full-stack restaurant operations platform. Phases 1 through 3B are merged into `main`; the current `phase-4a-menu-management` feature branch adds the menu catalog used by later order workflows.
+A modern full-stack restaurant operations platform. Phases 1 through 4A are merged into `main`; the current `phase-4b-order-management` feature branch adds order capture, immutable pricing snapshots, exact totals, and order-status history.
 
 ## Current status
 
@@ -25,6 +25,9 @@ A modern full-stack restaurant operations platform. Phases 1 through 3B are merg
 - ADMIN-only menu category, item, modifier-group, modifier-option, and ordered assignment management
 - Decimal-string EUR pricing, effective item availability, optimistic locking, and safe menu audit events
 - Responsive protected menu workspace with categories, menu items, and modifiers sections
+- ADMIN-only order creation, filtering, item capture, lifecycle transitions, and immutable status history
+- Server-authoritative `BigDecimal` pricing snapshots and transactionally recalculated order totals
+- Responsive order list and capture workspace with menu browsing, modifier selection, and conflict handling
 
 ## Technology stack
 
@@ -148,6 +151,7 @@ The browser never writes access or refresh tokens to localStorage, sessionStorag
 - Table management: `GET/POST /api/v1/tables`, `GET/PUT /api/v1/tables/{id}`, and `PATCH /api/v1/tables/{id}/activation`
 - Reservation management: `GET/POST /api/v1/reservations`, `GET/PUT /api/v1/reservations/{id}`, `PATCH /api/v1/reservations/{id}/status`, and `GET /api/v1/reservations/availability`
 - Menu management: category, item, modifier-group, modifier-option, activation, availability, and ordered-assignment operations below `/api/v1/menu`
+- Order management: `GET/POST /api/v1/orders`, `GET/PUT /api/v1/orders/{id}`, item operations below `/api/v1/orders/{id}/items`, `PATCH /api/v1/orders/{id}/status`, and `GET /api/v1/orders/{id}/history`
 
 ## Restaurant table management
 
@@ -167,9 +171,17 @@ Authenticated administrators can open `/menu` to manage normalized categories, u
 
 Prices and adjustments travel through the API as decimal strings and are stored as `DECIMAL(12,2)`. The frontend formats them centrally in EUR without floating-point calculations. Modifier groups support `SINGLE` and `MULTIPLE` selection rules, ordered reusable assignments, and active-option validation. An unsafe assigned configuration returns HTTP 409 instead of becoming unusable.
 
+## Order management
+
+Authenticated administrators can open `/orders` to search, filter, sort, and create table-service orders, then use `/orders/{id}` for responsive order capture. Every order requires an active, operationally `AVAILABLE` table and may optionally reference a `SEATED` reservation assigned to that same table. Order workflows never mutate table or reservation status automatically.
+
+The backend generates each unique order number and owns every monetary calculation. Adding an item snapshots its code, name, base price, selected modifier labels, and modifier adjustments into `DECIMAL(12,2)` fields. Later menu changes do not rewrite existing lines. Quantity-only and notes-only edits retain the stored snapshot; changing modifiers revalidates the current menu and refreshes the complete line snapshot. `subtotal` is the sum of line totals and Phase 4B defines `total = subtotal` because taxes, discounts, tips, service charges, and payments are not implemented.
+
+New orders begin `OPEN`. Open orders can change metadata and items, and may transition to `SUBMITTED` or `CANCELLED`. Submitted orders are commercially immutable and may transition only to `COMPLETED` or `CANCELLED`; terminal orders cannot reopen. MySQL order-row locks serialize item and status mutations, while optimistic versions reject stale clients. Separate chronological status history and safe audit events record successful changes.
+
 ## Current limitations
 
-There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, automated notification, occupancy workflow, ordering, kitchen, inventory, staffing, payment, or reporting feature. The system assumes one logical restaurant and does not hard-delete tables, reservations, or menu records. EUR is the single display currency until restaurant configuration and payment phases define currency ownership. Host and manager roles remain pending; ADMIN is the only current application role. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
+There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, automated notification, live occupancy workflow, kitchen workflow, inventory, staffing, payment, taxation, discounting, tipping, or reporting feature. The system assumes one logical restaurant and does not hard-delete tables, reservations, menu records, or orders. EUR is the single display currency until restaurant configuration and payment phases define currency ownership. Host, waiter, cashier, and manager roles remain pending; ADMIN is the only current application role. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
 
 ## Documentation
 
@@ -183,6 +195,7 @@ There is no public registration, account recovery, user administration, customer
 - [Phase 3A table-management testing](docs/testing/phase-3a-table-management.md)
 - [Phase 3B reservation-management testing](docs/testing/phase-3b-reservation-management.md)
 - [Phase 4A menu-management testing](docs/testing/phase-4a-menu-management.md)
+- [Phase 4B order-management testing](docs/testing/phase-4b-order-management.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign
