@@ -5,6 +5,7 @@ import { Link, useParams } from 'react-router-dom'
 import { listCategories, listGroups, listItems } from '../features/menu/menuApi'
 import { formatEur } from '../features/menu/money'
 import type { MenuItem } from '../features/menu/menuTypes'
+import { getKitchenTicketByOrder, kitchenKeys } from '../features/kitchen/kitchenApi'
 import { OrderFormDialog } from '../features/orders/OrderFormDialog'
 import { OrderItemDialog } from '../features/orders/OrderItemDialog'
 import type { OrderFormValues, OrderItemFormValues } from '../features/orders/orderSchemas'
@@ -62,6 +63,14 @@ export function OrderDetailPage() {
     queryKey: orderKeys.detail(id),
     queryFn: () => getOrder(id),
     enabled: Number.isInteger(id) && id > 0,
+  })
+  const kitchenQuery = useQuery({
+    queryKey: kitchenKeys.order(id),
+    queryFn: () => getKitchenTicketByOrder(id),
+    enabled:
+      Number.isInteger(id) &&
+      id > 0 &&
+      Boolean(orderQuery.data && orderQuery.data.status !== 'OPEN'),
   })
   const categoriesQuery = useQuery({
     queryKey: ['menu', 'categories', 'order-capture'],
@@ -183,6 +192,7 @@ export function OrderDetailPage() {
 
   const order = orderQuery.data
   const mutable = order.status === 'OPEN'
+  const kitchenTicket = kitchenQuery.data
 
   return (
     <div className="page order-detail-page">
@@ -224,7 +234,10 @@ export function OrderDetailPage() {
             <button
               className={`button ${action.status === 'CANCELLED' ? 'button--danger' : 'button--primary'}`}
               type="button"
-              disabled={statusMutation.isPending}
+              disabled={
+                statusMutation.isPending ||
+                (action.status === 'COMPLETED' && kitchenTicket?.status !== 'READY')
+              }
               onClick={() => {
                 if (window.confirm(`${action.label} ${order.orderNumber}?`))
                   statusMutation.mutate({ order, status: action.status })
@@ -236,6 +249,38 @@ export function OrderDetailPage() {
           ))}
         </div>
       </section>
+      {order.status !== 'OPEN' && (
+        <section className="order-kitchen-summary" aria-labelledby="order-kitchen-title">
+          <div>
+            <p className="eyebrow">Preparation</p>
+            <h2 id="order-kitchen-title">Kitchen</h2>
+          </div>
+          {kitchenQuery.isPending && <span>Loading kitchen state&hellip;</span>}
+          {kitchenQuery.isError && <span>Kitchen state is temporarily unavailable.</span>}
+          {!kitchenQuery.isPending && !kitchenQuery.isError && kitchenTicket && (
+            <>
+              <span
+                className={`kitchen-status kitchen-status--${kitchenTicket.status.toLowerCase()}`}
+              >
+                {kitchenTicket.status}
+              </span>
+              <p>
+                {kitchenTicket.items.filter((item) => item.status === 'READY').length} of{' '}
+                {kitchenTicket.items.length} items ready
+              </p>
+              <Link className="button button--secondary button--link" to="/kitchen">
+                Open kitchen
+              </Link>
+            </>
+          )}
+          {!kitchenQuery.isPending && !kitchenQuery.isError && !kitchenTicket && (
+            <span>No kitchen ticket is associated with this historical order.</span>
+          )}
+          {order.status === 'SUBMITTED' && kitchenTicket?.status !== 'READY' && (
+            <p className="field-hint">Kitchen preparation must be READY before completion.</p>
+          )}
+        </section>
+      )}
       {notice && (
         <div className="notice" role="status">
           <span>{notice}</span>

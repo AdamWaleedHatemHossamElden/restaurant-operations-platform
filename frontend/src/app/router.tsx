@@ -4,6 +4,7 @@ import { AppLayout } from '../components/layout/AppLayout'
 import { AnonymousOnlyRoute, ProtectedRoute } from '../features/auth/AuthRoutes'
 import { DashboardPage } from '../pages/DashboardPage'
 import { LoginPage } from '../pages/LoginPage'
+import { KitchenPage } from '../pages/KitchenPage'
 import { MenuPage } from '../pages/MenuPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { OrderDetailPage } from '../pages/OrderDetailPage'
@@ -30,6 +31,7 @@ export const routes: RouteObject[] = [
           { path: 'menu', element: <MenuPage /> },
           { path: 'orders', element: <OrdersPage /> },
           { path: 'orders/:orderId', element: <OrderDetailPage /> },
+          { path: 'kitchen', element: <KitchenPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

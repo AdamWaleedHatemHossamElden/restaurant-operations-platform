@@ -68,6 +68,8 @@ class OrderManagementIT {
 
     @BeforeEach
     void cleanAndSeed() {
+        jdbcTemplate.update("DELETE FROM kitchen_ticket_items");
+        jdbcTemplate.update("DELETE FROM kitchen_tickets");
         jdbcTemplate.update("DELETE FROM order_status_history");
         jdbcTemplate.update("DELETE FROM order_item_modifiers");
         jdbcTemplate.update("DELETE FROM order_items");
@@ -256,6 +258,17 @@ class OrderManagementIT {
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.message").value("Only OPEN orders may be modified"));
 
+        long ticketId = id("SELECT id FROM kitchen_tickets WHERE order_id = " + orderId);
+        long kitchenItemId = id("SELECT id FROM kitchen_ticket_items WHERE kitchen_ticket_id = " + ticketId);
+        long ticketVersion = jdbcTemplate.queryForObject(
+                "SELECT version FROM kitchen_tickets WHERE id = ?", Long.class, ticketId);
+        transitionKitchenItem(ticketId, kitchenItemId, ticketVersion, "PREPARING")
+                .andExpect(status().isOk());
+        ticketVersion = jdbcTemplate.queryForObject(
+                "SELECT version FROM kitchen_tickets WHERE id = ?", Long.class, ticketId);
+        transitionKitchenItem(ticketId, kitchenItemId, ticketVersion, "READY")
+                .andExpect(status().isOk());
+
         transition(orderId, number(submitted, "$.version"), "COMPLETED")
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("COMPLETED"))
@@ -399,6 +412,20 @@ class OrderManagementIT {
             long version,
             String status) throws Exception {
         return mockMvc.perform(patch("/api/v1/orders/{id}/status", orderId)
+                .with(adminJwt())
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"status\":\"" + status + "\",\"version\":" + version + "}"));
+    }
+
+    private org.springframework.test.web.servlet.ResultActions transitionKitchenItem(
+            long ticketId,
+            long itemId,
+            long version,
+            String status) throws Exception {
+        return mockMvc.perform(patch(
+                        "/api/v1/kitchen/tickets/{ticketId}/items/{itemId}/status",
+                        ticketId,
+                        itemId)
                 .with(adminJwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content("{\"status\":\"" + status + "\",\"version\":" + version + "}"));

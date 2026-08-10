@@ -5,6 +5,7 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import com.adam.restaurantoperations.auth.service.AuthException;
+import com.adam.restaurantoperations.kitchen.KitchenManagementException;
 import com.adam.restaurantoperations.reservations.ReservationManagementException;
 import com.adam.restaurantoperations.menu.MenuManagementException;
 import com.adam.restaurantoperations.orders.OrderManagementException;
@@ -14,6 +15,7 @@ import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.dao.PessimisticLockingFailureException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -57,6 +59,13 @@ public class GlobalExceptionHandler {
         return response(exception.getStatus(), exception.getMessage(), request, Map.of());
     }
 
+    @ExceptionHandler(KitchenManagementException.class)
+    ResponseEntity<ApiError> handleKitchenManagement(
+            KitchenManagementException exception,
+            HttpServletRequest request) {
+        return response(exception.getStatus(), exception.getMessage(), request, Map.of());
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     ResponseEntity<ApiError> handleValidation(
             MethodArgumentNotValidException exception,
@@ -88,7 +97,11 @@ public class GlobalExceptionHandler {
         return response(HttpStatus.BAD_REQUEST, "Malformed or unreadable JSON", request, Map.of());
     }
 
-    @ExceptionHandler({PessimisticLockingFailureException.class, DataIntegrityViolationException.class})
+    @ExceptionHandler({
+        PessimisticLockingFailureException.class,
+        OptimisticLockingFailureException.class,
+        DataIntegrityViolationException.class
+    })
     ResponseEntity<ApiError> handlePersistenceContention(Exception exception, HttpServletRequest request) {
         LOGGER.warn("Persistence contention for {}", request.getRequestURI());
         return response(

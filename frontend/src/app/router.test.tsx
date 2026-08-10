@@ -44,6 +44,10 @@ vi.mock('../pages/OrderDetailPage', () => ({
   OrderDetailPage: () => <h1>Order detail</h1>,
 }))
 
+vi.mock('../pages/KitchenPage', () => ({
+  KitchenPage: () => <h1>Kitchen display</h1>,
+}))
+
 const mockedCurrentUser = vi.mocked(currentUserRequest)
 const mockedLogin = vi.mocked(loginRequest)
 const mockedLogout = vi.mocked(logoutRequest)
@@ -118,6 +122,7 @@ describe('authentication routing', () => {
   it.each([
     ['/orders', 'Orders'],
     ['/orders/42', 'Order detail'],
+    ['/kitchen', 'Kitchen display'],
   ])('protects the order route %s and renders it after recovery', async (path, heading) => {
     const unauthenticated = renderRoute(path)
     expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
@@ -138,6 +143,11 @@ describe('authentication routing', () => {
       await screen.findByRole('heading', { name: 'Good service starts with a clear view.' }),
     ).toBeInTheDocument()
     expect(screen.getByText(testUser.email)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Kitchen' })).toHaveAttribute('href', '/kitchen')
+    expect(screen.getByRole('link', { name: 'Open kitchen display' })).toHaveAttribute(
+      'href',
+      '/kitchen',
+    )
   })
 
   it('redirects an already authenticated user away from login', async () => {

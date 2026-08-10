@@ -23,7 +23,7 @@ Spring Boot owns validation, authorization, application workflows, and persisten
 
 ## Real-time direction
 
-Spring WebSocket is present as a foundation dependency. A later kitchen phase can introduce authenticated STOMP destinations for order-status events. No broker destinations or pretend real-time features exist in Phase 1.
+Phase 5 uses native STOMP over `/ws` for server-to-client kitchen change notifications. The handshake is origin-restricted and carries no business data; the `CONNECT` frame uses the current memory-only Bearer token, and only authenticated ADMIN subscriptions to `/topic/kitchen` are accepted. REST/MySQL remains authoritative: notifications publish after commit and cause query invalidation, while initial load and reconnect refetch state. The in-process simple broker is deliberately best-effort and no client command destinations or durable messaging infrastructure are introduced.
 
 ## Testing strategy
 

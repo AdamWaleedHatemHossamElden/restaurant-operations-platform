@@ -20,6 +20,12 @@ Reusable `modifier_groups` store `SINGLE` or `MULTIPLE` selection rules. `modifi
 
 `order_status_history` stores every transition chronologically, including the initial `OPEN` state, previous and next states, change time, and actor. All four V6 tables use InnoDB, `utf8mb4`, checks, indexes for supported filters and ordering, and exact decimal money. Order-row write locks serialize item, metadata, and status mutations so aggregate totals and commercial immutability remain consistent.
 
+## Kitchen management in progress (Flyway V7)
+
+`kitchen_tickets` has a restrictive one-to-one relationship with submitted orders, a derived `QUEUED`, `PREPARING`, `READY`, or cancellation-owned `CANCELLED` status, lifecycle timestamps, and an optimistic version. `kitchen_ticket_items` has one restrictive, uniquely indexed relationship to each submitted `order_item` and stores only preparation status and timestamps; kitchen responses read immutable item/modifier labels and operational notes from the V6 snapshot tables instead of duplicating pricing or mutable menu data.
+
+V7 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and queue/filter indexes. It backfills tickets only for existing active `SUBMITTED` orders, preserving completed and cancelled history without manufacturing kitchen records. New submission creates the ticket and every item atomically. Mutations lock `orders`, then `kitchen_tickets`, then kitchen items so preparation, cancellation, and completion cannot form an inconsistent aggregate.
+
 ## Planned domain relationships
 
 - **Users and roles:** users receive many roles through `user_roles`; identity credentials remain distinct from employee records.
@@ -29,7 +35,7 @@ Reusable `modifier_groups` store `SINGLE` or `MULTIPLE` selection rules. `modifi
 - **Reservations:** reservations link customers, restaurants, time ranges, party size, and table assignments. Status history should preserve lifecycle transitions.
 - **Menu categories and items:** the Phase 4A single-restaurant catalog is implemented. Restaurant ownership, price history, tax rules, and currency configuration remain future extensions.
 - **Orders and order items:** the Phase 4B single-restaurant table-service aggregate is implemented with optional seated-reservation traceability and immutable item/modifier pricing snapshots. Restaurant ownership, taxes, discounts, service charges, tips, and payment allocation remain future extensions.
-- **Order status history:** immutable transitions capture previous state, new state, actor, and timestamp. Kitchen-specific status history remains a Phase 5 concern.
+- **Order status history:** immutable transitions capture previous state, new state, actor, and timestamp. Kitchen lifecycle is represented by ticket/item state, timestamps, and safe audit events rather than a second order-status history.
 - **Inventory:** inventory items hold units and thresholds per location. Counts should be derived or reconciled from stock movements.
 - **Recipes and recipe ingredients:** recipes connect menu items to inventory quantities and units, enabling consumption calculations.
 - **Suppliers:** suppliers provide inventory items through purchase relationships with lead times and supplier-specific references.

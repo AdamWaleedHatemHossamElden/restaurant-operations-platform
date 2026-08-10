@@ -2,11 +2,13 @@ package com.adam.restaurantoperations.common.config;
 
 import com.adam.restaurantoperations.audit.AuthenticationAuditService;
 import com.adam.restaurantoperations.audit.MenuAuditService;
+import com.adam.restaurantoperations.audit.KitchenAuditService;
 import com.adam.restaurantoperations.audit.OrderAuditService;
 import com.adam.restaurantoperations.audit.ReservationAuditService;
 import com.adam.restaurantoperations.audit.TableAuditService;
 import com.adam.restaurantoperations.auth.service.AuthenticationService;
 import com.adam.restaurantoperations.menu.MenuService;
+import com.adam.restaurantoperations.kitchen.KitchenService;
 import com.adam.restaurantoperations.orders.OrderService;
 import com.adam.restaurantoperations.reservations.ReservationService;
 import com.adam.restaurantoperations.roles.RoleRepository;
@@ -72,6 +74,12 @@ class OpenApiDocumentationTest {
     @MockitoBean
     private OrderAuditService orderAuditService;
 
+    @MockitoBean
+    private KitchenService kitchenService;
+
+    @MockitoBean
+    private KitchenAuditService kitchenAuditService;
+
     @Test
     void generatedDocumentDefinesBearerSchemeForAuthenticatedOperations() throws Exception {
         mockMvc.perform(get("/v3/api-docs"))
@@ -104,6 +112,12 @@ class OpenApiDocumentationTest {
                 .andExpect(jsonPath("$.paths['/api/v1/orders/{id}/items'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/orders/{id}/items/{itemId}'].put").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/orders/{id}/status'].patch").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/kitchen/tickets'].get.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.paths['/api/v1/kitchen/tickets/{id}'].get").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/kitchen/orders/{orderId}'].get").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/v1/kitchen/tickets/{ticketId}/items/{itemId}/status'].patch.responses['409']")
+                        .exists())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/login'].post.security").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/refresh'].post.security").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/logout'].post.security").doesNotExist())
