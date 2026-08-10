@@ -74,6 +74,18 @@ export function DashboardPage() {
 
       <HealthStatus />
 
+      <section className="phase-notice" aria-labelledby="kitchen-workspace-title">
+        <p className="eyebrow">Phase 5</p>
+        <h2 id="kitchen-workspace-title">Keep preparation visible in real time.</h2>
+        <p>
+          Follow submitted tickets, progress individual items, and recover authoritative kitchen
+          state after reconnecting.
+        </p>
+        <Link className="button button--primary button--link" to="/kitchen">
+          Open kitchen display
+        </Link>
+      </section>
+
       <section className="phase-notice" aria-labelledby="orders-workspace-title">
         <p className="eyebrow">Phase 4B</p>
         <h2 id="orders-workspace-title">Capture service without losing price history.</h2>

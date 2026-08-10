@@ -14,6 +14,7 @@ import java.util.Set;
 
 import com.adam.restaurantoperations.audit.OrderAuditService;
 import com.adam.restaurantoperations.auth.service.RequestMetadata;
+import com.adam.restaurantoperations.kitchen.KitchenService;
 import com.adam.restaurantoperations.menu.MenuCategoryEntity;
 import com.adam.restaurantoperations.menu.MenuCategoryRepository;
 import com.adam.restaurantoperations.menu.MenuItemEntity;
@@ -69,6 +70,7 @@ public class OrderService {
     private final ModifierOptionRepository options;
     private final OrderNumberGenerator numberGenerator;
     private final OrderAuditService audit;
+    private final KitchenService kitchen;
 
     public OrderService(
             OrderRepository orders,
@@ -83,7 +85,8 @@ public class OrderService {
             ModifierGroupRepository groups,
             ModifierOptionRepository options,
             OrderNumberGenerator numberGenerator,
-            OrderAuditService audit) {
+            OrderAuditService audit,
+            KitchenService kitchen) {
         this.orders = orders;
         this.orderItems = orderItems;
         this.orderModifiers = orderModifiers;
@@ -97,6 +100,7 @@ public class OrderService {
         this.options = options;
         this.numberGenerator = numberGenerator;
         this.audit = audit;
+        this.kitchen = kitchen;
     }
 
     @Transactional(readOnly = true)
@@ -288,8 +292,16 @@ public class OrderService {
         if (request.status() == OrderStatus.SUBMITTED && orderItems.countByOrderId(orderId) == 0) {
             throw OrderManagementException.conflict("An order requires at least one item before submission");
         }
+        if (request.status() == OrderStatus.COMPLETED) {
+            kitchen.requireReadyForCompletion(order);
+        }
         order.transitionTo(request.status(), Instant.now());
         OrderEntity saved = save(order);
+        if (request.status() == OrderStatus.SUBMITTED) {
+            kitchen.createForSubmittedOrder(saved, actorId, metadata.ipAddress());
+        } else if (request.status() == OrderStatus.CANCELLED && previous == OrderStatus.SUBMITTED) {
+            kitchen.cancelForSubmittedOrder(saved, actorId, metadata.ipAddress());
+        }
         history.save(new OrderStatusHistoryEntity(saved, previous, request.status(), actorId));
         audit.record(
                 auditAction(request.status()),

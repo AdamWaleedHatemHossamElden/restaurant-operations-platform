@@ -28,11 +28,28 @@ export function setApiAccessToken(token: string | null) {
   accessToken = token
 }
 
+export function getApiAccessToken() {
+  return accessToken
+}
+
 export function setApiAuthRecoveryHandler(handler: AuthRecoveryHandler | null) {
   authRecoveryHandler = handler
   if (!handler) {
     recoveryInFlight = null
   }
+}
+
+export async function recoverApiAccessToken(): Promise<string | null> {
+  if (!authRecoveryHandler) return null
+  if (!recoveryInFlight) {
+    const recovery = authRecoveryHandler()
+    recoveryInFlight = recovery
+    const clearCompletedRecovery = () => {
+      if (recoveryInFlight === recovery) recoveryInFlight = null
+    }
+    void recovery.then(clearCompletedRecovery, clearCompletedRecovery)
+  }
+  return recoveryInFlight
 }
 
 apiClient.interceptors.request.use((config) => {
@@ -66,18 +83,7 @@ apiClient.interceptors.response.use(
       return apiClient.request(request)
     }
 
-    if (!recoveryInFlight) {
-      const recovery = authRecoveryHandler()
-      recoveryInFlight = recovery
-      const clearCompletedRecovery = () => {
-        if (recoveryInFlight === recovery) {
-          recoveryInFlight = null
-        }
-      }
-      void recovery.then(clearCompletedRecovery, clearCompletedRecovery)
-    }
-
-    const recoveredToken = await recoveryInFlight
+    const recoveredToken = await recoverApiAccessToken()
     if (!recoveredToken) {
       return Promise.reject(error)
     }

@@ -5,6 +5,7 @@ import java.util.List;
 
 import com.adam.restaurantoperations.audit.AuthenticationAuditService;
 import com.adam.restaurantoperations.audit.MenuAuditService;
+import com.adam.restaurantoperations.audit.KitchenAuditService;
 import com.adam.restaurantoperations.audit.OrderAuditService;
 import com.adam.restaurantoperations.audit.ReservationAuditService;
 import com.adam.restaurantoperations.audit.TableAuditService;
@@ -15,6 +16,7 @@ import com.adam.restaurantoperations.auth.service.AuthException;
 import com.adam.restaurantoperations.auth.service.AuthSession;
 import com.adam.restaurantoperations.auth.service.AuthenticationService;
 import com.adam.restaurantoperations.menu.MenuService;
+import com.adam.restaurantoperations.kitchen.KitchenService;
 import com.adam.restaurantoperations.orders.OrderService;
 import com.adam.restaurantoperations.auth.service.RequestMetadata;
 import com.adam.restaurantoperations.reservations.ReservationService;
@@ -82,6 +84,12 @@ class AuthenticationControllerSecurityTest {
 
     @MockitoBean
     private OrderAuditService orderAuditService;
+
+    @MockitoBean
+    private KitchenService kitchenService;
+
+    @MockitoBean
+    private KitchenAuditService kitchenAuditService;
 
     @Test
     void loginReturnsAccessTokenAndHttpOnlyCookieWithoutRefreshTokenInJson() throws Exception {

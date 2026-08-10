@@ -1,6 +1,6 @@
 # Restaurant Operations Platform
 
-A modern full-stack restaurant operations platform. Phases 1 through 4A are merged into `main`; the current `phase-4b-order-management` feature branch adds order capture, immutable pricing snapshots, exact totals, and order-status history.
+A modern full-stack restaurant operations platform. Phases 1 through 4B are merged into `main`; the current unmerged `phase-5-kitchen-realtime` branch adds kitchen preparation and secure real-time updates.
 
 ## Current status
 
@@ -28,6 +28,9 @@ A modern full-stack restaurant operations platform. Phases 1 through 4A are merg
 - ADMIN-only order creation, filtering, item capture, lifecycle transitions, and immutable status history
 - Server-authoritative `BigDecimal` pricing snapshots and transactionally recalculated order totals
 - Responsive order list and capture workspace with menu browsing, modifier selection, and conflict handling
+- Transactional kitchen-ticket creation, item preparation, derived ticket status, cancellation, and READY-gated order completion
+- ADMIN-authenticated STOMP notifications with after-commit publication and REST-authoritative recovery
+- Responsive kitchen display with queue filters, snapshot instructions, conflict recovery, and order-detail status
 
 ## Technology stack
 
@@ -152,6 +155,8 @@ The browser never writes access or refresh tokens to localStorage, sessionStorag
 - Reservation management: `GET/POST /api/v1/reservations`, `GET/PUT /api/v1/reservations/{id}`, `PATCH /api/v1/reservations/{id}/status`, and `GET /api/v1/reservations/availability`
 - Menu management: category, item, modifier-group, modifier-option, activation, availability, and ordered-assignment operations below `/api/v1/menu`
 - Order management: `GET/POST /api/v1/orders`, `GET/PUT /api/v1/orders/{id}`, item operations below `/api/v1/orders/{id}/items`, `PATCH /api/v1/orders/{id}/status`, and `GET /api/v1/orders/{id}/history`
+- Kitchen management: `GET /api/v1/kitchen/tickets`, `GET /api/v1/kitchen/tickets/{id}`, `GET /api/v1/kitchen/orders/{orderId}`, and `PATCH /api/v1/kitchen/tickets/{ticketId}/items/{itemId}/status`
+- Kitchen real-time endpoint: native STOMP over `/ws`, with ADMIN Bearer authentication in `CONNECT` and server notifications on `/topic/kitchen`
 
 ## Restaurant table management
 
@@ -177,11 +182,19 @@ Authenticated administrators can open `/orders` to search, filter, sort, and cre
 
 The backend generates each unique order number and owns every monetary calculation. Adding an item snapshots its code, name, base price, selected modifier labels, and modifier adjustments into `DECIMAL(12,2)` fields. Later menu changes do not rewrite existing lines. Quantity-only and notes-only edits retain the stored snapshot; changing modifiers revalidates the current menu and refreshes the complete line snapshot. `subtotal` is the sum of line totals and Phase 4B defines `total = subtotal` because taxes, discounts, tips, service charges, and payments are not implemented.
 
-New orders begin `OPEN`. Open orders can change metadata and items, and may transition to `SUBMITTED` or `CANCELLED`. Submitted orders are commercially immutable and may transition only to `COMPLETED` or `CANCELLED`; terminal orders cannot reopen. MySQL order-row locks serialize item and status mutations, while optimistic versions reject stale clients. Separate chronological status history and safe audit events record successful changes.
+New orders begin `OPEN`. Open orders can change metadata and items, and may transition to `SUBMITTED` or `CANCELLED`. Submitted orders are commercially immutable and may transition only to `COMPLETED` or `CANCELLED`; terminal orders cannot reopen. Phase 5 creates the kitchen aggregate in the submission transaction and requires its ticket to be `READY` before explicit completion. MySQL order-row locks serialize item and status mutations, while optimistic versions reject stale clients. Separate chronological status history and safe audit events record successful changes.
+
+## Kitchen and real-time updates
+
+Authenticated administrators can open `/kitchen` to view active tickets grouped as `QUEUED`, `PREPARING`, and `READY`, inspect immutable submitted item/modifier snapshots, and progress each item through `QUEUED → PREPARING → READY`. Ticket state is derived transactionally from its items; submitted-order cancellation marks the ticket `CANCELLED` without erasing preparation history. Cancelled tickets leave the active queue and reject further preparation.
+
+All commands and reads use the REST API and MySQL remains authoritative. A single native STOMP client connects with the current memory-only Bearer access token and subscribes to `/topic/kitchen`. Small, safe notifications trigger React Query invalidation; initial load, every reconnect, and every event refetch REST state, so temporary delivery loss cannot permanently desynchronize the UI. Notifications publish only after a successful database commit, and delivery failure cannot roll back committed work. The client reconnects with a current token through the existing single-flight session recovery, stores no token, and disconnects on logout.
+
+Kitchen item mutations follow the database lock order `orders → kitchen_tickets → kitchen_ticket_items`. The request ticket version is checked while those locks are held; invalid transitions, stale state, lock contention, cancellation races, and premature completion return safe HTTP 409 responses.
 
 ## Current limitations
 
-There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, automated notification, live occupancy workflow, kitchen workflow, inventory, staffing, payment, taxation, discounting, tipping, or reporting feature. The system assumes one logical restaurant and does not hard-delete tables, reservations, menu records, or orders. EUR is the single display currency until restaurant configuration and payment phases define currency ownership. Host, waiter, cashier, and manager roles remain pending; ADMIN is the only current application role. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
+There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, inventory/recipe deduction, staffing/scheduling, payment, taxation, discounting, tipping, invoicing, durable external messaging, customer ordering, or reporting feature. The system assumes one logical restaurant and does not hard-delete tables, reservations, menu records, orders, or kitchen history. EUR is the single display currency until restaurant configuration and payment phases define currency ownership. Host, waiter, cashier, kitchen, and manager roles remain pending; ADMIN is the only current application role. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
 
 ## Documentation
 
@@ -196,6 +209,7 @@ There is no public registration, account recovery, user administration, customer
 - [Phase 3B reservation-management testing](docs/testing/phase-3b-reservation-management.md)
 - [Phase 4A menu-management testing](docs/testing/phase-4a-menu-management.md)
 - [Phase 4B order-management testing](docs/testing/phase-4b-order-management.md)
+- [Phase 5 kitchen and real-time testing](docs/testing/phase-5-kitchen-realtime.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign

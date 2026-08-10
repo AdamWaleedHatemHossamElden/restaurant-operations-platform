@@ -17,6 +17,7 @@ export function AppLayout() {
             <NavLink to="/reservations">Reservations</NavLink>
             <NavLink to="/menu">Menu</NavLink>
             <NavLink to="/orders">Orders</NavLink>
+            <NavLink to="/kitchen">Kitchen</NavLink>
           </div>
           <span className="phase-chip">Admin workspace</span>
         </nav>

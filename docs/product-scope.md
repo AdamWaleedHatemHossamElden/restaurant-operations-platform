@@ -23,6 +23,6 @@ The modular monolith is planned around `auth`, `users`, `employees`, `tables`, `
 
 ## Current delivery boundary
 
-Phases 1 through 4A are merged. Phase 4B adds ADMIN-only table-service order capture, optional seated-reservation traceability, immutable item and modifier pricing snapshots, exact totals, controlled order transitions, and business-visible status history.
+Phases 1 through 4B are merged. Phase 5 is current unmerged work on `phase-5-kitchen-realtime`. It adds ADMIN-only kitchen tickets created from submitted orders, item preparation, derived queue state, submitted-order cancellation integration, READY-gated order completion, and authenticated real-time invalidation with REST recovery.
 
-Phase 4B does not include customer ordering, delivery, kitchen behavior, WebSocket order events, live occupancy, inventory consumption, payments, invoices, taxes, discounts, service charges, tips, split bills, refunds, image uploads, public menu publishing, or multi-currency behavior. Those workflows remain later phases.
+Phase 5 does not include customer ordering, delivery, live occupancy automation, inventory or recipe deduction, suppliers, payments, invoices, taxes, discounts, service charges, tips, split bills, refunds, staff roles or scheduling, durable messaging, multi-restaurant behavior, image uploads, public menu publishing, or multi-currency behavior. Those workflows remain later phases.

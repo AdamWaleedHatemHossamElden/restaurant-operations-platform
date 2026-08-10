@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { listCategories, listGroups, listItems } from '../features/menu/menuApi'
 import type { MenuCategory, MenuItem, ModifierGroup } from '../features/menu/menuTypes'
+import { getKitchenTicketByOrder } from '../features/kitchen/kitchenApi'
+import type { KitchenTicket } from '../features/kitchen/kitchenTypes'
 import {
   addOrderItem,
   getOrder,
@@ -38,6 +40,10 @@ vi.mock('../features/menu/menuApi', () => ({
 }))
 vi.mock('../features/tables/tablesApi', () => ({ listTables: vi.fn() }))
 vi.mock('../features/reservations/reservationsApi', () => ({ listReservations: vi.fn() }))
+vi.mock('../features/kitchen/kitchenApi', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../features/kitchen/kitchenApi')>()
+  return { ...original, getKitchenTicketByOrder: vi.fn() }
+})
 
 const category: MenuCategory = {
   id: 1,
@@ -172,12 +178,13 @@ const mockedAdd = vi.mocked(addOrderItem)
 const mockedUpdateItem = vi.mocked(updateOrderItem)
 const mockedRemove = vi.mocked(removeOrderItem)
 const mockedTransition = vi.mocked(transitionOrder)
+const mockedKitchen = vi.mocked(getKitchenTicketByOrder)
 
 function renderPage() {
   const client = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
   })
-  return render(
+  const rendered = render(
     <QueryClientProvider client={client}>
       <MemoryRouter initialEntries={['/orders/7']}>
         <Routes>
@@ -186,6 +193,7 @@ function renderPage() {
       </MemoryRouter>
     </QueryClientProvider>,
   )
+  return { ...rendered, client }
 }
 
 describe('order detail page', () => {
@@ -214,6 +222,7 @@ describe('order detail page', () => {
       submittedAt: '2030-01-01T10:10:00Z',
     })
     vi.mocked(updateOrder).mockResolvedValue({ ...order, version: 3 })
+    mockedKitchen.mockResolvedValue(null)
   })
 
   it('renders stored snapshots, menu browser, total, and local status history', async () => {
@@ -339,5 +348,59 @@ describe('order detail page', () => {
         'SUBMITTED',
       ),
     )
+  })
+
+  it('shows authoritative kitchen state and enables completion only when ready', async () => {
+    const submittedOrder = {
+      ...order,
+      status: 'SUBMITTED' as const,
+      submittedAt: '2030-01-01T10:05:00Z',
+    }
+    const ticket: KitchenTicket = {
+      id: 12,
+      status: 'PREPARING',
+      version: 2,
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      restaurantTable: order.restaurantTable,
+      reservation: null,
+      submittedAt: '2030-01-01T10:05:00Z',
+      createdAt: '2030-01-01T10:05:00Z',
+      startedAt: '2030-01-01T10:06:00Z',
+      readyAt: null,
+      cancelledAt: null,
+      items: [
+        {
+          id: 13,
+          orderItemId: 8,
+          itemCode: 'BURGER',
+          itemName: 'Burger snapshot',
+          quantity: 1,
+          notes: null,
+          displayOrder: 0,
+          status: 'PREPARING',
+          startedAt: '2030-01-01T10:06:00Z',
+          readyAt: null,
+          modifiers: [],
+        },
+      ],
+    }
+    mockedGet.mockResolvedValue(submittedOrder)
+    mockedKitchen.mockResolvedValue(ticket)
+    const rendered = renderPage()
+
+    expect(await screen.findByText('PREPARING')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Complete order' })).toBeDisabled()
+    expect(screen.getByText(/must be READY before completion/)).toBeInTheDocument()
+
+    mockedKitchen.mockResolvedValue({
+      ...ticket,
+      status: 'READY',
+      readyAt: '2030-01-01T10:07:00Z',
+      items: ticket.items.map((item) => ({ ...item, status: 'READY', readyAt: ticket.readyAt })),
+    })
+    await rendered.client.invalidateQueries({ queryKey: ['kitchen', 'orders', order.id] })
+    expect(await screen.findByText('READY')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Complete order' })).toBeEnabled()
   })
 })
