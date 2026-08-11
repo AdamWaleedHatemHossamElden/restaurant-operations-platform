@@ -25,6 +25,12 @@ Spring Boot owns validation, authorization, application workflows, and persisten
 
 Phase 5 uses native STOMP over `/ws` for server-to-client kitchen change notifications. The handshake is origin-restricted and carries no business data; the `CONNECT` frame uses the current memory-only Bearer token, and only authenticated ADMIN subscriptions to `/topic/kitchen` are accepted. REST/MySQL remains authoritative: notifications publish after commit and cause query invalidation, while initial load and reconnect refetch state. The in-process simple broker is deliberately best-effort and no client command destinations or durable messaging infrastructure are introduced.
 
+## Inventory transaction boundary
+
+Phase 6 keeps stock as an append-only ledger rather than a mutable balance. Inventory configuration, recipes, modifier ingredients, suppliers, and purchase orders remain separate aggregates in the modular monolith, while the kitchen service calls one inventory application service inside the existing `QUEUED → PREPARING` transaction. Recipe and modifier configuration rows are locked while their current ingredients are read; usage is aggregated and persisted before kitchen state changes. A database-unique deterministic source key is the final exactly-once authority.
+
+Purchase receiving locks the purchase order before its line, validates the optimistic request version and remaining quantity, appends one receipt movement, and derives the new PO status in one transaction. Negative stock means usage writers do not lock or update a shared balance row, avoiding an unnecessary contention point.
+
 ## Testing strategy
 
-Fast unit and MVC slice tests run with the normal Maven lifecycle and do not require Docker. The `integration-test` Maven profile runs a Testcontainers MySQL smoke test that proves container startup, connectivity, Flyway migration, and context loading. Frontend behavior is covered with Vitest, React Testing Library, and jsdom. End-to-end browser coverage with Playwright is deferred until stable business workflows exist.
+Fast unit and MVC tests run with the normal Maven lifecycle and do not require Docker. The `integration-test` Maven profile runs Testcontainers MySQL tests for fresh Flyway migration and real locking/concurrency behavior. Frontend behavior is covered with Vitest, React Testing Library, and jsdom; stable vertical workflows are also verified manually in a real browser against the development services.

@@ -4,8 +4,8 @@
 2. **Phase 2 — Authentication and roles:** backend and frontend authentication are merged, including rotating refresh sessions, memory-only access tokens, protected routes, and safe logout. Later user-management slices remain pending.
 3. **Phase 3 — Restaurant tables and reservations:** Phase 3A table management and Phase 3B reservation management are merged into `main`, including UTC scheduling, live suitability, serialized overlap protection, optimistic locking, controlled transitions, audit events, and responsive workspaces.
 4. **Phase 4 — Menu and order management:** Phase 4A menu configuration and Phase 4B order management are merged into `main`, including table-service order capture, immutable pricing snapshots, exact totals, controlled lifecycle transitions, and chronological status history.
-5. **Phase 5 — Kitchen display and real-time updates:** current unmerged work on `phase-5-kitchen-realtime`, including transactional kitchen tickets, item preparation, derived queue state, READY-gated completion, authenticated WebSocket/STOMP notifications, and REST recovery after reconnect.
-6. **Phase 6 — Inventory, recipes, and suppliers:** inventory ledger, recipe consumption, stock alerts, suppliers, and purchasing foundations.
+5. **Phase 5 — Kitchen display and real-time updates:** merged, including transactional kitchen tickets, item preparation, derived queue state, READY-gated completion, authenticated WebSocket/STOMP notifications, and REST recovery after reconnect.
+6. **Phase 6 — Inventory, recipes, suppliers, and purchasing:** current unmerged work on `phase-6-inventory-suppliers`, including the immutable stock ledger, low-stock visibility, kitchen recipe consumption, supplier pricing, purchase orders, partial receiving, and concurrency protection.
 7. **Phase 7 — Staff scheduling:** employee records, availability, shifts, scheduling constraints, and staff views.
 8. **Phase 8 — Payments and invoices:** payment recording, invoice generation, reconciliation boundaries, and secure provider integration design.
 9. **Phase 9 — Reports and analytics:** permission-aware operational reports, export design, and tested business metrics.

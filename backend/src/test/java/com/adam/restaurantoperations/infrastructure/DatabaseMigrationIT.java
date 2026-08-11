@@ -41,7 +41,7 @@ class DatabaseMigrationIT {
     @Test
     void startsMySqlAndAppliesAllMigrations() {
         assertThat(MYSQL.isRunning()).isTrue();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("7");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
         Integer tableCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables "
                         + "WHERE table_schema = DATABASE() AND table_name IN "
@@ -49,9 +49,11 @@ class DatabaseMigrationIT {
                         + "'restaurant_tables', 'reservations', 'menu_categories', 'menu_items', "
                         + "'modifier_groups', 'modifier_options', 'menu_item_modifier_groups', 'orders', "
                         + "'order_items', 'order_item_modifiers', 'order_status_history', "
-                        + "'kitchen_tickets', 'kitchen_ticket_items')",
+                        + "'kitchen_tickets', 'kitchen_ticket_items', 'inventory_items', 'stock_movements', "
+                        + "'recipes', 'recipe_ingredients', 'modifier_option_ingredients', 'suppliers', "
+                        + "'supplier_inventory_items', 'purchase_orders', 'purchase_order_items')",
                 Integer.class);
-        assertThat(tableCount).isEqualTo(19);
+        assertThat(tableCount).isEqualTo(28);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.columns "
                         + "WHERE table_schema = DATABASE() AND table_name = 'restaurant_tables' "
@@ -102,5 +104,20 @@ class DatabaseMigrationIT {
                         + "('kitchen_tickets', 'kitchen_ticket_items') "
                         + "AND constraint_type IN ('UNIQUE', 'FOREIGN KEY', 'CHECK')",
                 Integer.class)).isGreaterThanOrEqualTo(8);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns "
+                        + "WHERE table_schema = DATABASE() AND table_name = 'stock_movements' "
+                        + "AND column_name IN ('inventory_item_id', 'movement_type', 'quantity', 'occurred_at', "
+                        + "'actor_user_id', 'reference_type', 'reference_id', 'source_key', 'unit_cost', "
+                        + "'total_cost')",
+                Integer.class)).isEqualTo(10);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.table_constraints "
+                        + "WHERE table_schema = DATABASE() AND table_name IN "
+                        + "('inventory_items', 'stock_movements', 'recipes', 'recipe_ingredients', "
+                        + "'modifier_option_ingredients', 'suppliers', 'supplier_inventory_items', "
+                        + "'purchase_orders', 'purchase_order_items') "
+                        + "AND constraint_type IN ('UNIQUE', 'FOREIGN KEY', 'CHECK')",
+                Integer.class)).isGreaterThanOrEqualTo(28);
     }
 }

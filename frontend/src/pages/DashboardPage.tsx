@@ -74,6 +74,18 @@ export function DashboardPage() {
 
       <HealthStatus />
 
+      <section className="phase-notice" aria-labelledby="inventory-workspace-title">
+        <p className="eyebrow">Phase 6</p>
+        <h2 id="inventory-workspace-title">Connect preparation to stock and purchasing.</h2>
+        <p>
+          Track immutable stock movements, configure recipes, manage suppliers, and receive purchase
+          orders without blocking kitchen operations on negative balances.
+        </p>
+        <Link className="button button--primary button--link" to="/inventory">
+          Open inventory workspace
+        </Link>
+      </section>
+
       <section className="phase-notice" aria-labelledby="kitchen-workspace-title">
         <p className="eyebrow">Phase 5</p>
         <h2 id="kitchen-workspace-title">Keep preparation visible in real time.</h2>

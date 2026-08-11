@@ -63,6 +63,7 @@ describe('kitchen realtime provider', () => {
     act(() => mocks.options?.onConnect())
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['kitchen'] })
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['orders'] })
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['inventory'] })
 
     act(() =>
       mocks.options?.onEvent({
@@ -89,7 +90,7 @@ describe('kitchen realtime provider', () => {
       mocks.options?.onConnect()
       mocks.options?.onConnect()
     })
-    expect(invalidate).toHaveBeenCalledTimes(4)
+    expect(invalidate).toHaveBeenCalledTimes(6)
 
     mocks.authenticated = false
     rendered.rerender(view(client))

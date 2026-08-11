@@ -15,6 +15,7 @@ import com.adam.restaurantoperations.kitchen.KitchenDtos.KitchenTicketResponse;
 import com.adam.restaurantoperations.kitchen.realtime.KitchenDomainEventPublisher;
 import com.adam.restaurantoperations.kitchen.realtime.KitchenEventType;
 import com.adam.restaurantoperations.kitchen.realtime.KitchenRealtimeEvent;
+import com.adam.restaurantoperations.inventory.StockConsumptionService;
 import com.adam.restaurantoperations.orders.OrderEntity;
 import com.adam.restaurantoperations.orders.OrderItemEntity;
 import com.adam.restaurantoperations.orders.OrderItemModifierRepository;
@@ -48,6 +49,7 @@ public class KitchenService {
     private final OrderItemModifierRepository orderModifiers;
     private final KitchenAuditService audit;
     private final KitchenDomainEventPublisher events;
+    private final StockConsumptionService stockConsumption;
 
     public KitchenService(
             KitchenTicketRepository tickets,
@@ -56,7 +58,8 @@ public class KitchenService {
             OrderItemRepository orderItems,
             OrderItemModifierRepository orderModifiers,
             KitchenAuditService audit,
-            KitchenDomainEventPublisher events) {
+            KitchenDomainEventPublisher events,
+            StockConsumptionService stockConsumption) {
         this.tickets = tickets;
         this.kitchenItems = kitchenItems;
         this.orders = orders;
@@ -64,6 +67,7 @@ public class KitchenService {
         this.orderModifiers = orderModifiers;
         this.audit = audit;
         this.events = events;
+        this.stockConsumption = stockConsumption;
     }
 
     @Transactional(readOnly = true)
@@ -126,6 +130,9 @@ public class KitchenService {
 
         Instant changedAt = Instant.now();
         KitchenTicketStatus previousTicketStatus = ticket.getStatus();
+        if (request.status() == KitchenItemStatus.PREPARING) {
+            stockConsumption.consumeForKitchenItem(item, actorId, ipAddress);
+        }
         item.transitionTo(request.status(), changedAt);
         kitchenItems.saveAndFlush(item);
         KitchenTicketStatus derivedStatus = derive(kitchenItems.findOrderedByTicketId(ticketId));

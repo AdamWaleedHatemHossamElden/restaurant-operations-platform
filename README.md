@@ -1,6 +1,6 @@
 # Restaurant Operations Platform
 
-A modern full-stack restaurant operations platform. Phases 1 through 4B are merged into `main`; the current unmerged `phase-5-kitchen-realtime` branch adds kitchen preparation and secure real-time updates.
+A modern full-stack restaurant operations platform. Phases 1 through 5 are merged into `main`; the current unmerged `phase-6-inventory-suppliers` branch adds ledger-backed inventory, recipes, suppliers, and purchasing.
 
 ## Current status
 
@@ -31,6 +31,9 @@ A modern full-stack restaurant operations platform. Phases 1 through 4B are merg
 - Transactional kitchen-ticket creation, item preparation, derived ticket status, cancellation, and READY-gated order completion
 - ADMIN-authenticated STOMP notifications with after-commit publication and REST-authoritative recovery
 - Responsive kitchen display with queue filters, snapshot instructions, conflict recovery, and order-detail status
+- ADMIN-only inventory items, immutable stock ledger, low-stock alerts, recipes, modifier ingredients, suppliers, and purchase orders
+- Atomic recipe consumption when kitchen preparation begins, with database-backed exactly-once usage and negative-stock visibility
+- Exact supplier pricing snapshots, partial receiving, concurrency-safe final receipts, and a responsive protected inventory workspace
 
 ## Technology stack
 
@@ -157,6 +160,7 @@ The browser never writes access or refresh tokens to localStorage, sessionStorag
 - Order management: `GET/POST /api/v1/orders`, `GET/PUT /api/v1/orders/{id}`, item operations below `/api/v1/orders/{id}/items`, `PATCH /api/v1/orders/{id}/status`, and `GET /api/v1/orders/{id}/history`
 - Kitchen management: `GET /api/v1/kitchen/tickets`, `GET /api/v1/kitchen/tickets/{id}`, `GET /api/v1/kitchen/orders/{orderId}`, and `PATCH /api/v1/kitchen/tickets/{ticketId}/items/{itemId}/status`
 - Kitchen real-time endpoint: native STOMP over `/ws`, with ADMIN Bearer authentication in `CONNECT` and server notifications on `/topic/kitchen`
+- Inventory: item and movement operations below `/api/v1/inventory`, recipe operations below `/api/v1/recipes`, supplier operations below `/api/v1/suppliers`, and purchasing below `/api/v1/purchase-orders`
 
 ## Restaurant table management
 
@@ -192,9 +196,17 @@ All commands and reads use the REST API and MySQL remains authoritative. A singl
 
 Kitchen item mutations follow the database lock order `orders → kitchen_tickets → kitchen_ticket_items`. The request ticket version is checked while those locks are held; invalid transitions, stale state, lock contention, cancellation races, and premature completion return safe HTTP 409 responses.
 
+## Inventory, recipes, suppliers, and purchasing
+
+Authenticated administrators can open `/inventory` for four integrated workspaces: Stock, Recipes, Suppliers, and Purchasing. Inventory items use one canonical unit (`GRAM`, `MILLILITER`, or `UNIT`), a reorder threshold, soft activation, and optimistic versions. Current on-hand is derived only from immutable positive-magnitude ledger entries; movement type determines the signed effect. Manual adjustments and waste append history rather than rewriting it, and negative stock remains visible and counts as low stock.
+
+An active menu-item recipe and selected modifier-option ingredient mappings are read when a kitchen item first moves from `QUEUED` to `PREPARING`. Quantities are multiplied by the order-line quantity and aggregated into one `USAGE` movement per kitchen item and inventory item. The kitchen transition and usage entries commit atomically, while a database-unique source key prevents duplicate consumption. Missing recipes do not block preparation. Later recipe changes, cancellation, or reconnects do not alter or reverse historical usage.
+
+Suppliers have soft activation and versioned item-price relationships. Draft purchase orders snapshot the current inventory code, name, canonical unit, and exact `DECIMAL(12,4)` supplier cost. Commercial data freezes after ordering. Receipts may be partial, append immutable `RECEIPT` movements, and advance the purchase order through `ORDERED`, `PARTIALLY_RECEIVED`, and `RECEIVED`. Purchase-order and line locks plus request versions ensure simultaneous final receipts produce one successful ledger change and one safe conflict.
+
 ## Current limitations
 
-There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, inventory/recipe deduction, staffing/scheduling, payment, taxation, discounting, tipping, invoicing, durable external messaging, customer ordering, or reporting feature. The system assumes one logical restaurant and does not hard-delete tables, reservations, menu records, orders, or kitchen history. EUR is the single display currency until restaurant configuration and payment phases define currency ownership. Host, waiter, cashier, kitchen, and manager roles remain pending; ADMIN is the only current application role. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
+There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, unit conversion, stock transfers, staffing/scheduling, payment, taxation, discounting, tipping, invoicing, durable external messaging, customer ordering, or reporting feature. The system assumes one logical restaurant and does not hard-delete operational history. Inventory consumption intentionally permits negative balances, and cancellation after preparation does not automatically restore stock. EUR is the single display currency until restaurant configuration and payment phases define currency ownership. Host, waiter, cashier, kitchen, manager, and inventory-specific roles remain pending; ADMIN is the only current application role. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
 
 ## Documentation
 
@@ -210,6 +222,7 @@ There is no public registration, account recovery, user administration, customer
 - [Phase 4A menu-management testing](docs/testing/phase-4a-menu-management.md)
 - [Phase 4B order-management testing](docs/testing/phase-4b-order-management.md)
 - [Phase 5 kitchen and real-time testing](docs/testing/phase-5-kitchen-realtime.md)
+- [Phase 6 inventory, recipes, suppliers, and purchasing testing](docs/testing/phase-6-inventory-suppliers.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign

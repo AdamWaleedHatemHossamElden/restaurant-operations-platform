@@ -5,6 +5,7 @@ import { AnonymousOnlyRoute, ProtectedRoute } from '../features/auth/AuthRoutes'
 import { DashboardPage } from '../pages/DashboardPage'
 import { LoginPage } from '../pages/LoginPage'
 import { KitchenPage } from '../pages/KitchenPage'
+import { InventoryPage } from '../pages/InventoryPage'
 import { MenuPage } from '../pages/MenuPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { OrderDetailPage } from '../pages/OrderDetailPage'
@@ -32,6 +33,7 @@ export const routes: RouteObject[] = [
           { path: 'orders', element: <OrdersPage /> },
           { path: 'orders/:orderId', element: <OrderDetailPage /> },
           { path: 'kitchen', element: <KitchenPage /> },
+          { path: 'inventory', element: <InventoryPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

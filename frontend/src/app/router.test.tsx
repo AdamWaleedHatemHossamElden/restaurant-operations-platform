@@ -48,6 +48,10 @@ vi.mock('../pages/KitchenPage', () => ({
   KitchenPage: () => <h1>Kitchen display</h1>,
 }))
 
+vi.mock('../pages/InventoryPage', () => ({
+  InventoryPage: () => <h1>Inventory workspace</h1>,
+}))
+
 const mockedCurrentUser = vi.mocked(currentUserRequest)
 const mockedLogin = vi.mocked(loginRequest)
 const mockedLogout = vi.mocked(logoutRequest)
@@ -123,6 +127,7 @@ describe('authentication routing', () => {
     ['/orders', 'Orders'],
     ['/orders/42', 'Order detail'],
     ['/kitchen', 'Kitchen display'],
+    ['/inventory', 'Inventory workspace'],
   ])('protects the order route %s and renders it after recovery', async (path, heading) => {
     const unauthenticated = renderRoute(path)
     expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()

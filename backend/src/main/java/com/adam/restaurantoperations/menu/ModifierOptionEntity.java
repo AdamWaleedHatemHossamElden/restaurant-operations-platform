@@ -29,7 +29,7 @@ public class ModifierOptionEntity {
     protected ModifierOptionEntity(){}
     public ModifierOptionEntity(ModifierGroupEntity group,String name,BigDecimal price,int order){this.group=group;this.name=name;this.priceAdjustment=price;this.displayOrder=order;}
     @PrePersist void createTimestamps(){createdAt=updatedAt=Instant.now();} @PreUpdate void updateTimestamp(){updatedAt=Instant.now();}
-    public void update(String name,BigDecimal price,int order){this.name=name;this.priceAdjustment=price;this.displayOrder=order;} public void setActive(boolean value){active=value;}
+    public void update(String name,BigDecimal price,int order){this.name=name;this.priceAdjustment=price;this.displayOrder=order;} public void setActive(boolean value){active=value;} public void touch(){updatedAt=Instant.now();}
     public Long getId(){return id;} public ModifierGroupEntity getGroup(){return group;} public String getName(){return name;} public BigDecimal getPriceAdjustment(){return priceAdjustment;}
     public int getDisplayOrder(){return displayOrder;} public boolean isActive(){return active;} public Instant getCreatedAt(){return createdAt;} public Instant getUpdatedAt(){return updatedAt;} public long getVersion(){return version;}
 }

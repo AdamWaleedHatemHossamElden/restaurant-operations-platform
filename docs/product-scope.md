@@ -23,6 +23,6 @@ The modular monolith is planned around `auth`, `users`, `employees`, `tables`, `
 
 ## Current delivery boundary
 
-Phases 1 through 4B are merged. Phase 5 is current unmerged work on `phase-5-kitchen-realtime`. It adds ADMIN-only kitchen tickets created from submitted orders, item preparation, derived queue state, submitted-order cancellation integration, READY-gated order completion, and authenticated real-time invalidation with REST recovery.
+Phases 1 through 5 are merged. Phase 6 is current unmerged work on `phase-6-inventory-suppliers`. It adds ADMIN-only inventory items, an immutable stock ledger, recipe and modifier ingredient configuration, automatic consumption at kitchen preparation, suppliers, supplier pricing, purchase orders, partial receiving, and low-stock visibility.
 
-Phase 5 does not include customer ordering, delivery, live occupancy automation, inventory or recipe deduction, suppliers, payments, invoices, taxes, discounts, service charges, tips, split bills, refunds, staff roles or scheduling, durable messaging, multi-restaurant behavior, image uploads, public menu publishing, or multi-currency behavior. Those workflows remain later phases.
+Phase 6 intentionally uses one logical restaurant, three canonical units without conversion, EUR supplier prices, negative-stock tolerance, append-only movements, and ADMIN authorization. It does not include customer ordering, delivery, live occupancy automation, stock transfers, forecasting, automatic replenishment, barcode scanning, payments, invoices, taxes, discounts, service charges, tips, split bills, refunds, staff roles or scheduling, durable messaging, multi-restaurant behavior, image uploads, public menu publishing, or multi-currency behavior. Those workflows remain later phases.
