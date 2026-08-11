@@ -14,6 +14,7 @@ import com.adam.restaurantoperations.reservations.ReservationService;
 import com.adam.restaurantoperations.roles.RoleRepository;
 import com.adam.restaurantoperations.tables.RestaurantTableService;
 import com.adam.restaurantoperations.users.UserRepository;
+import com.adam.restaurantoperations.testsupport.MockInventoryBeans;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -33,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @AutoConfigureMockMvc
 @ActiveProfiles({"test", "dev"})
+@MockInventoryBeans
 class OpenApiDocumentationTest {
 
     @Autowired
@@ -118,6 +120,14 @@ class OpenApiDocumentationTest {
                 .andExpect(jsonPath(
                         "$.paths['/api/v1/kitchen/tickets/{ticketId}/items/{itemId}/status'].patch.responses['409']")
                         .exists())
+                .andExpect(jsonPath("$.paths['/api/v1/inventory/items'].get.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.paths['/api/v1/inventory/movements'].post.responses['201']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/recipes'].get.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath(
+                        "$.paths['/api/v1/recipes/menu-items/{menuItemId}/ingredients'].put").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/suppliers'].get.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.paths['/api/v1/purchase-orders'].post.responses['201']").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/purchase-orders/{id}/receipts'].post").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/login'].post.security").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/refresh'].post.security").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/logout'].post.security").doesNotExist())

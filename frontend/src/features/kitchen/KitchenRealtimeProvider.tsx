@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 
 import { useAuth } from '../auth/authContext'
+import { inventoryKeys } from '../inventory/inventoryApi'
 import { orderKeys } from '../orders/ordersApi'
 import { kitchenKeys } from './kitchenApi'
 import { startKitchenRealtime, type KitchenConnectionState } from './kitchenRealtimeClient'
@@ -19,6 +20,7 @@ export function KitchenRealtimeProvider({ children }: { children: ReactNode }) {
     const invalidateAll = () => {
       void queryClient.invalidateQueries({ queryKey: kitchenKeys.all })
       void queryClient.invalidateQueries({ queryKey: orderKeys.all })
+      void queryClient.invalidateQueries({ queryKey: inventoryKeys.all })
     }
     const connection = startKitchenRealtime({
       onStateChange: setState,

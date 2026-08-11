@@ -12,6 +12,7 @@ import com.adam.restaurantoperations.kitchen.KitchenService;
 import com.adam.restaurantoperations.orders.OrderService;
 import com.adam.restaurantoperations.reservations.ReservationService;
 import com.adam.restaurantoperations.tables.RestaurantTableService;
+import com.adam.restaurantoperations.testsupport.MockInventoryBeans;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -30,6 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "app.frontend-origin=http://localhost:5173")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@MockInventoryBeans
 class HealthControllerTest {
 
     @Autowired

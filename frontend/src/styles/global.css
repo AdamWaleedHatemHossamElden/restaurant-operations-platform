@@ -2080,6 +2080,246 @@ main {
   }
 }
 
+.inventory-hero,
+.workspace-toolbar,
+.section-heading,
+.inventory-card header,
+.purchase-detail header,
+.purchase-detail footer {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.inventory-summary {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #d8ddd8);
+  border-radius: 1rem;
+  display: grid;
+  min-width: 9rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.inventory-summary strong,
+.stock-balance strong {
+  font-size: clamp(1.75rem, 4vw, 2.7rem);
+}
+
+.inventory-filters {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.inventory-filters label:not(.checkbox-row) {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.inventory-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  margin-top: 1rem;
+}
+
+.inventory-card,
+.purchase-detail {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #d8ddd8);
+  border-radius: 1rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.inventory-card--low {
+  border-color: #b45309;
+  box-shadow: inset 0 0 0 1px #b45309;
+}
+
+.stock-balance {
+  display: grid;
+  margin: 1rem 0;
+}
+
+.stock-alert,
+.stock-negative {
+  color: #9a3412;
+  font-weight: 700;
+}
+
+.stock-ok,
+.stock-positive {
+  color: #166534;
+  font-weight: 700;
+}
+
+.inventory-stack,
+.purchase-detail,
+.supplier-prices,
+.purchase-lines,
+.movement-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.ingredient-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.supplier-price-row,
+.purchase-list__item {
+  align-items: flex-start;
+  background: transparent;
+  border: 1px solid var(--border, #d8ddd8);
+  border-radius: 0.75rem;
+  color: inherit;
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.75rem;
+  text-align: left;
+  width: 100%;
+}
+
+.supplier-price-row strong {
+  overflow-wrap: anywhere;
+}
+
+.purchasing-layout {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(14rem, 0.8fr) minmax(0, 2fr);
+  margin-top: 1rem;
+}
+
+.purchase-list {
+  display: grid;
+  gap: 0.6rem;
+  align-content: start;
+}
+
+.purchase-list__item.active {
+  border-color: var(--accent, #1e5631);
+  box-shadow: inset 0 0 0 1px var(--accent, #1e5631);
+}
+
+.purchase-line {
+  align-items: center;
+  border-bottom: 1px solid var(--border, #d8ddd8);
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 2fr) minmax(7rem, 0.8fr) auto;
+  padding: 0.75rem 0;
+}
+
+.purchase-line > div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.purchase-line__actions {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.inventory-dialog {
+  max-height: min(90vh, 52rem);
+  overflow-y: auto;
+  width: min(94vw, 38rem);
+}
+
+.inventory-dialog--wide {
+  width: min(94vw, 58rem);
+}
+
+.dialog__header,
+.dialog__actions {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.dialog-form {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.ingredient-editor,
+.inventory-facts {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ingredient-editor__row {
+  align-items: center;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 2fr) minmax(6rem, 1fr) auto auto;
+}
+
+.inventory-facts {
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.inventory-facts div {
+  display: grid;
+}
+
+.movement-row {
+  align-items: center;
+  border-bottom: 1px solid var(--border, #d8ddd8);
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1.2fr 1fr 0.8fr 1.5fr;
+  padding: 0.75rem 0;
+}
+
+@media (max-width: 720px) {
+  .inventory-hero,
+  .workspace-toolbar,
+  .section-heading,
+  .purchase-detail header,
+  .purchase-detail footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inventory-filters,
+  .inventory-filters label:not(.checkbox-row) {
+    width: 100%;
+  }
+
+  .inventory-filters input,
+  .inventory-filters select,
+  .workspace-toolbar > .button {
+    width: 100%;
+  }
+
+  .purchasing-layout,
+  .purchase-line,
+  .ingredient-editor__row,
+  .movement-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .purchase-line__actions,
+  .inventory-card .menu-card__actions {
+    flex-direction: column;
+  }
+
+  .purchase-line__actions button,
+  .inventory-card .menu-card__actions button {
+    width: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

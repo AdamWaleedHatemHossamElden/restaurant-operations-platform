@@ -16,6 +16,7 @@ import com.adam.restaurantoperations.orders.OrderService;
 import com.adam.restaurantoperations.reservations.ReservationService;
 import com.adam.restaurantoperations.tables.dto.CreateTableRequest;
 import com.adam.restaurantoperations.tables.dto.TableResponse;
+import com.adam.restaurantoperations.testsupport.MockInventoryBeans;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -37,6 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "app.frontend-origin=http://localhost:5173")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@MockInventoryBeans
 class RestaurantTableControllerSecurityTest {
 
     @Autowired

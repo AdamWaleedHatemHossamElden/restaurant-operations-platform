@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.adam.restaurantoperations.auth.service.AuthException;
 import com.adam.restaurantoperations.kitchen.KitchenManagementException;
+import com.adam.restaurantoperations.inventory.InventoryManagementException;
 import com.adam.restaurantoperations.reservations.ReservationManagementException;
 import com.adam.restaurantoperations.menu.MenuManagementException;
 import com.adam.restaurantoperations.orders.OrderManagementException;
@@ -62,6 +63,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(KitchenManagementException.class)
     ResponseEntity<ApiError> handleKitchenManagement(
             KitchenManagementException exception,
+            HttpServletRequest request) {
+        return response(exception.getStatus(), exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(InventoryManagementException.class)
+    ResponseEntity<ApiError> handleInventoryManagement(
+            InventoryManagementException exception,
             HttpServletRequest request) {
         return response(exception.getStatus(), exception.getMessage(), request, Map.of());
     }

@@ -21,6 +21,7 @@ import com.adam.restaurantoperations.orders.OrderService;
 import com.adam.restaurantoperations.auth.service.RequestMetadata;
 import com.adam.restaurantoperations.reservations.ReservationService;
 import com.adam.restaurantoperations.tables.RestaurantTableService;
+import com.adam.restaurantoperations.testsupport.MockInventoryBeans;
 import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest(properties = "app.frontend-origin=http://localhost:5173")
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
+@MockInventoryBeans
 class AuthenticationControllerSecurityTest {
 
     private static final CurrentUserResponse USER =

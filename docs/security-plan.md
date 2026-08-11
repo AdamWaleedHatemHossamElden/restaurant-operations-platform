@@ -20,6 +20,10 @@ Phase 5 keeps every `/api/v1/kitchen` operation ADMIN-only and binds validated D
 
 Kitchen notifications contain only event type, identifiers, statuses, order number, and timestamp. Database state and REST remain authoritative: notifications publish through an `AFTER_COMMIT` listener, delivery failure cannot roll back valid work, and reconnect/event handling refetches REST state. Aggregate mutations use the consistent lock order `orders → kitchen_tickets → kitchen_ticket_items`; stale versions, invalid transitions, cancellation/completion races, and expected contention map to safe HTTP 409. Audits contain identifiers and concise status summaries only, excluding notes, guest details, request bodies, authorization headers, tokens, and cookies.
 
+Phase 6 requires authenticated `ADMIN` authority for `/api/v1/inventory`, `/api/v1/recipes`, `/api/v1/suppliers`, and `/api/v1/purchase-orders`. Controllers accept validated DTOs; clients cannot supply balances, actors, timestamps, PO numbers, supplier costs for PO snapshots, totals, or movement signs. Exact decimals, normalized uniqueness, restrictive foreign keys, checks, optimistic versions, pessimistic aggregate locks, and unique usage source keys backstop application validation. Expected stale, lock, uniqueness, invalid-state, and over-receipt conflicts return safe HTTP 409 responses.
+
+Inventory audits contain action names, entity identifiers, counts, status, and safe reference IDs only. Supplier contact fields and notes, purchase-order notes, movement reasons, request bodies, authorization headers, tokens, cookies, and credentials are excluded. The frontend reuses the existing memory-only Bearer client and stores no inventory or authentication secrets. Kitchen real-time events remain identifiers-only; they invalidate inventory queries so balances are refetched from REST rather than sent over STOMP.
+
 ## Remaining controls
 
 - Apply role-based authorization at request and application-service boundaries; restaurant scope must be checked independently of role.

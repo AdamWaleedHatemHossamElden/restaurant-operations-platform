@@ -20,11 +20,19 @@ Reusable `modifier_groups` store `SINGLE` or `MULTIPLE` selection rules. `modifi
 
 `order_status_history` stores every transition chronologically, including the initial `OPEN` state, previous and next states, change time, and actor. All four V6 tables use InnoDB, `utf8mb4`, checks, indexes for supported filters and ordering, and exact decimal money. Order-row write locks serialize item, metadata, and status mutations so aggregate totals and commercial immutability remain consistent.
 
-## Kitchen management in progress (Flyway V7)
+## Implemented kitchen management (Flyway V7)
 
 `kitchen_tickets` has a restrictive one-to-one relationship with submitted orders, a derived `QUEUED`, `PREPARING`, `READY`, or cancellation-owned `CANCELLED` status, lifecycle timestamps, and an optimistic version. `kitchen_ticket_items` has one restrictive, uniquely indexed relationship to each submitted `order_item` and stores only preparation status and timestamps; kitchen responses read immutable item/modifier labels and operational notes from the V6 snapshot tables instead of duplicating pricing or mutable menu data.
 
 V7 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and queue/filter indexes. It backfills tickets only for existing active `SUBMITTED` orders, preserving completed and cancelled history without manufacturing kitchen records. New submission creates the ticket and every item atomically. Mutations lock `orders`, then `kitchen_tickets`, then kitchen items so preparation, cancellation, and completion cannot form an inconsistent aggregate.
+
+## Inventory, recipes, suppliers, and purchasing in progress (Flyway V8)
+
+`inventory_items` defines normalized unique codes and names, one canonical unit, reorder thresholds, soft activation, timestamps, and optimistic versions. `stock_movements` is the sole stock authority: positive exact quantities are signed by movement type, and no update/delete API exists. Automatic usage carries a unique deterministic source key per kitchen item and inventory item.
+
+`recipes` has at most one row per menu item. Ordered `recipe_ingredients` and `modifier_option_ingredients` use restrictive foreign keys, unique inventory-item assignments, exact positive quantities, and deterministic display order. Current configuration is read only when preparation starts; historical movements are snapshots and are never recalculated.
+
+`suppliers` and `supplier_inventory_items` store soft-active vendors and exact current per-canonical-unit costs. `purchase_orders` owns its generated number, lifecycle, totals, timestamps, and optimistic version. `purchase_order_items` snapshots inventory labels, unit, quantity, cost, line total, and receipt progress. All V8 structures use InnoDB, `utf8mb4`, `DECIMAL`, checks, restrictive foreign keys, and indexes supporting the implemented filters and lock paths.
 
 ## Planned domain relationships
 
@@ -36,10 +44,10 @@ V7 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and queue/filter in
 - **Menu categories and items:** the Phase 4A single-restaurant catalog is implemented. Restaurant ownership, price history, tax rules, and currency configuration remain future extensions.
 - **Orders and order items:** the Phase 4B single-restaurant table-service aggregate is implemented with optional seated-reservation traceability and immutable item/modifier pricing snapshots. Restaurant ownership, taxes, discounts, service charges, tips, and payment allocation remain future extensions.
 - **Order status history:** immutable transitions capture previous state, new state, actor, and timestamp. Kitchen lifecycle is represented by ticket/item state, timestamps, and safe audit events rather than a second order-status history.
-- **Inventory:** inventory items hold units and thresholds per location. Counts should be derived or reconciled from stock movements.
-- **Recipes and recipe ingredients:** recipes connect menu items to inventory quantities and units, enabling consumption calculations.
-- **Suppliers:** suppliers provide inventory items through purchase relationships with lead times and supplier-specific references.
-- **Stock movements:** immutable receipts, usage, waste, transfers, and adjustments provide the inventory ledger.
+- **Inventory:** Phase 6 implements single-restaurant items with canonical units and ledger-derived balances; locations, conversions, and transfers remain future work.
+- **Recipes and recipe ingredients:** Phase 6 connects menu items and modifier options to exact inventory usage quantities.
+- **Suppliers:** Phase 6 provides suppliers and current supplier-item pricing; lead times and automated replenishment remain future work.
+- **Stock movements:** Phase 6 implements immutable receipts, usage, waste, and adjustments. Transfers are not implemented.
 - **Payments:** payment records reference orders and preserve amount, currency, method, status, and external reference without storing prohibited card data.
 - **Audit logs:** append-focused audit records identify actor, action, entity type, entity identifier, restaurant context, time, and structured details.
 

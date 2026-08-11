@@ -20,4 +20,8 @@ public interface ModifierOptionRepository extends JpaRepository<ModifierOptionEn
     @Lock(LockModeType.PESSIMISTIC_READ)
     @Query("select option from ModifierOptionEntity option where option.id = :id")
     Optional<ModifierOptionEntity> findByIdForOrderPricing(@Param("id") Long id);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select option from ModifierOptionEntity option where option.id = :id")
+    Optional<ModifierOptionEntity> findByIdForInventoryUpdate(@Param("id") Long id);
 }
