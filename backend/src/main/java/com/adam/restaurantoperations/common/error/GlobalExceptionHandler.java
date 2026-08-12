@@ -11,6 +11,7 @@ import com.adam.restaurantoperations.reservations.ReservationManagementException
 import com.adam.restaurantoperations.menu.MenuManagementException;
 import com.adam.restaurantoperations.orders.OrderManagementException;
 import com.adam.restaurantoperations.tables.TableManagementException;
+import com.adam.restaurantoperations.staff.StaffManagementException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.slf4j.Logger;
@@ -70,6 +71,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InventoryManagementException.class)
     ResponseEntity<ApiError> handleInventoryManagement(
             InventoryManagementException exception,
+            HttpServletRequest request) {
+        return response(exception.getStatus(), exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(StaffManagementException.class)
+    ResponseEntity<ApiError> handleStaffManagement(
+            StaffManagementException exception,
             HttpServletRequest request) {
         return response(exception.getStatus(), exception.getMessage(), request, Map.of());
     }

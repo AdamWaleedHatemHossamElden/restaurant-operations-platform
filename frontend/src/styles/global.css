@@ -2320,6 +2320,193 @@ main {
   }
 }
 
+.staff-hero,
+.staff-card header,
+.week-toolbar,
+.week-navigation,
+.availability-card {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.staff-summary {
+  background: color-mix(in srgb, var(--accent, #1e5631) 12%, white);
+  border-radius: 1rem;
+  display: grid;
+  min-width: 10rem;
+  padding: 1rem;
+  text-align: center;
+}
+
+.staff-summary strong {
+  font-size: 2rem;
+}
+
+.staff-filters {
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.staff-filters label,
+.staff-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.staff-card-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  margin-top: 1rem;
+}
+
+.staff-card,
+.availability-card,
+.schedule-day,
+.shift-card {
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #d8ddd8);
+  border-radius: 1rem;
+  min-width: 0;
+  padding: 1rem;
+}
+
+.staff-dialog {
+  max-height: min(90vh, 52rem);
+  overflow-y: auto;
+  width: min(94vw, 42rem);
+}
+
+.staff-form {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.staff-form__wide {
+  grid-column: 1 / -1;
+}
+
+.availability-guide {
+  background: #f5f8f5;
+  border-radius: 0.75rem;
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.75rem;
+}
+
+.week-toolbar {
+  align-items: flex-end;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.week-navigation {
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+.availability-layout {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.availability-layout > section {
+  display: grid;
+  gap: 0.75rem;
+  align-content: start;
+}
+
+.availability-card > div:first-child {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.weekly-schedule {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(7, minmax(9.5rem, 1fr));
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+}
+
+.schedule-day {
+  padding: 0.75rem;
+}
+
+.schedule-day header,
+.schedule-day__shifts,
+.shift-card {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.schedule-day h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+
+.shift-card {
+  border-radius: 0.75rem;
+  padding: 0.75rem;
+}
+
+.shift-card--completed {
+  border-color: #166534;
+}
+
+.shift-card--cancelled {
+  opacity: 0.72;
+}
+
+.shift-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+@media (max-width: 720px) {
+  .staff-hero,
+  .week-toolbar,
+  .availability-card {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .staff-filters,
+  .staff-filters label,
+  .staff-filters input,
+  .staff-filters select,
+  .staff-filters button,
+  .week-navigation,
+  .week-navigation button {
+    width: 100%;
+  }
+
+  .staff-form,
+  .availability-layout,
+  .weekly-schedule {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .weekly-schedule {
+    overflow-x: visible;
+  }
+
+  .shift-card__actions {
+    flex-direction: column;
+  }
+
+  .shift-card__actions button {
+    width: 100%;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -79,6 +79,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/suppliers", "/api/v1/suppliers/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/purchase-orders", "/api/v1/purchase-orders/**")
                         .hasRole("ADMIN")
+                        .requestMatchers("/api/v1/staff", "/api/v1/staff/**").hasRole("ADMIN")
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").denyAll()
                         .anyRequest().denyAll());
         return http.build();

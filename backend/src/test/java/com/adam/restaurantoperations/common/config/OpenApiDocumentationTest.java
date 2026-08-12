@@ -128,6 +128,12 @@ class OpenApiDocumentationTest {
                 .andExpect(jsonPath("$.paths['/api/v1/suppliers'].get.security[0].bearerAuth").isArray())
                 .andExpect(jsonPath("$.paths['/api/v1/purchase-orders'].post.responses['201']").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/purchase-orders/{id}/receipts'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/staff/employees'].get.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.paths['/api/v1/staff/employees'].post.responses['201']").exists())
+                .andExpect(jsonPath(
+                        "$.paths['/api/v1/staff/employees/{employeeId}/availability'].post").exists())
+                .andExpect(jsonPath("$.paths['/api/v1/staff/shifts'].get.security[0].bearerAuth").isArray())
+                .andExpect(jsonPath("$.paths['/api/v1/staff/shifts/{id}/status'].patch").exists())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/login'].post.security").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/refresh'].post.security").doesNotExist())
                 .andExpect(jsonPath("$.paths['/api/v1/auth/logout'].post.security").doesNotExist())

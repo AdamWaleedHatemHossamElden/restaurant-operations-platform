@@ -31,6 +31,12 @@ Phase 6 keeps stock as an append-only ledger rather than a mutable balance. Inve
 
 Purchase receiving locks the purchase order before its line, validates the optimistic request version and remaining quantity, appends one receipt movement, and derives the new PO status in one transaction. Negative stock means usage writers do not lock or update a shared balance row, avoiding an unnecessary contention point.
 
+## Staff scheduling transaction boundary
+
+Phase 7 keeps employee identity separate from authentication. Operational roles are scheduling values and do not participate in Spring Security. Employee, availability, and shift commands serialize on the employee row. A scheduling write then locks or reads availability before locking and checking shifts, preserving the deterministic order `employee → availability → shifts`. Under MySQL `READ_COMMITTED`, a waiter sees current committed planning state after acquiring the employee lock, so simultaneous overlaps cannot both pass.
+
+Availability windows and shifts use half-open UTC intervals. Browser-local inputs are converted only at the HTTP boundary. Existing shifts are intentionally not rewritten when availability changes; planned and historical shift state remains explicit and administrator-controlled.
+
 ## Testing strategy
 
 Fast unit and MVC tests run with the normal Maven lifecycle and do not require Docker. The `integration-test` Maven profile runs Testcontainers MySQL tests for fresh Flyway migration and real locking/concurrency behavior. Frontend behavior is covered with Vitest, React Testing Library, and jsdom; stable vertical workflows are also verified manually in a real browser against the development services.

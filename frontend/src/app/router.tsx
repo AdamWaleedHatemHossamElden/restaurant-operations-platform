@@ -12,6 +12,7 @@ import { OrderDetailPage } from '../pages/OrderDetailPage'
 import { OrdersPage } from '../pages/OrdersPage'
 import { ReservationsPage } from '../pages/ReservationsPage'
 import { TablesPage } from '../pages/TablesPage'
+import { StaffPage } from '../pages/StaffPage'
 
 export const routes: RouteObject[] = [
   {
@@ -34,6 +35,7 @@ export const routes: RouteObject[] = [
           { path: 'orders/:orderId', element: <OrderDetailPage /> },
           { path: 'kitchen', element: <KitchenPage /> },
           { path: 'inventory', element: <InventoryPage /> },
+          { path: 'staff', element: <StaffPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

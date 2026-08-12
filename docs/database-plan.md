@@ -26,7 +26,7 @@ Reusable `modifier_groups` store `SINGLE` or `MULTIPLE` selection rules. `modifi
 
 V7 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and queue/filter indexes. It backfills tickets only for existing active `SUBMITTED` orders, preserving completed and cancelled history without manufacturing kitchen records. New submission creates the ticket and every item atomically. Mutations lock `orders`, then `kitchen_tickets`, then kitchen items so preparation, cancellation, and completion cannot form an inconsistent aggregate.
 
-## Inventory, recipes, suppliers, and purchasing in progress (Flyway V8)
+## Implemented inventory, recipes, suppliers, and purchasing (Flyway V8)
 
 `inventory_items` defines normalized unique codes and names, one canonical unit, reorder thresholds, soft activation, timestamps, and optimistic versions. `stock_movements` is the sole stock authority: positive exact quantities are signed by movement type, and no update/delete API exists. Automatic usage carries a unique deterministic source key per kitchen item and inventory item.
 
@@ -34,10 +34,16 @@ V7 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and queue/filter in
 
 `suppliers` and `supplier_inventory_items` store soft-active vendors and exact current per-canonical-unit costs. `purchase_orders` owns its generated number, lifecycle, totals, timestamps, and optimistic version. `purchase_order_items` snapshots inventory labels, unit, quantity, cost, line total, and receipt progress. All V8 structures use InnoDB, `utf8mb4`, `DECIMAL`, checks, restrictive foreign keys, and indexes supporting the implemented filters and lock paths.
 
+## Staff scheduling in progress (Flyway V9)
+
+`employees` stores normalized unique codes, names, minimal optional contact data, a scheduling-domain default operational role, optional employment start date, soft activation, timestamps, and an optimistic version. It stores no password, salary, tax, bank, identity-document, or sensitive HR data and does not require an application user.
+
+`employee_availability` stores removable date-specific UTC windows with `start_at < end_at`, optional bounded notes, restrictive employee ownership, timestamps, and optimistic versions. `shifts` stores the employee, independently assigned operational role, UTC range, `SCHEDULED`, `COMPLETED`, or `CANCELLED` state, bounded notes, lifecycle timestamps, and an optimistic version. V9 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and indexes for employee/date, weekly schedule, role, and status access paths.
+
 ## Planned domain relationships
 
 - **Users and roles:** users receive many roles through `user_roles`; identity credentials remain distinct from employee records.
-- **Employees and shifts:** employees belong to a restaurant and optionally link to a user. Shifts assign employees to time ranges and operational roles.
+- **Employees and shifts:** Phase 7 implements single-restaurant employee records without user-account links. Date-specific availability and shifts reference employees restrictively; operational roles are business data rather than authorization.
 - **Customers:** customer contact and preference records support reservations without requiring a login account.
 - **Restaurant tables:** physical tables belong to a restaurant, have capacity and availability state, and may participate in temporary combinations.
 - **Reservations:** reservations link customers, restaurants, time ranges, party size, and table assignments. Status history should preserve lifecycle transitions.
