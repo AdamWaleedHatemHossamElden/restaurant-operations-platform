@@ -24,6 +24,10 @@ Phase 6 requires authenticated `ADMIN` authority for `/api/v1/inventory`, `/api/
 
 Inventory audits contain action names, entity identifiers, counts, status, and safe reference IDs only. Supplier contact fields and notes, purchase-order notes, movement reasons, request bodies, authorization headers, tokens, cookies, and credentials are excluded. The frontend reuses the existing memory-only Bearer client and stores no inventory or authentication secrets. Kitchen real-time events remain identifiers-only; they invalidate inventory queries so balances are refetched from REST rather than sent over STOMP.
 
+Phase 7 requires authenticated `ADMIN` authority for every `/api/v1/staff/**` operation. `HOST`, `WAITER`, `CASHIER`, `KITCHEN`, `INVENTORY`, `MANAGER`, and `OTHER` are scheduling-domain values only and never produce Spring Security authorities, user accounts, passwords, or self-service access. Controllers bind validated DTOs, sorting is allowlisted, and safe 400/404/409 responses do not expose persistence internals.
+
+Employee, availability, and shift mutations serialize through a pessimistic employee-row lock. Multi-resource validation follows `employee → availability → shifts`; half-open overlap checks and availability containment run while those locks are held. Optimistic versions reject stale writes, and database uniqueness/check/foreign-key constraints provide final backstops. Staff audits store action, actor, entity identifiers, employee code or operational status where useful, timestamp, and source IP. They exclude full request bodies, contact details, notes, credentials, tokens, and cookies.
+
 ## Remaining controls
 
 - Apply role-based authorization at request and application-service boundaries; restaurant scope must be checked independently of role.

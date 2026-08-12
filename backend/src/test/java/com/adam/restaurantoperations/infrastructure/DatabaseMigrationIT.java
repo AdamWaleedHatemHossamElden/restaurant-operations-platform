@@ -41,7 +41,7 @@ class DatabaseMigrationIT {
     @Test
     void startsMySqlAndAppliesAllMigrations() {
         assertThat(MYSQL.isRunning()).isTrue();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("8");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
         Integer tableCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables "
                         + "WHERE table_schema = DATABASE() AND table_name IN "
@@ -51,9 +51,10 @@ class DatabaseMigrationIT {
                         + "'order_items', 'order_item_modifiers', 'order_status_history', "
                         + "'kitchen_tickets', 'kitchen_ticket_items', 'inventory_items', 'stock_movements', "
                         + "'recipes', 'recipe_ingredients', 'modifier_option_ingredients', 'suppliers', "
-                        + "'supplier_inventory_items', 'purchase_orders', 'purchase_order_items')",
+                        + "'supplier_inventory_items', 'purchase_orders', 'purchase_order_items', "
+                        + "'employees', 'employee_availability', 'shifts')",
                 Integer.class);
-        assertThat(tableCount).isEqualTo(28);
+        assertThat(tableCount).isEqualTo(31);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.columns "
                         + "WHERE table_schema = DATABASE() AND table_name = 'restaurant_tables' "
@@ -119,5 +120,16 @@ class DatabaseMigrationIT {
                         + "'purchase_orders', 'purchase_order_items') "
                         + "AND constraint_type IN ('UNIQUE', 'FOREIGN KEY', 'CHECK')",
                 Integer.class)).isGreaterThanOrEqualTo(28);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns "
+                        + "WHERE table_schema = DATABASE() AND table_name IN "
+                        + "('employees', 'employee_availability', 'shifts')",
+                Integer.class)).isEqualTo(32);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.table_constraints "
+                        + "WHERE table_schema = DATABASE() AND table_name IN "
+                        + "('employees', 'employee_availability', 'shifts') "
+                        + "AND constraint_type IN ('UNIQUE', 'FOREIGN KEY', 'CHECK')",
+                Integer.class)).isGreaterThanOrEqualTo(8);
     }
 }

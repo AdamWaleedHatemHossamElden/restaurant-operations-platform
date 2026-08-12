@@ -74,6 +74,18 @@ export function DashboardPage() {
 
       <HealthStatus />
 
+      <section className="phase-notice" aria-labelledby="staff-workspace-title">
+        <p className="eyebrow">Phase 7</p>
+        <h2 id="staff-workspace-title">Build a conflict-safe weekly schedule.</h2>
+        <p>
+          Manage employees, date-specific availability, operational assignments, and terminal shift
+          outcomes without mixing scheduling roles with application authorization.
+        </p>
+        <Link className="button button--primary button--link" to="/staff">
+          Open staff workspace
+        </Link>
+      </section>
+
       <section className="phase-notice" aria-labelledby="inventory-workspace-title">
         <p className="eyebrow">Phase 6</p>
         <h2 id="inventory-workspace-title">Connect preparation to stock and purchasing.</h2>

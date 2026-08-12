@@ -1,6 +1,6 @@
 # Restaurant Operations Platform
 
-A modern full-stack restaurant operations platform. Phases 1 through 5 are merged into `main`; the current unmerged `phase-6-inventory-suppliers` branch adds ledger-backed inventory, recipes, suppliers, and purchasing.
+A modern full-stack restaurant operations platform. Phases 1 through 6 are merged into `main`; the current unmerged `phase-7-staff-scheduling` branch adds employees, date-specific availability, and conflict-safe weekly scheduling.
 
 ## Current status
 
@@ -34,6 +34,8 @@ A modern full-stack restaurant operations platform. Phases 1 through 5 are merge
 - ADMIN-only inventory items, immutable stock ledger, low-stock alerts, recipes, modifier ingredients, suppliers, and purchase orders
 - Atomic recipe consumption when kitchen preparation begins, with database-backed exactly-once usage and negative-stock visibility
 - Exact supplier pricing snapshots, partial receiving, concurrency-safe final receipts, and a responsive protected inventory workspace
+- ADMIN-only employee records, scheduling-domain operational roles, date-specific availability, and terminal shift lifecycle
+- MySQL-serialized availability and shift overlap protection with a responsive protected weekly staff workspace
 
 ## Technology stack
 
@@ -161,6 +163,7 @@ The browser never writes access or refresh tokens to localStorage, sessionStorag
 - Kitchen management: `GET /api/v1/kitchen/tickets`, `GET /api/v1/kitchen/tickets/{id}`, `GET /api/v1/kitchen/orders/{orderId}`, and `PATCH /api/v1/kitchen/tickets/{ticketId}/items/{itemId}/status`
 - Kitchen real-time endpoint: native STOMP over `/ws`, with ADMIN Bearer authentication in `CONNECT` and server notifications on `/topic/kitchen`
 - Inventory: item and movement operations below `/api/v1/inventory`, recipe operations below `/api/v1/recipes`, supplier operations below `/api/v1/suppliers`, and purchasing below `/api/v1/purchase-orders`
+- Staff scheduling: employee, availability, shift, activation, and lifecycle operations below `/api/v1/staff`
 
 ## Restaurant table management
 
@@ -204,9 +207,15 @@ An active menu-item recipe and selected modifier-option ingredient mappings are 
 
 Suppliers have soft activation and versioned item-price relationships. Draft purchase orders snapshot the current inventory code, name, canonical unit, and exact `DECIMAL(12,4)` supplier cost. Commercial data freezes after ordering. Receipts may be partial, append immutable `RECEIPT` movements, and advance the purchase order through `ORDERED`, `PARTIALLY_RECEIVED`, and `RECEIVED`. Purchase-order and line locks plus request versions ensure simultaneous final receipts produce one successful ledger change and one safe conflict.
 
+## Employees and staff scheduling
+
+Authenticated administrators can open `/staff` for employee records, exact availability windows, and a browser-local weekly schedule. Employee codes are normalized and unique, employee records use soft activation and optimistic versions, and operational roles such as `WAITER`, `KITCHEN`, or `MANAGER` describe scheduled work only. They never create Spring Security authorities or application accounts; every Phase 7 operation remains ADMIN-only.
+
+Availability and shift timestamps are stored as UTC instants and converted at the browser boundary. New scheduled shifts must fit completely inside one date-specific availability window and cannot overlap another non-cancelled shift under half-open `[start, end)` rules. MySQL write-locks the employee before availability and shift checks, so concurrent contenders serialize as one success and one safe conflict. Availability changes preserve existing shifts. Employees with future scheduled shifts cannot be deactivated until those shifts are cancelled or completed. Shifts progress only from `SCHEDULED` to `COMPLETED` or `CANCELLED`; terminal shifts remain read-only.
+
 ## Current limitations
 
-There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, unit conversion, stock transfers, staffing/scheduling, payment, taxation, discounting, tipping, invoicing, durable external messaging, customer ordering, or reporting feature. The system assumes one logical restaurant and does not hard-delete operational history. Inventory consumption intentionally permits negative balances, and cancellation after preparation does not automatically restore stock. EUR is the single display currency until restaurant configuration and payment phases define currency ownership. Host, waiter, cashier, kitchen, manager, and inventory-specific roles remain pending; ADMIN is the only current application role. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
+There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, unit conversion, stock transfers, payroll, salary management, time clock, attendance, timesheets, recurring availability, shift swaps, employee self-service, account provisioning, labor-law engine, automatic scheduling, staffing notifications, payment, taxation, discounting, tipping, invoicing, durable external messaging, customer ordering, or reporting feature. The system assumes one logical restaurant and does not hard-delete operational history. Inventory consumption intentionally permits negative balances, and cancellation after preparation does not automatically restore stock. EUR is the single display currency until restaurant configuration and payment phases define currency ownership. ADMIN remains the only application authority; Phase 7 operational roles are scheduling data only. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
 
 ## Documentation
 
@@ -223,6 +232,7 @@ There is no public registration, account recovery, user administration, customer
 - [Phase 4B order-management testing](docs/testing/phase-4b-order-management.md)
 - [Phase 5 kitchen and real-time testing](docs/testing/phase-5-kitchen-realtime.md)
 - [Phase 6 inventory, recipes, suppliers, and purchasing testing](docs/testing/phase-6-inventory-suppliers.md)
+- [Phase 7 employees and staff scheduling testing](docs/testing/phase-7-staff-scheduling.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign

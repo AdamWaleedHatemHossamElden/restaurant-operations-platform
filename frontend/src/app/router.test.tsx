@@ -52,6 +52,10 @@ vi.mock('../pages/InventoryPage', () => ({
   InventoryPage: () => <h1>Inventory workspace</h1>,
 }))
 
+vi.mock('../pages/StaffPage', () => ({
+  StaffPage: () => <h1>Staff scheduling</h1>,
+}))
+
 const mockedCurrentUser = vi.mocked(currentUserRequest)
 const mockedLogin = vi.mocked(loginRequest)
 const mockedLogout = vi.mocked(logoutRequest)
@@ -128,6 +132,7 @@ describe('authentication routing', () => {
     ['/orders/42', 'Order detail'],
     ['/kitchen', 'Kitchen display'],
     ['/inventory', 'Inventory workspace'],
+    ['/staff', 'Staff scheduling'],
   ])('protects the order route %s and renders it after recovery', async (path, heading) => {
     const unauthenticated = renderRoute(path)
     expect(await screen.findByRole('heading', { name: 'Sign in' })).toBeInTheDocument()
@@ -149,6 +154,7 @@ describe('authentication routing', () => {
     ).toBeInTheDocument()
     expect(screen.getByText(testUser.email)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Kitchen' })).toHaveAttribute('href', '/kitchen')
+    expect(screen.getByRole('link', { name: 'Staff' })).toHaveAttribute('href', '/staff')
     expect(screen.getByRole('link', { name: 'Open kitchen display' })).toHaveAttribute(
       'href',
       '/kitchen',
