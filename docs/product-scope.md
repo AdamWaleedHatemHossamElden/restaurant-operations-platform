@@ -23,6 +23,6 @@ The modular monolith is planned around `auth`, `users`, `employees`, `tables`, `
 
 ## Current delivery boundary
 
-Phases 1 through 7 are merged. Phase 8 is current unmerged work on `phase-8-payments-invoices`. It adds ADMIN-only recording of already-confirmed EUR payments, derived settlement state, immutable one-time reconciliation, paid-order invoice snapshots, concurrency-safe idempotency and overpayment protection, audit, and responsive settlement views.
+Phases 1 through 8 are merged. Phase 9 is current unmerged work on `phase-9-reports-analytics`. It adds ADMIN-only, read-only operational projections over existing orders, menu snapshots, payments, reservations, kitchen tickets, stock movements, and shifts, plus bounded formula-safe CSV exports and a responsive reports workspace.
 
-Phase 8 intentionally does not process funds or collect card/bank credentials. Payment-provider integrations, authorization and capture, refunds, voids, chargebacks, taxes, discounts, tips, configurable currencies, accounting exports, fiscal numbering, and jurisdiction-specific invoice compliance remain outside scope.
+Phase 9 is operational analytics, not formal accounting, profit/loss, tax or VAT reporting, payroll, labor cost, forecasting, AI insight, demand prediction, customer profiling, cross-location or multi-currency analytics, external BI, scheduled email reporting, streaming analytics, a data warehouse, or fiscal reporting. Phase 8 also intentionally does not process funds or collect card/bank credentials.

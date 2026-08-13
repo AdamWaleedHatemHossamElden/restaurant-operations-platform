@@ -41,7 +41,7 @@ class DatabaseMigrationIT {
     @Test
     void startsMySqlAndAppliesAllMigrations() {
         assertThat(MYSQL.isRunning()).isTrue();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("10");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("11");
         Integer tableCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables "
                         + "WHERE table_schema = DATABASE() AND table_name IN "
@@ -107,6 +107,12 @@ class DatabaseMigrationIT {
                         + "('kitchen_tickets', 'kitchen_ticket_items') "
                         + "AND constraint_type IN ('UNIQUE', 'FOREIGN KEY', 'CHECK')",
                 Integer.class)).isGreaterThanOrEqualTo(8);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(DISTINCT index_name) FROM information_schema.statistics "
+                        + "WHERE table_schema = DATABASE() AND index_name IN "
+                        + "('idx_orders_status_completed', 'idx_kitchen_tickets_created', "
+                        + "'idx_stock_movements_occurred')",
+                Integer.class)).isEqualTo(3);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.columns "
                         + "WHERE table_schema = DATABASE() AND table_name IN "

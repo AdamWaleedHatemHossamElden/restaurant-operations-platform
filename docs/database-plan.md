@@ -40,11 +40,15 @@ V7 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and queue/filter in
 
 `employee_availability` stores removable date-specific UTC windows with `start_at < end_at`, optional bounded notes, restrictive employee ownership, timestamps, and optimistic versions. `shifts` stores the employee, independently assigned operational role, UTC range, `SCHEDULED`, `COMPLETED`, or `CANCELLED` state, bounded notes, lifecycle timestamps, and an optimistic version. V9 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and indexes for employee/date, weekly schedule, role, and status access paths.
 
-## Payments and invoices in progress (Flyway V10)
+## Implemented payments and invoices (Flyway V10)
 
 `payments` is an append-only ledger of confirmed `SUCCEEDED` settlements against an order. It stores exact positive EUR amounts, an allowlisted method, server-generated payment number, required unique idempotency key, optional unique external confirmation reference, actor, and receive time. It deliberately has no card-number, security-code, bank-credential, provider-payload, refund, or reversible-status fields. Order locking serializes balance validation before insert.
 
 `payment_reconciliations` has a unique restrictive payment relationship and stores one immutable reconciliation timestamp, optional bounded reference, and actor. `invoices` has a unique restrictive order relationship and stores server-generated number, exact order totals, currency, issue time, and actor. Ordered `invoice_items` and `invoice_item_modifiers` copy the immutable commercial labels and prices from order snapshots. V10 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and indexes for operational filters.
+
+## Reporting access indexes (Flyway V11)
+
+Phase 9 introduces no reporting tables and duplicates no authoritative values. V11 adds only three composite indexes for the report range scans not covered by V1–V10: completed orders by `status, completed_at`, kitchen tickets by `created_at, status`, and global stock movements by `occurred_at, movement_type, inventory_item_id`. Payments, invoices, reservations, and shifts already had suitable range indexes. All reports aggregate directly from committed operational records.
 
 ## Planned domain relationships
 

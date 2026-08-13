@@ -1,6 +1,6 @@
 # Restaurant Operations Platform
 
-A modern full-stack restaurant operations platform. Phases 1 through 7 are merged into `main`; the current unmerged `phase-8-payments-invoices` branch adds confirmed-payment recording, reconciliation, and immutable invoice snapshots.
+A modern full-stack restaurant operations platform. Phases 1 through 8 are merged into `main`; the current unmerged `phase-9-reports-analytics` branch adds read-only operational reporting and safe CSV exports.
 
 ## Current status
 
@@ -38,6 +38,8 @@ A modern full-stack restaurant operations platform. Phases 1 through 7 are merge
 - MySQL-serialized availability and shift overlap protection with a responsive protected weekly staff workspace
 - ADMIN-only confirmed EUR payments with partial and split settlement, stable idempotency keys, and overpayment protection
 - Immutable one-time reconciliation and invoice snapshots, plus responsive payment, invoice, and order-detail settlement views
+- ADMIN-only read-only reports for completed orders, menu performance, payments, reservations, kitchen, inventory, and staff
+- Half-open bounded reporting periods, UTC time-series aggregation, accessible summaries, and formula-safe CSV exports
 
 ## Technology stack
 
@@ -166,6 +168,7 @@ The browser never writes access or refresh tokens to localStorage, sessionStorag
 - Kitchen real-time endpoint: native STOMP over `/ws`, with ADMIN Bearer authentication in `CONNECT` and server notifications on `/topic/kitchen`
 - Inventory: item and movement operations below `/api/v1/inventory`, recipe operations below `/api/v1/recipes`, supplier operations below `/api/v1/suppliers`, and purchasing below `/api/v1/purchase-orders`
 - Staff scheduling: employee, availability, shift, activation, and lifecycle operations below `/api/v1/staff`
+- Reports: operational aggregates below `/api/v1/reports` and bounded CSV exports below `/api/v1/reports/exports`
 
 ## Restaurant table management
 
@@ -219,11 +222,19 @@ Availability and shift timestamps are stored as UTC instants and converted at th
 
 Authenticated administrators can open `/payments` or a completed order to record money already confirmed outside the platform. Payments use exact `DECIMAL(12,2)` EUR amounts and the methods `CASH`, `CARD`, `BANK_TRANSFER`, and `OTHER`; the API accepts a confirmation reference but no card number, security code, bank credential, or provider payload. The server derives unpaid, partially paid, and paid state from immutable successful records. A required `Idempotency-Key` makes safe retries return the original record, while reuse with another payload fails safely.
 
+## Reports and analytics
+
+Authenticated administrators can open `/reports` to view read-only operational projections for one bounded `[from,to)` period. Browser-local day boundaries are converted to UTC instants; server-side day, week, and month buckets are explicitly UTC. Completed order value uses immutable totals and `completed_at`, while payments received uses successful payment amounts and `received_at`; the two are intentionally separate and are not described as accounting revenue.
+
+Menu performance reads immutable completed-order item snapshots. Reservations omit guest contact data, kitchen preparation duration includes only tickets with a supported READY timestamp, inventory quantities remain grouped by item and canonical unit, and shift hours use the full planned duration of shifts whose `start_at` belongs to the range. Reports hydrate purpose-built DTOs from bounded SQL aggregates and never mutate business state.
+
+Sales, menu, payment, reservation, inventory, and staff summaries can be downloaded as authenticated UTF-8 CSV files. Every cell is quoted and user-controlled formula prefixes are neutralized. Phase 9 remains single-restaurant and uses the browser's local timezone only to choose UTC boundaries; it is operational reporting, not formal accounting, payroll, forecasting, or fiscal reporting.
+
 Payment creation locks the order before deriving its remaining balance, so simultaneous final-payment attempts cannot overpay it. Reconciliation is an immutable, one-per-payment confirmation against an external report or cash drawer. A fully paid completed order can issue exactly one immutable invoice whose lines and modifiers are copied from the order's existing commercial snapshots. The `/payments` workspace provides searchable payment, reconciliation, and invoice tabs; invoice views are print-friendly and the browser generates no payment identifiers beyond a per-submission idempotency key.
 
 ## Current limitations
 
-There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, unit conversion, stock transfers, payroll, salary management, time clock, attendance, timesheets, recurring availability, shift swaps, employee self-service, account provisioning, labor-law engine, automatic scheduling, staffing notifications, payment-provider integration, refunds, voids, chargebacks, taxation, discounting, tipping, durable external messaging, customer ordering, or reporting feature. The system assumes one logical restaurant and does not hard-delete operational history. Inventory consumption intentionally permits negative balances, and cancellation after preparation does not automatically restore stock. EUR is the only supported settlement currency. ADMIN remains the only application authority; operational staff roles are scheduling data only. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
+There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, unit conversion, stock transfers, payroll, salary management, time clock, attendance, timesheets, recurring availability, shift swaps, employee self-service, account provisioning, labor-law engine, automatic scheduling, staffing notifications, payment-provider integration, refunds, voids, chargebacks, taxation, discounting, tipping, durable external messaging, or customer ordering. Phase 9 reporting is read-only operational analytics over existing application data; it is not formal accounting, tax or VAT reporting, payroll, forecasting, or external BI. The system assumes one logical restaurant and does not hard-delete operational history. Inventory consumption intentionally permits negative balances, and cancellation after preparation does not automatically restore stock. EUR is the only supported settlement currency. ADMIN remains the only application authority; operational staff roles are scheduling data only. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
 
 ## Documentation
 
@@ -242,6 +253,7 @@ There is no public registration, account recovery, user administration, customer
 - [Phase 6 inventory, recipes, suppliers, and purchasing testing](docs/testing/phase-6-inventory-suppliers.md)
 - [Phase 7 employees and staff scheduling testing](docs/testing/phase-7-staff-scheduling.md)
 - [Phase 8 payments, reconciliation, and invoices testing](docs/testing/phase-8-payments-invoices.md)
+- [Phase 9 reports and analytics testing](docs/testing/phase-9-reports-analytics.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign

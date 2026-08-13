@@ -11,6 +11,7 @@ import com.adam.restaurantoperations.reservations.ReservationManagementException
 import com.adam.restaurantoperations.menu.MenuManagementException;
 import com.adam.restaurantoperations.orders.OrderManagementException;
 import com.adam.restaurantoperations.payments.PaymentManagementException;
+import com.adam.restaurantoperations.reports.ReportManagementException;
 import com.adam.restaurantoperations.tables.TableManagementException;
 import com.adam.restaurantoperations.staff.StaffManagementException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
@@ -65,6 +67,13 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(PaymentManagementException.class)
     ResponseEntity<ApiError> handlePaymentManagement(
             PaymentManagementException exception,
+            HttpServletRequest request) {
+        return response(exception.getStatus(), exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(ReportManagementException.class)
+    ResponseEntity<ApiError> handleReportManagement(
+            ReportManagementException exception,
             HttpServletRequest request) {
         return response(exception.getStatus(), exception.getMessage(), request, Map.of());
     }
@@ -112,6 +121,13 @@ public class GlobalExceptionHandler {
             MethodArgumentTypeMismatchException exception,
             HttpServletRequest request) {
         return response(HttpStatus.BAD_REQUEST, "Invalid request parameter", request, Map.of());
+    }
+
+    @ExceptionHandler(MissingServletRequestParameterException.class)
+    ResponseEntity<ApiError> handleMissingRequestParameter(
+            MissingServletRequestParameterException exception,
+            HttpServletRequest request) {
+        return response(HttpStatus.BAD_REQUEST, "Missing required request parameter", request, Map.of());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
