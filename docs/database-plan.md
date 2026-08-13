@@ -34,11 +34,17 @@ V7 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and queue/filter in
 
 `suppliers` and `supplier_inventory_items` store soft-active vendors and exact current per-canonical-unit costs. `purchase_orders` owns its generated number, lifecycle, totals, timestamps, and optimistic version. `purchase_order_items` snapshots inventory labels, unit, quantity, cost, line total, and receipt progress. All V8 structures use InnoDB, `utf8mb4`, `DECIMAL`, checks, restrictive foreign keys, and indexes supporting the implemented filters and lock paths.
 
-## Staff scheduling in progress (Flyway V9)
+## Staff scheduling (Flyway V9)
 
 `employees` stores normalized unique codes, names, minimal optional contact data, a scheduling-domain default operational role, optional employment start date, soft activation, timestamps, and an optimistic version. It stores no password, salary, tax, bank, identity-document, or sensitive HR data and does not require an application user.
 
 `employee_availability` stores removable date-specific UTC windows with `start_at < end_at`, optional bounded notes, restrictive employee ownership, timestamps, and optimistic versions. `shifts` stores the employee, independently assigned operational role, UTC range, `SCHEDULED`, `COMPLETED`, or `CANCELLED` state, bounded notes, lifecycle timestamps, and an optimistic version. V9 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and indexes for employee/date, weekly schedule, role, and status access paths.
+
+## Payments and invoices in progress (Flyway V10)
+
+`payments` is an append-only ledger of confirmed `SUCCEEDED` settlements against an order. It stores exact positive EUR amounts, an allowlisted method, server-generated payment number, required unique idempotency key, optional unique external confirmation reference, actor, and receive time. It deliberately has no card-number, security-code, bank-credential, provider-payload, refund, or reversible-status fields. Order locking serializes balance validation before insert.
+
+`payment_reconciliations` has a unique restrictive payment relationship and stores one immutable reconciliation timestamp, optional bounded reference, and actor. `invoices` has a unique restrictive order relationship and stores server-generated number, exact order totals, currency, issue time, and actor. Ordered `invoice_items` and `invoice_item_modifiers` copy the immutable commercial labels and prices from order snapshots. V10 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and indexes for operational filters.
 
 ## Planned domain relationships
 
@@ -54,7 +60,7 @@ V7 uses InnoDB, `utf8mb4`, checks, restrictive foreign keys, and queue/filter in
 - **Recipes and recipe ingredients:** Phase 6 connects menu items and modifier options to exact inventory usage quantities.
 - **Suppliers:** Phase 6 provides suppliers and current supplier-item pricing; lead times and automated replenishment remain future work.
 - **Stock movements:** Phase 6 implements immutable receipts, usage, waste, and adjustments. Transfers are not implemented.
-- **Payments:** payment records reference orders and preserve amount, currency, method, status, and external reference without storing prohibited card data.
+- **Payments and invoices:** Phase 8 implements immutable confirmed-payment, reconciliation, and invoice-snapshot records without prohibited card data. Refunds, voids, chargebacks, taxes, discounts, and provider payloads remain future work.
 - **Audit logs:** append-focused audit records identify actor, action, entity type, entity identifier, restaurant context, time, and structured details.
 
 Future migrations will be added with the phase that owns the behavior. Indexes will follow verified access patterns; foreign keys will enforce ownership and deletion rules.

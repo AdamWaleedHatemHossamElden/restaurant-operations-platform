@@ -74,6 +74,18 @@ export function DashboardPage() {
 
       <HealthStatus />
 
+      <section className="phase-notice" aria-labelledby="payments-workspace-title">
+        <p className="eyebrow">Phase 8</p>
+        <h2 id="payments-workspace-title">Settle service with an auditable ledger.</h2>
+        <p>
+          Record confirmed EUR payments, reconcile settlement records, and issue immutable invoices
+          from completed order snapshots.
+        </p>
+        <Link className="button button--primary button--link" to="/payments">
+          Open payments workspace
+        </Link>
+      </section>
+
       <section className="phase-notice" aria-labelledby="staff-workspace-title">
         <p className="eyebrow">Phase 7</p>
         <h2 id="staff-workspace-title">Build a conflict-safe weekly schedule.</h2>

@@ -17,6 +17,11 @@ import {
   updateOrderItem,
 } from '../features/orders/ordersApi'
 import type { RestaurantOrder } from '../features/orders/orderTypes'
+import {
+  getOrderPaymentSummary,
+  issueInvoice,
+  recordPayment,
+} from '../features/payments/paymentsApi'
 import { listReservations } from '../features/reservations/reservationsApi'
 import { listTables } from '../features/tables/tablesApi'
 import { OrderDetailPage } from './OrderDetailPage'
@@ -43,6 +48,16 @@ vi.mock('../features/reservations/reservationsApi', () => ({ listReservations: v
 vi.mock('../features/kitchen/kitchenApi', async (importOriginal) => {
   const original = await importOriginal<typeof import('../features/kitchen/kitchenApi')>()
   return { ...original, getKitchenTicketByOrder: vi.fn() }
+})
+vi.mock('../features/payments/paymentsApi', async (importOriginal) => {
+  const original = await importOriginal<typeof import('../features/payments/paymentsApi')>()
+  return {
+    ...original,
+    getInvoice: vi.fn(),
+    getOrderPaymentSummary: vi.fn(),
+    issueInvoice: vi.fn(),
+    recordPayment: vi.fn(),
+  }
 })
 
 const category: MenuCategory = {
@@ -223,6 +238,19 @@ describe('order detail page', () => {
     })
     vi.mocked(updateOrder).mockResolvedValue({ ...order, version: 3 })
     mockedKitchen.mockResolvedValue(null)
+    vi.mocked(getOrderPaymentSummary).mockResolvedValue({
+      orderId: 7,
+      orderNumber: order.orderNumber,
+      orderStatus: 'COMPLETED',
+      currency: 'EUR',
+      orderTotal: '10.00',
+      paidAmount: '0.00',
+      outstandingAmount: '10.00',
+      paymentState: 'UNPAID',
+      invoiceId: null,
+      invoiceNumber: null,
+      payments: [],
+    })
   })
 
   it('renders stored snapshots, menu browser, total, and local status history', async () => {
@@ -402,5 +430,118 @@ describe('order detail page', () => {
     await rendered.client.invalidateQueries({ queryKey: ['kitchen', 'orders', order.id] })
     expect(await screen.findByText('READY')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Complete order' })).toBeEnabled()
+  })
+
+  it('records a completed-order payment with one stable idempotency key', async () => {
+    mockedGet.mockResolvedValue({
+      ...order,
+      status: 'COMPLETED',
+      completedAt: '2030-01-01T10:10:00Z',
+    })
+    vi.mocked(recordPayment).mockResolvedValue({
+      id: 20,
+      paymentNumber: 'PAY-ONE',
+      orderId: 7,
+      orderNumber: order.orderNumber,
+      method: 'CASH',
+      status: 'SUCCEEDED',
+      amount: '10.00',
+      currency: 'EUR',
+      externalReference: null,
+      receivedAt: '2030-01-01T10:11:00Z',
+      actorUserId: 1,
+      reconciliation: null,
+    })
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue('11111111-1111-4111-8111-111111111111')
+
+    renderPage()
+    const user = userEvent.setup()
+    await user.click(await screen.findByRole('button', { name: 'Record confirmed payment' }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).queryByLabelText(/card number/i)).not.toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: 'Record payment' }))
+    await waitFor(() =>
+      expect(recordPayment).toHaveBeenCalledWith(
+        7,
+        { amount: '10.00', method: 'CASH', externalReference: null },
+        '11111111-1111-4111-8111-111111111111',
+      ),
+    )
+    expect(issueInvoice).not.toHaveBeenCalled()
+  })
+
+  it('refetches authoritative payment state after a payment conflict', async () => {
+    mockedGet.mockResolvedValue({
+      ...order,
+      status: 'COMPLETED',
+      subtotal: '30.00',
+      total: '30.00',
+      completedAt: '2030-01-01T10:10:00Z',
+    })
+    vi.mocked(getOrderPaymentSummary)
+      .mockResolvedValueOnce({
+        orderId: 7,
+        orderNumber: order.orderNumber,
+        orderStatus: 'COMPLETED',
+        currency: 'EUR',
+        orderTotal: '30.00',
+        paidAmount: '10.00',
+        outstandingAmount: '20.00',
+        paymentState: 'PARTIALLY_PAID',
+        invoiceId: null,
+        invoiceNumber: null,
+        payments: [],
+      })
+      .mockResolvedValue({
+        orderId: 7,
+        orderNumber: order.orderNumber,
+        orderStatus: 'COMPLETED',
+        currency: 'EUR',
+        orderTotal: '30.00',
+        paidAmount: '25.00',
+        outstandingAmount: '5.00',
+        paymentState: 'PARTIALLY_PAID',
+        invoiceId: null,
+        invoiceNumber: null,
+        payments: [],
+      })
+    vi.mocked(recordPayment).mockRejectedValueOnce({
+      isAxiosError: true,
+      response: {
+        status: 409,
+        data: { message: 'The outstanding amount changed. Review the latest payment summary.' },
+      },
+    })
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue('22222222-2222-4222-8222-222222222222')
+
+    renderPage()
+    const user = userEvent.setup()
+    const paymentSummary = (
+      await screen.findByRole('heading', { name: 'Payment summary' })
+    ).closest('section')!
+    expect(await within(paymentSummary).findByText('€10.00')).toBeInTheDocument()
+    expect(within(paymentSummary).getByText('€20.00')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Record confirmed payment' }))
+    const dialog = screen.getByRole('dialog')
+    await user.click(within(dialog).getByRole('button', { name: 'Record payment' }))
+
+    expect(
+      await within(dialog).findByText(
+        'The outstanding amount changed. Review the latest payment summary.',
+      ),
+    ).toBeInTheDocument()
+    expect(await within(paymentSummary).findByText('€25.00')).toBeInTheDocument()
+    expect(within(paymentSummary).getByText('€5.00')).toBeInTheDocument()
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+    expect(within(dialog).getByLabelText('Amount (EUR)')).toHaveValue('20.00')
+    expect(recordPayment).toHaveBeenCalledTimes(1)
+    expect(recordPayment).toHaveBeenCalledWith(
+      7,
+      { amount: '20.00', method: 'CASH', externalReference: null },
+      '22222222-2222-4222-8222-222222222222',
+    )
+    expect(getOrderPaymentSummary).toHaveBeenCalledTimes(2)
+    expect(issueInvoice).not.toHaveBeenCalled()
   })
 })

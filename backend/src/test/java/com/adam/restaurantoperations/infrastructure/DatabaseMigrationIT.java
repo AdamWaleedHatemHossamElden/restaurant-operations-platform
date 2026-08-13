@@ -41,7 +41,7 @@ class DatabaseMigrationIT {
     @Test
     void startsMySqlAndAppliesAllMigrations() {
         assertThat(MYSQL.isRunning()).isTrue();
-        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("9");
+        assertThat(flyway.info().current().getVersion().getVersion()).isEqualTo("10");
         Integer tableCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.tables "
                         + "WHERE table_schema = DATABASE() AND table_name IN "
@@ -52,9 +52,11 @@ class DatabaseMigrationIT {
                         + "'kitchen_tickets', 'kitchen_ticket_items', 'inventory_items', 'stock_movements', "
                         + "'recipes', 'recipe_ingredients', 'modifier_option_ingredients', 'suppliers', "
                         + "'supplier_inventory_items', 'purchase_orders', 'purchase_order_items', "
-                        + "'employees', 'employee_availability', 'shifts')",
+                        + "'employees', 'employee_availability', 'shifts', 'payments', "
+                        + "'payment_reconciliations', 'invoices', 'invoice_items', "
+                        + "'invoice_item_modifiers')",
                 Integer.class);
-        assertThat(tableCount).isEqualTo(31);
+        assertThat(tableCount).isEqualTo(36);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.columns "
                         + "WHERE table_schema = DATABASE() AND table_name = 'restaurant_tables' "
@@ -105,6 +107,19 @@ class DatabaseMigrationIT {
                         + "('kitchen_tickets', 'kitchen_ticket_items') "
                         + "AND constraint_type IN ('UNIQUE', 'FOREIGN KEY', 'CHECK')",
                 Integer.class)).isGreaterThanOrEqualTo(8);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.columns "
+                        + "WHERE table_schema = DATABASE() AND table_name IN "
+                        + "('payments', 'payment_reconciliations', 'invoices', 'invoice_items', "
+                        + "'invoice_item_modifiers')",
+                Integer.class)).isEqualTo(47);
+        assertThat(jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM information_schema.table_constraints "
+                        + "WHERE table_schema = DATABASE() AND table_name IN "
+                        + "('payments', 'payment_reconciliations', 'invoices', 'invoice_items', "
+                        + "'invoice_item_modifiers') AND constraint_type IN "
+                        + "('UNIQUE', 'FOREIGN KEY', 'CHECK')",
+                Integer.class)).isGreaterThanOrEqualTo(24);
         assertThat(jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM information_schema.columns "
                         + "WHERE table_schema = DATABASE() AND table_name = 'stock_movements' "

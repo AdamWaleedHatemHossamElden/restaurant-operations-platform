@@ -37,6 +37,12 @@ Phase 7 keeps employee identity separate from authentication. Operational roles 
 
 Availability windows and shifts use half-open UTC intervals. Browser-local inputs are converted only at the HTTP boundary. Existing shifts are intentionally not rewritten when availability changes; planned and historical shift state remains explicit and administrator-controlled.
 
+## Payments and invoice transaction boundary
+
+Phase 8 records confirmed settlements; it does not process or authorize funds. A payment command locks the order row, rechecks `COMPLETED`, resolves a required idempotency key, derives successful paid and outstanding totals with `BigDecimal`, and inserts only when the request remains within the outstanding balance. The order row is the common database-backed serialization point for competing payment and invoice commands. A unique idempotency key provides a final retry backstop; identical replay returns the original payment and mismatched replay conflicts.
+
+Reconciliation locks its payment and has one immutable unique child. Invoice issuance locks the same order, requires exact full settlement, and copies existing item and modifier snapshots into a one-per-order invoice aggregate. Concurrent issuance therefore returns the same durable invoice without duplicate audit events. MySQL and REST remain authoritative; the React client holds only one submission idempotency key in component memory and never accepts card credentials.
+
 ## Testing strategy
 
 Fast unit and MVC tests run with the normal Maven lifecycle and do not require Docker. The `integration-test` Maven profile runs Testcontainers MySQL tests for fresh Flyway migration and real locking/concurrency behavior. Frontend behavior is covered with Vitest, React Testing Library, and jsdom; stable vertical workflows are also verified manually in a real browser against the development services.

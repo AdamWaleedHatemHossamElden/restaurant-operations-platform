@@ -24,6 +24,266 @@
   --shadow: 0 24px 70px rgba(31, 42, 34, 0.12);
 }
 
+/* Phase 8 payments, reconciliation, and immutable invoice workspace */
+.payments-heading,
+.order-payment-summary {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 1.25rem;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  min-width: 0;
+  box-sizing: border-box;
+  max-width: 100%;
+  width: 100%;
+}
+
+.payments-page,
+.payment-filters,
+.payment-filters .form-field {
+  min-width: 0;
+}
+
+.payments-page {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.workspace-tabs,
+.payment-filters {
+  box-sizing: border-box;
+  max-width: 100%;
+  width: 100%;
+}
+
+.payment-filters input,
+.payment-filters select {
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
+  width: 100%;
+}
+
+.workspace-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin: 1.25rem 0;
+  overflow-x: auto;
+}
+
+.workspace-tabs button {
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  padding: 0.65rem 1rem;
+  white-space: nowrap;
+}
+
+.workspace-tabs button.is-active {
+  background: var(--ink, #18201c);
+  color: white;
+}
+
+.payment-filters {
+  align-items: end;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(13rem, 2fr) repeat(4, minmax(9rem, 1fr));
+  margin-bottom: 1.25rem;
+}
+
+.payment-table td:first-child,
+.invoice-card div {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.payments-page .data-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.payment-table small,
+.invoice-card time,
+.invoice-line small,
+.invoice-line span {
+  color: var(--muted);
+  display: block;
+}
+
+.status-chip,
+.payment-state {
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.35rem 0.65rem;
+  text-transform: uppercase;
+}
+
+.status-chip--positive,
+.payment-state--paid {
+  background: #def7e8;
+  color: #17633b;
+}
+
+.payment-state--partially_paid {
+  background: #fff1c7;
+  color: #75500a;
+}
+
+.payment-state--unpaid {
+  background: #f2e8e3;
+  color: #7b342c;
+}
+
+.invoice-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+}
+
+.invoice-card {
+  align-items: end;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+}
+
+.invoice-view,
+.order-payment-summary {
+  margin-top: 1.5rem;
+}
+
+.invoice-view__actions {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: flex-end;
+  margin-bottom: 1rem;
+}
+
+.invoice-document {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  color: #18201c;
+  margin-inline: auto;
+  max-width: 52rem;
+  padding: clamp(1.25rem, 4vw, 3rem);
+}
+
+.invoice-document > header,
+.invoice-document > footer,
+.invoice-line,
+.payment-history > div {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.invoice-document > header div:last-child,
+.invoice-document > footer {
+  text-align: right;
+}
+
+.invoice-document time {
+  display: block;
+}
+
+.invoice-lines {
+  border-block: 1px solid var(--line);
+  margin-block: 2rem;
+}
+
+.invoice-line,
+.payment-history > div {
+  padding: 1rem 0;
+}
+
+.invoice-line + .invoice-line,
+.payment-history > div + div {
+  border-top: 1px solid var(--line);
+}
+
+.payment-summary-values {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+.payment-summary-values div {
+  background: var(--background, #f7f4ef);
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+.payment-summary-values dd {
+  font-size: 1.25rem;
+  font-weight: 800;
+  margin: 0.25rem 0 0;
+}
+
+.payment-history {
+  margin-block: 1rem;
+}
+
+.payment-history span {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.payment-dialog {
+  max-width: 34rem;
+}
+
+@media (max-width: 800px) {
+  .payment-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .payment-filters,
+  .payment-summary-values {
+    grid-template-columns: 1fr;
+  }
+
+  .invoice-document > header,
+  .invoice-document > footer,
+  .invoice-line,
+  .payment-history > div {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .invoice-document > header div:last-child,
+  .invoice-document > footer {
+    text-align: left;
+  }
+}
+
+@media print {
+  .site-header,
+  .site-footer,
+  .invoice-view__actions,
+  .payments-page > :not(.invoice-view),
+  .order-detail-page > :not(.order-payment-summary),
+  .order-payment-summary > :not(.invoice-view) {
+    display: none !important;
+  }
+
+  .invoice-document {
+    border: 0;
+    max-width: none;
+    padding: 0;
+  }
+}
+
 /* Phase 4B order management */
 .orders-page,
 .order-detail-page {

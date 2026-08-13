@@ -1,6 +1,6 @@
 # Restaurant Operations Platform
 
-A modern full-stack restaurant operations platform. Phases 1 through 6 are merged into `main`; the current unmerged `phase-7-staff-scheduling` branch adds employees, date-specific availability, and conflict-safe weekly scheduling.
+A modern full-stack restaurant operations platform. Phases 1 through 7 are merged into `main`; the current unmerged `phase-8-payments-invoices` branch adds confirmed-payment recording, reconciliation, and immutable invoice snapshots.
 
 ## Current status
 
@@ -36,6 +36,8 @@ A modern full-stack restaurant operations platform. Phases 1 through 6 are merge
 - Exact supplier pricing snapshots, partial receiving, concurrency-safe final receipts, and a responsive protected inventory workspace
 - ADMIN-only employee records, scheduling-domain operational roles, date-specific availability, and terminal shift lifecycle
 - MySQL-serialized availability and shift overlap protection with a responsive protected weekly staff workspace
+- ADMIN-only confirmed EUR payments with partial and split settlement, stable idempotency keys, and overpayment protection
+- Immutable one-time reconciliation and invoice snapshots, plus responsive payment, invoice, and order-detail settlement views
 
 ## Technology stack
 
@@ -213,9 +215,15 @@ Authenticated administrators can open `/staff` for employee records, exact avail
 
 Availability and shift timestamps are stored as UTC instants and converted at the browser boundary. New scheduled shifts must fit completely inside one date-specific availability window and cannot overlap another non-cancelled shift under half-open `[start, end)` rules. MySQL write-locks the employee before availability and shift checks, so concurrent contenders serialize as one success and one safe conflict. Availability changes preserve existing shifts. Employees with future scheduled shifts cannot be deactivated until those shifts are cancelled or completed. Shifts progress only from `SCHEDULED` to `COMPLETED` or `CANCELLED`; terminal shifts remain read-only.
 
+## Payments, reconciliation, and invoices
+
+Authenticated administrators can open `/payments` or a completed order to record money already confirmed outside the platform. Payments use exact `DECIMAL(12,2)` EUR amounts and the methods `CASH`, `CARD`, `BANK_TRANSFER`, and `OTHER`; the API accepts a confirmation reference but no card number, security code, bank credential, or provider payload. The server derives unpaid, partially paid, and paid state from immutable successful records. A required `Idempotency-Key` makes safe retries return the original record, while reuse with another payload fails safely.
+
+Payment creation locks the order before deriving its remaining balance, so simultaneous final-payment attempts cannot overpay it. Reconciliation is an immutable, one-per-payment confirmation against an external report or cash drawer. A fully paid completed order can issue exactly one immutable invoice whose lines and modifiers are copied from the order's existing commercial snapshots. The `/payments` workspace provides searchable payment, reconciliation, and invoice tabs; invoice views are print-friendly and the browser generates no payment identifiers beyond a per-submission idempotency key.
+
 ## Current limitations
 
-There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, unit conversion, stock transfers, payroll, salary management, time clock, attendance, timesheets, recurring availability, shift swaps, employee self-service, account provisioning, labor-law engine, automatic scheduling, staffing notifications, payment, taxation, discounting, tipping, invoicing, durable external messaging, customer ordering, or reporting feature. The system assumes one logical restaurant and does not hard-delete operational history. Inventory consumption intentionally permits negative balances, and cancellation after preparation does not automatically restore stock. EUR is the single display currency until restaurant configuration and payment phases define currency ownership. ADMIN remains the only application authority; Phase 7 operational roles are scheduling data only. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
+There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, unit conversion, stock transfers, payroll, salary management, time clock, attendance, timesheets, recurring availability, shift swaps, employee self-service, account provisioning, labor-law engine, automatic scheduling, staffing notifications, payment-provider integration, refunds, voids, chargebacks, taxation, discounting, tipping, durable external messaging, customer ordering, or reporting feature. The system assumes one logical restaurant and does not hard-delete operational history. Inventory consumption intentionally permits negative balances, and cancellation after preparation does not automatically restore stock. EUR is the only supported settlement currency. ADMIN remains the only application authority; operational staff roles are scheduling data only. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
 
 ## Documentation
 
@@ -233,6 +241,7 @@ There is no public registration, account recovery, user administration, customer
 - [Phase 5 kitchen and real-time testing](docs/testing/phase-5-kitchen-realtime.md)
 - [Phase 6 inventory, recipes, suppliers, and purchasing testing](docs/testing/phase-6-inventory-suppliers.md)
 - [Phase 7 employees and staff scheduling testing](docs/testing/phase-7-staff-scheduling.md)
+- [Phase 8 payments, reconciliation, and invoices testing](docs/testing/phase-8-payments-invoices.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign
