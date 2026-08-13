@@ -74,6 +74,18 @@ export function DashboardPage() {
 
       <HealthStatus />
 
+      <section className="phase-notice" aria-labelledby="reports-workspace-title">
+        <p className="eyebrow">Phase 9</p>
+        <h2 id="reports-workspace-title">Turn operations into trustworthy decisions.</h2>
+        <p>
+          Compare completed sales, payments, reservations, kitchen throughput, stock movement, and
+          scheduled labor across one consistent reporting period.
+        </p>
+        <Link className="button button--primary button--link" to="/reports">
+          Open reports workspace
+        </Link>
+      </section>
+
       <section className="phase-notice" aria-labelledby="payments-workspace-title">
         <p className="eyebrow">Phase 8</p>
         <h2 id="payments-workspace-title">Settle service with an auditable ledger.</h2>

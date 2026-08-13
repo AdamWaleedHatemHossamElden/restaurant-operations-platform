@@ -82,6 +82,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/staff", "/api/v1/staff/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/payments", "/api/v1/payments/**").hasRole("ADMIN")
                         .requestMatchers("/api/v1/invoices", "/api/v1/invoices/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/reports", "/api/v1/reports/**").hasRole("ADMIN")
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").denyAll()
                         .anyRequest().denyAll());
         return http.build();
@@ -110,6 +111,7 @@ public class SecurityConfig {
                 "Idempotency-Key",
                 AuthProperties.CSRF_HEADER_NAME));
         configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("Content-Disposition"));
         configuration.setMaxAge(3600L);
 
         var source = new UrlBasedCorsConfigurationSource();

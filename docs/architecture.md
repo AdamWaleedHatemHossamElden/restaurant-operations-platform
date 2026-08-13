@@ -43,6 +43,12 @@ Phase 8 records confirmed settlements; it does not process or authorize funds. A
 
 Reconciliation locks its payment and has one immutable unique child. Invoice issuance locks the same order, requires exact full settlement, and copies existing item and modifier snapshots into a one-per-order invoice aggregate. Concurrent issuance therefore returns the same durable invoice without duplicate audit events. MySQL and REST remain authoritative; the React client holds only one submission idempotency key in component memory and never accepts card credentials.
 
+## Reporting boundary
+
+Phase 9 is a read-only projection module over the existing MySQL system of record. `JdbcTemplate` aggregation queries return purpose-built DTOs without JPA entity hydration, N+1 traversal, report tables, ETL, caches, or write locks. Every range is a required, maximum-366-day `[from,to)` UTC interval. DAY, WEEK, and MONTH are allowlisted UTC SQL buckets; bounded top rankings use deterministic secondary ordering.
+
+Completed-order reporting uses immutable order totals and `completed_at`; payment reporting separately uses successful payment amounts and `received_at`. Menu history uses immutable order-item labels and prices. Current inventory state is explicitly separated from range movement, and quantities are never aggregated across canonical units. Report GETs are transactionally read-only and do not write audit events or mutate business records.
+
 ## Testing strategy
 
 Fast unit and MVC tests run with the normal Maven lifecycle and do not require Docker. The `integration-test` Maven profile runs Testcontainers MySQL tests for fresh Flyway migration and real locking/concurrency behavior. Frontend behavior is covered with Vitest, React Testing Library, and jsdom; stable vertical workflows are also verified manually in a real browser against the development services.

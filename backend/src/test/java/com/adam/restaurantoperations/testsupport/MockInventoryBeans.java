@@ -16,6 +16,8 @@ import com.adam.restaurantoperations.inventory.SupplierService;
 import com.adam.restaurantoperations.staff.StaffService;
 import com.adam.restaurantoperations.payments.InvoiceService;
 import com.adam.restaurantoperations.payments.PaymentService;
+import com.adam.restaurantoperations.reports.CsvExporter;
+import com.adam.restaurantoperations.reports.ReportService;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 @Target(ElementType.TYPE)
@@ -31,7 +33,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
     StaffAuditService.class,
     PaymentService.class,
     InvoiceService.class,
-    PaymentAuditService.class
+    PaymentAuditService.class,
+    ReportService.class,
+    CsvExporter.class
 })
 public @interface MockInventoryBeans {
 }

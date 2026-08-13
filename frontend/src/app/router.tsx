@@ -14,6 +14,7 @@ import { PaymentsPage } from '../pages/PaymentsPage'
 import { ReservationsPage } from '../pages/ReservationsPage'
 import { TablesPage } from '../pages/TablesPage'
 import { StaffPage } from '../pages/StaffPage'
+import { ReportsPage } from '../pages/ReportsPage'
 
 export const routes: RouteObject[] = [
   {
@@ -38,6 +39,7 @@ export const routes: RouteObject[] = [
           { path: 'kitchen', element: <KitchenPage /> },
           { path: 'inventory', element: <InventoryPage /> },
           { path: 'staff', element: <StaffPage /> },
+          { path: 'reports', element: <ReportsPage /> },
           { path: '*', element: <NotFoundPage /> },
         ],
       },

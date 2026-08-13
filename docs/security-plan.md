@@ -30,6 +30,8 @@ Employee, availability, and shift mutations serialize through a pessimistic empl
 
 Phase 8 requires authenticated `ADMIN` authority for every `/api/v1/payments/**` and `/api/v1/invoices/**` operation. Payment DTOs accept only amount, allowlisted method, and optional external confirmation reference; no raw card, bank credential, provider payload, credential, token, or cookie field exists. Exact money validation, order-row locks, immutable records, required idempotency, restrictive foreign keys, and uniqueness constraints enforce retry and concurrency safety. Payment, reconciliation, and invoice audits contain action, actor, entity identifiers, timestamp, and source IP but omit full payloads and external references.
 
+Phase 9 requires authenticated `ADMIN` authority for every `/api/v1/reports/**` operation. Operational scheduling roles do not grant report access. Purpose-built DTOs and exports omit guest contact data, employee contacts, supplier contacts, raw payment references, request bodies, credentials, tokens, and cookies. Reports are transactionally read-only and use bounded ranges and allowlisted grouping/ranking inputs. CSV export quotes every cell and prefixes values beginning with spreadsheet formula markers (`=`, `+`, `-`, or `@`) so user-controlled labels cannot execute as formulas.
+
 ## Remaining controls
 
 - Apply role-based authorization at request and application-service boundaries; restaurant scope must be checked independently of role.
