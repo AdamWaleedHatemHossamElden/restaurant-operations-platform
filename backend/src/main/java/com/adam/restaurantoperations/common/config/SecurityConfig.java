@@ -80,6 +80,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/purchase-orders", "/api/v1/purchase-orders/**")
                         .hasRole("ADMIN")
                         .requestMatchers("/api/v1/staff", "/api/v1/staff/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/payments", "/api/v1/payments/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/invoices", "/api/v1/invoices/**").hasRole("ADMIN")
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").denyAll()
                         .anyRequest().denyAll());
         return http.build();
@@ -105,6 +107,7 @@ public class SecurityConfig {
                 "Authorization",
                 "Content-Type",
                 "Accept",
+                "Idempotency-Key",
                 AuthProperties.CSRF_HEADER_NAME));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);

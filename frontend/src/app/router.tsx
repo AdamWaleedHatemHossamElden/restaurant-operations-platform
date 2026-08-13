@@ -10,6 +10,7 @@ import { MenuPage } from '../pages/MenuPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
 import { OrderDetailPage } from '../pages/OrderDetailPage'
 import { OrdersPage } from '../pages/OrdersPage'
+import { PaymentsPage } from '../pages/PaymentsPage'
 import { ReservationsPage } from '../pages/ReservationsPage'
 import { TablesPage } from '../pages/TablesPage'
 import { StaffPage } from '../pages/StaffPage'
@@ -33,6 +34,7 @@ export const routes: RouteObject[] = [
           { path: 'menu', element: <MenuPage /> },
           { path: 'orders', element: <OrdersPage /> },
           { path: 'orders/:orderId', element: <OrderDetailPage /> },
+          { path: 'payments', element: <PaymentsPage /> },
           { path: 'kitchen', element: <KitchenPage /> },
           { path: 'inventory', element: <InventoryPage /> },
           { path: 'staff', element: <StaffPage /> },

@@ -214,6 +214,15 @@ class AuthenticationControllerSecurityTest {
                         HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
                         org.hamcrest.Matchers.containsString("X-CSRF-Protection")));
 
+        mockMvc.perform(options("/api/v1/payments/orders/1")
+                        .header(HttpHeaders.ORIGIN, "http://localhost:5173")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")
+                        .header(HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS, "Idempotency-Key"))
+                .andExpect(status().isOk())
+                .andExpect(header().string(
+                        HttpHeaders.ACCESS_CONTROL_ALLOW_HEADERS,
+                        org.hamcrest.Matchers.containsString("Idempotency-Key")));
+
         mockMvc.perform(options("/api/v1/auth/refresh")
                         .header(HttpHeaders.ORIGIN, "https://evil.example")
                         .header(HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, "POST")

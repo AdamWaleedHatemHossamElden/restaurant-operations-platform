@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import axios from 'axios'
 import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
@@ -27,6 +28,17 @@ import type {
 } from '../features/orders/orderTypes'
 import { listReservations } from '../features/reservations/reservationsApi'
 import { listTables } from '../features/tables/tablesApi'
+import { InvoiceDocument, RecordPaymentDialog } from '../features/payments/PaymentDialogs'
+import {
+  getInvoice,
+  getOrderPaymentSummary,
+  invoiceKeys,
+  issueInvoice,
+  paymentKeys,
+  paymentRequestError,
+  recordPayment,
+} from '../features/payments/paymentsApi'
+import type { PaymentInput } from '../features/payments/paymentTypes'
 
 type ItemEditor = { menuItem: MenuItem; orderItem: OrderItem | null }
 
@@ -58,6 +70,9 @@ export function OrderDetailPage() {
   const [editingDetails, setEditingDetails] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
+  const [paymentKey, setPaymentKey] = useState<string | null>(null)
+  const [showInvoice, setShowInvoice] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
 
   const orderQuery = useQuery({
     queryKey: orderKeys.detail(id),
@@ -91,6 +106,16 @@ export function OrderDetailPage() {
   const reservationsQuery = useQuery({
     queryKey: ['reservations', 'seated-order-options'],
     queryFn: () => listReservations({ status: 'SEATED', sortBy: 'startAt', direction: 'ASC' }),
+  })
+  const paymentSummaryQuery = useQuery({
+    queryKey: paymentKeys.summary(id),
+    queryFn: () => getOrderPaymentSummary(id),
+    enabled: Number.isInteger(id) && id > 0 && orderQuery.data?.status === 'COMPLETED',
+  })
+  const invoiceQuery = useQuery({
+    queryKey: invoiceKeys.detail(paymentSummaryQuery.data?.invoiceId ?? 0),
+    queryFn: () => getInvoice(paymentSummaryQuery.data!.invoiceId!),
+    enabled: showInvoice && Boolean(paymentSummaryQuery.data?.invoiceId),
   })
 
   const availableItems = useMemo(
@@ -174,6 +199,38 @@ export function OrderDetailPage() {
       setNotice(`Order is now ${order.status}.`)
     },
     onError: (error) => setNotice(orderRequestError(error)),
+  })
+  const paymentMutation = useMutation({
+    mutationFn: ({ input, key }: { input: PaymentInput; key: string }) =>
+      recordPayment(id, input, key),
+    onSuccess: async () => {
+      setPaymentKey(null)
+      setPaymentError(null)
+      setNotice('Confirmed payment recorded. The outstanding amount was recalculated.')
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: paymentKeys.all }),
+        queryClient.invalidateQueries({ queryKey: paymentKeys.summary(id) }),
+      ])
+    },
+    onError: async (error) => {
+      setPaymentError(paymentRequestError(error))
+      if (axios.isAxiosError(error) && error.response?.status === 409) {
+        await queryClient.invalidateQueries({ queryKey: paymentKeys.summary(id) })
+      }
+    },
+  })
+  const invoiceMutation = useMutation({
+    mutationFn: () => issueInvoice(id),
+    onSuccess: async (invoice) => {
+      queryClient.setQueryData(invoiceKeys.detail(invoice.id), invoice)
+      setShowInvoice(true)
+      setNotice('Immutable invoice issued from the order snapshots.')
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: invoiceKeys.all }),
+        queryClient.invalidateQueries({ queryKey: paymentKeys.summary(id) }),
+      ])
+    },
+    onError: (error) => setNotice(paymentRequestError(error)),
   })
 
   if (!Number.isInteger(id) || id <= 0)
@@ -289,6 +346,133 @@ export function OrderDetailPage() {
           </button>
         </div>
       )}
+
+      <section className="order-payment-summary" aria-labelledby="order-payment-title">
+        <div className="order-section-heading">
+          <div>
+            <p className="eyebrow">Settlement</p>
+            <h2 id="order-payment-title">Payment summary</h2>
+          </div>
+          {paymentSummaryQuery.data && (
+            <span
+              className={`payment-state payment-state--${paymentSummaryQuery.data.paymentState.toLowerCase()}`}
+            >
+              {paymentSummaryQuery.data.paymentState.replace('_', ' ')}
+            </span>
+          )}
+        </div>
+        {order.status !== 'COMPLETED' && (
+          <p>
+            Payments and invoices become available after the order reaches COMPLETED. This order
+            remains read-only for settlement.
+          </p>
+        )}
+        {order.status === 'COMPLETED' && paymentSummaryQuery.isPending && (
+          <div className="table-state">Loading payment summary&hellip;</div>
+        )}
+        {order.status === 'COMPLETED' && paymentSummaryQuery.isError && (
+          <div className="table-state table-state--error" role="alert">
+            Payment summary could not be loaded.
+          </div>
+        )}
+        {paymentSummaryQuery.data && (
+          <>
+            <dl className="payment-summary-values">
+              <div>
+                <dt>Order total</dt>
+                <dd>{formatEur(paymentSummaryQuery.data.orderTotal)}</dd>
+              </div>
+              <div>
+                <dt>Paid</dt>
+                <dd>{formatEur(paymentSummaryQuery.data.paidAmount)}</dd>
+              </div>
+              <div>
+                <dt>Outstanding</dt>
+                <dd>{formatEur(paymentSummaryQuery.data.outstandingAmount)}</dd>
+              </div>
+            </dl>
+            <div className="payment-history">
+              {paymentSummaryQuery.data.payments.length === 0 ? (
+                <p>No confirmed payments recorded.</p>
+              ) : (
+                paymentSummaryQuery.data.payments.map((payment) => (
+                  <div key={payment.id}>
+                    <span>
+                      <strong>{payment.paymentNumber}</strong>
+                      <small>
+                        {payment.method.replace('_', ' ')} ·{' '}
+                        {new Date(payment.receivedAt).toLocaleString()}
+                      </small>
+                    </span>
+                    <strong>{formatEur(payment.amount)}</strong>
+                  </div>
+                ))
+              )}
+            </div>
+            <div className="order-detail-actions">
+              {paymentSummaryQuery.data.paymentState !== 'PAID' && (
+                <button
+                  className="button button--primary"
+                  type="button"
+                  onClick={() => {
+                    setPaymentError(null)
+                    setPaymentKey(crypto.randomUUID())
+                  }}
+                >
+                  Record confirmed payment
+                </button>
+              )}
+              {paymentSummaryQuery.data.paymentState === 'PAID' &&
+                !paymentSummaryQuery.data.invoiceId && (
+                  <button
+                    className="button button--primary"
+                    type="button"
+                    disabled={invoiceMutation.isPending}
+                    onClick={() => invoiceMutation.mutate()}
+                  >
+                    {invoiceMutation.isPending ? 'Issuing…' : 'Issue invoice'}
+                  </button>
+                )}
+              {paymentSummaryQuery.data.invoiceId && (
+                <button
+                  className="button button--secondary"
+                  type="button"
+                  onClick={() => setShowInvoice(true)}
+                >
+                  View {paymentSummaryQuery.data.invoiceNumber}
+                </button>
+              )}
+              <Link className="button button--secondary button--link" to="/payments">
+                Payments workspace
+              </Link>
+            </div>
+          </>
+        )}
+        {showInvoice && invoiceQuery.isPending && (
+          <div className="table-state">Loading invoice&hellip;</div>
+        )}
+        {showInvoice && invoiceQuery.data && (
+          <div className="invoice-view">
+            <div className="invoice-view__actions">
+              <button
+                className="button button--secondary"
+                type="button"
+                onClick={() => setShowInvoice(false)}
+              >
+                Hide invoice
+              </button>
+              <button
+                className="button button--primary"
+                type="button"
+                onClick={() => window.print()}
+              >
+                Print invoice
+              </button>
+            </div>
+            <InvoiceDocument invoice={invoiceQuery.data} />
+          </div>
+        )}
+      </section>
 
       <div className="order-capture-layout">
         <section className="menu-browser" aria-labelledby="menu-browser-title">
@@ -444,7 +628,7 @@ export function OrderDetailPage() {
             </div>
           </dl>
           <p className="field-hint">
-            Taxes, discounts, tips, and payments are not part of Phase 4B.
+            Taxes, discounts, and tips are not included. Payment totals remain server-authoritative.
           </p>
         </section>
       </div>
@@ -505,6 +689,21 @@ export function OrderDetailPage() {
               await detailsMutation.mutateAsync({ order, values })
             } catch {
               /* safe error is shown */
+            }
+          }}
+        />
+      )}
+      {paymentKey && paymentSummaryQuery.data && (
+        <RecordPaymentDialog
+          outstanding={paymentSummaryQuery.data.outstandingAmount}
+          pending={paymentMutation.isPending}
+          error={paymentError}
+          onClose={() => setPaymentKey(null)}
+          onSave={async (input) => {
+            try {
+              await paymentMutation.mutateAsync({ input, key: paymentKey })
+            } catch {
+              /* safe error is shown and the same idempotency key is retained */
             }
           }}
         />

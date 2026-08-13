@@ -23,6 +23,6 @@ The modular monolith is planned around `auth`, `users`, `employees`, `tables`, `
 
 ## Current delivery boundary
 
-Phases 1 through 6 are merged. Phase 7 is current unmerged work on `phase-7-staff-scheduling`. It adds ADMIN-only employee records, scheduling-domain operational roles, date-specific availability, weekly shift planning, overlap protection, controlled completion/cancellation, audit, and responsive staff views.
+Phases 1 through 7 are merged. Phase 8 is current unmerged work on `phase-8-payments-invoices`. It adds ADMIN-only recording of already-confirmed EUR payments, derived settlement state, immutable one-time reconciliation, paid-order invoice snapshots, concurrency-safe idempotency and overpayment protection, audit, and responsive settlement views.
 
-Phase 7 intentionally keeps employees separate from authentication users. Operational roles do not grant authorities, and availability is date-specific rather than recurring. Payroll, salaries, tax or bank data, benefits, leave balances, time clocks, attendance, timesheets, overtime and labor-law rules, shift swaps, employee self-service, user-account provisioning, notifications, automatic scheduling, forecasts, and multi-location staffing remain outside scope.
+Phase 8 intentionally does not process funds or collect card/bank credentials. Payment-provider integrations, authorization and capture, refunds, voids, chargebacks, taxes, discounts, tips, configurable currencies, accounting exports, fiscal numbering, and jurisdiction-specific invoice compliance remain outside scope.

@@ -28,6 +28,8 @@ Phase 7 requires authenticated `ADMIN` authority for every `/api/v1/staff/**` op
 
 Employee, availability, and shift mutations serialize through a pessimistic employee-row lock. Multi-resource validation follows `employee → availability → shifts`; half-open overlap checks and availability containment run while those locks are held. Optimistic versions reject stale writes, and database uniqueness/check/foreign-key constraints provide final backstops. Staff audits store action, actor, entity identifiers, employee code or operational status where useful, timestamp, and source IP. They exclude full request bodies, contact details, notes, credentials, tokens, and cookies.
 
+Phase 8 requires authenticated `ADMIN` authority for every `/api/v1/payments/**` and `/api/v1/invoices/**` operation. Payment DTOs accept only amount, allowlisted method, and optional external confirmation reference; no raw card, bank credential, provider payload, credential, token, or cookie field exists. Exact money validation, order-row locks, immutable records, required idempotency, restrictive foreign keys, and uniqueness constraints enforce retry and concurrency safety. Payment, reconciliation, and invoice audits contain action, actor, entity identifiers, timestamp, and source IP but omit full payloads and external references.
+
 ## Remaining controls
 
 - Apply role-based authorization at request and application-service boundaries; restaurant scope must be checked independently of role.
