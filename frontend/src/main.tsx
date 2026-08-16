@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { QueryClientProvider } from '@tanstack/react-query'
 
 import { App } from './app/App'
+import { AppErrorBoundary } from './app/AppErrorBoundary'
 import { queryClient } from './app/queryClient'
 import './styles/global.css'
 import './styles/design-system.css'
@@ -15,8 +16,10 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
+    <AppErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </AppErrorBoundary>
   </StrictMode>,
 )

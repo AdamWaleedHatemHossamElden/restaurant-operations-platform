@@ -12,13 +12,17 @@ type Options = {
   onStateChange: (state: KitchenConnectionState) => void
 }
 
-function websocketUrl() {
-  const url = new URL(env.VITE_API_BASE_URL)
+export function deriveKitchenWebSocketUrl(apiBaseUrl: string) {
+  const url = new URL(apiBaseUrl)
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
   url.pathname = `${url.pathname.replace(/\/api\/v1\/?$/, '')}/ws`
   url.search = ''
   url.hash = ''
   return url.toString()
+}
+
+function websocketUrl() {
+  return deriveKitchenWebSocketUrl(env.VITE_API_BASE_URL)
 }
 
 function tokenExpiry(token: string) {

@@ -1,0 +1,48 @@
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  flyway:
+    locations: classpath:db/migration
+
+server:
+  forward-headers-strategy: framework
+  error:
+    include-binding-errors: never
+    include-exception: false
+    include-message: never
+    include-stacktrace: never
+
+app:
+  frontend-origin: ${FRONTEND_ORIGIN}
+  auth:
+    jwt-secret: ${JWT_SECRET}
+    cookie-secure: true
+    cookie-same-site: ${AUTH_COOKIE_SAME_SITE:Lax}
+    bootstrap-email: ""
+    bootstrap-password: ""
+    bootstrap-display-name: ""
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: never
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false
+
+logging:
+  level:
+    root: INFO
+    com.adam.restaurantoperations: INFO
+    org.springframework.security: WARN

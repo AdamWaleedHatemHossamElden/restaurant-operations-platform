@@ -1,0 +1,16 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+target
+*.log
+logs
+.idea
+.vscode
+*.iml
+test-results
+coverage
+tmp
+*.tmp
+*.temp

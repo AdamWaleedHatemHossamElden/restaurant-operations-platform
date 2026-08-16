@@ -91,11 +91,13 @@ class DevelopmentAdminBootstrapTest {
     }
 
     @Test
-    void bootstrapBeanIsAbsentFromDefaultAndTestProfiles() {
+    void bootstrapBeanIsAbsentFromDefaultTestAndProductionProfiles() {
         var contextRunner = new ApplicationContextRunner().withUserConfiguration(BootstrapOnlyConfiguration.class);
 
         contextRunner.run(context -> assertThat(context).doesNotHaveBean(DevelopmentAdminBootstrap.class));
         contextRunner.withPropertyValues("spring.profiles.active=test")
+                .run(context -> assertThat(context).doesNotHaveBean(DevelopmentAdminBootstrap.class));
+        contextRunner.withPropertyValues("spring.profiles.active=prod")
                 .run(context -> assertThat(context).doesNotHaveBean(DevelopmentAdminBootstrap.class));
     }
 
