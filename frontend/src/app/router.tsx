@@ -4,17 +4,19 @@ import { AppLayout } from '../components/layout/AppLayout'
 import { AnonymousOnlyRoute, ProtectedRoute } from '../features/auth/AuthRoutes'
 import { DashboardPage } from '../pages/DashboardPage'
 import { LoginPage } from '../pages/LoginPage'
-import { KitchenPage } from '../pages/KitchenPage'
-import { InventoryPage } from '../pages/InventoryPage'
-import { MenuPage } from '../pages/MenuPage'
 import { NotFoundPage } from '../pages/NotFoundPage'
-import { OrderDetailPage } from '../pages/OrderDetailPage'
-import { OrdersPage } from '../pages/OrdersPage'
-import { PaymentsPage } from '../pages/PaymentsPage'
-import { ReservationsPage } from '../pages/ReservationsPage'
-import { TablesPage } from '../pages/TablesPage'
-import { StaffPage } from '../pages/StaffPage'
-import { ReportsPage } from '../pages/ReportsPage'
+import {
+  InventoryPage,
+  KitchenPage,
+  MenuPage,
+  OrderDetailPage,
+  OrdersPage,
+  PaymentsPage,
+  ReportsPage,
+  ReservationsPage,
+  StaffPage,
+  TablesPage,
+} from './deferredPages'
 
 export const routes: RouteObject[] = [
   {

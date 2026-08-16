@@ -1,6 +1,6 @@
 # Restaurant Operations Platform
 
-A modern full-stack restaurant operations platform. Phases 1 through 8 are merged into `main`; the current unmerged `phase-9-reports-analytics` branch adds read-only operational reporting and safe CSV exports.
+A modern full-stack restaurant operations platform. Phases 1 through 10 are merged into `main`; Phase 11A production-readiness work is in progress on `phase-11-finalization`. The application is not deployed yet.
 
 ## Current status
 
@@ -40,6 +40,8 @@ A modern full-stack restaurant operations platform. Phases 1 through 8 are merge
 - Immutable one-time reconciliation and invoice snapshots, plus responsive payment, invoice, and order-detail settlement views
 - ADMIN-only read-only reports for completed orders, menu performance, payments, reservations, kitchen, inventory, and staff
 - Half-open bounded reporting periods, UTC time-series aggregation, accessible summaries, and formula-safe CSV exports
+- Ember design system, responsive application shell, accessible dialogs, and route-level production code splitting
+- GitHub Actions quality gates, weekly dependency updates, an explicit production profile, and a non-root backend image
 
 ## Technology stack
 
@@ -47,7 +49,7 @@ Frontend: React 19, TypeScript, Vite, React Router, TanStack Query, Axios, React
 
 Backend: Java 21, Spring Boot 4.1, Maven Wrapper, Spring MVC, Spring Data JPA, Spring Security, Bean Validation, MySQL Connector/J, Flyway, Spring WebSocket, Actuator, Springdoc OpenAPI, JUnit 5, Mockito, Spring Boot Test, and Testcontainers MySQL.
 
-Infrastructure: Docker Compose and MySQL 8.4 using InnoDB, `utf8mb4`, UTC, a persistent named volume, and a health check.
+Infrastructure: GitHub Actions, Dependabot, a multi-stage backend Docker image, and Docker Compose with MySQL 8.4 using InnoDB, `utf8mb4`, UTC, a persistent named volume, and a health check.
 
 ## Project structure
 
@@ -76,7 +78,7 @@ A global Maven installation is not required; use the included wrapper.
 ## Environment setup
 
 1. Copy `.env.example` to `.env` and replace both example database passwords for local use.
-2. Copy `frontend/.env.example` to `frontend/.env.local` if the API does not use the default `http://localhost:8080/api/v1` URL. Set `VITE_API_BASE_URL` to the API's versioned base URL; do not place secrets in any `VITE_` variable because Vite exposes them to browser code.
+2. Copy `frontend/.env.example` to `frontend/.env.local` if the API does not use the development default `http://localhost:8080/api/v1`. Production builds require `VITE_API_BASE_URL`. Do not place secrets in any `VITE_` variable because Vite exposes them to browser code.
 3. Set backend variables if their defaults do not match your local environment:
    - `MYSQL_HOST_PORT` (defaults to `3307` for the host; MySQL remains on `3306` inside the container)
    - `DB_URL`
@@ -135,7 +137,7 @@ The backend has development-only fallbacks, but explicit environment variables a
 From `frontend/`:
 
 ```powershell
-npm install
+npm ci
 npm run format:check
 npm run lint
 npm test
@@ -143,7 +145,15 @@ npm run build
 npm run dev
 ```
 
-The frontend starts at `http://localhost:5173`. Vite uses `VITE_API_BASE_URL` when present and otherwise calls `http://localhost:8080/api/v1`.
+The frontend starts at `http://localhost:5173`. Development defaults to `http://localhost:8080/api/v1`; production builds fail fast unless `VITE_API_BASE_URL` is an explicit absolute URL. The kitchen WebSocket URL is derived from that API origin and automatically uses `wss:` for HTTPS.
+
+## Production readiness
+
+Run the backend with `SPRING_PROFILES_ACTIVE=prod` and deployment-injected `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, and `FRONTEND_ORIGIN`. The production profile enforces secure refresh cookies, schema-only Flyway locations, forwarded-header handling, minimal Actuator exposure with liveness/readiness probes, safe error settings, production logging, and disabled Swagger. Development bootstrap credentials are ignored because the bootstrap component exists only in the `dev` profile.
+
+The backend production image can be built with `docker build -t restaurant-operations-backend:local backend`. It runs the packaged Java 21 application as a non-root user and contains no configured secrets. The React build remains provider-neutral static output for Phase 11B; its host must provide SPA fallback and security headers. See the [production-readiness runbook](docs/production-readiness.md) before selecting or configuring a deployment platform.
+
+CI runs frontend formatting, linting, tests, and the production build in parallel with backend verification and the Docker-backed MySQL/Testcontainers integration suite. Dependabot proposes weekly npm, Maven, and GitHub Actions updates without automatic merging.
 
 ## Frontend authentication flow
 
@@ -234,7 +244,7 @@ Payment creation locks the order before deriving its remaining balance, so simul
 
 ## Current limitations
 
-There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, unit conversion, stock transfers, payroll, salary management, time clock, attendance, timesheets, recurring availability, shift swaps, employee self-service, account provisioning, labor-law engine, automatic scheduling, staffing notifications, payment-provider integration, refunds, voids, chargebacks, taxation, discounting, tipping, durable external messaging, or customer ordering. Phase 9 reporting is read-only operational analytics over existing application data; it is not formal accounting, tax or VAT reporting, payroll, forecasting, or external BI. The system assumes one logical restaurant and does not hard-delete operational history. Inventory consumption intentionally permits negative balances, and cancellation after preparation does not automatically restore stock. EUR is the only supported settlement currency. ADMIN remains the only application authority; operational staff roles are scheduling data only. Authentication rate limiting, MFA, and production key management/rotation remain deferred hardening work.
+There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, unit conversion, stock transfers, payroll, salary management, time clock, attendance, timesheets, recurring availability, shift swaps, employee self-service, account provisioning, labor-law engine, automatic scheduling, staffing notifications, payment-provider integration, refunds, voids, chargebacks, taxation, discounting, tipping, durable external messaging, or customer ordering. Phase 9 reporting is read-only operational analytics over existing application data; it is not formal accounting, tax or VAT reporting, payroll, forecasting, or external BI. The system assumes one logical restaurant and does not hard-delete operational history. Inventory consumption intentionally permits negative balances, and cancellation after preparation does not automatically restore stock. EUR is the only supported settlement currency. ADMIN remains the only application authority; operational staff roles are scheduling data only. Authentication rate limiting, managed secret rotation, TLS termination, backups, monitoring, and live deployment validation remain Phase 11B infrastructure work; MFA remains outside the current portfolio scope.
 
 ## Documentation
 
@@ -255,6 +265,8 @@ There is no public registration, account recovery, user administration, customer
 - [Phase 8 payments, reconciliation, and invoices testing](docs/testing/phase-8-payments-invoices.md)
 - [Phase 9 reports and analytics testing](docs/testing/phase-9-reports-analytics.md)
 - [Phase 10 UI/UX redesign testing](docs/testing/phase-10-ui-ux-redesign.md)
+- [Production-readiness runbook](docs/production-readiness.md)
+- [Phase 11 production-readiness testing](docs/testing/phase-11-production-readiness.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign

@@ -1,5 +1,7 @@
 # Architecture
 
+Phase 11A adds delivery boundaries around the existing modular monolith: GitHub Actions reproduces frontend, backend, and MySQL/Testcontainers gates; `application-prod.yml` defines the provider-neutral runtime contract; and a multi-stage non-root backend image packages the executable application. The React client remains a static production build so Phase 11B can choose a suitable host without coupling application code to a provider.
+
 ## Modular monolith
 
 The backend is one deployable Spring Boot application with business capabilities organized as explicit modules. This keeps transactions, local development, refactoring, and deployment straightforward while leaving room for disciplined boundaries. A module should own its domain logic and persistence access and expose intentional application interfaces rather than reaching into another module's internals.
