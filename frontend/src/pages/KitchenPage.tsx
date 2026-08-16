@@ -157,9 +157,9 @@ export function KitchenPage() {
     <div className="page kitchen-page">
       <section className="tables-hero kitchen-hero" aria-labelledby="kitchen-title">
         <div>
-          <p className="eyebrow">Phase 5 live preparation</p>
+          <p className="eyebrow">Live preparation</p>
           <h1 id="kitchen-title">Kitchen display</h1>
-          <p>REST-authoritative tickets with secure realtime change notifications.</p>
+          <p>Track active tickets and preparation progress in real time.</p>
         </div>
         <span
           className={`realtime-state realtime-state--${realtimeState}`}

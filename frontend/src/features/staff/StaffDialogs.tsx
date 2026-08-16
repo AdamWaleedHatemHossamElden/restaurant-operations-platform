@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState, type FormEvent, type ReactNode } from 'react'
 
+import { Dialog as AccessibleDialog } from '../../components/ui/Dialog'
 import { listAvailability, staffKeys } from './staffApi'
 import {
   addLocalDays,
@@ -30,22 +31,19 @@ function Dialog({
   onClose: () => void
 }) {
   return (
-    <div className="dialog-backdrop" role="presentation">
-      <section
-        className="dialog staff-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="staff-dialog-title"
-      >
-        <div className="dialog__header">
-          <h2 id="staff-dialog-title">{title}</h2>
-          <button type="button" aria-label="Close dialog" onClick={onClose}>
-            &times;
-          </button>
-        </div>
-        {children}
-      </section>
-    </div>
+    <AccessibleDialog
+      className="dialog staff-dialog"
+      labelledBy="staff-dialog-title"
+      onClose={onClose}
+    >
+      <div className="dialog__header">
+        <h2 id="staff-dialog-title">{title}</h2>
+        <button className="icon-button" type="button" aria-label="Close dialog" onClick={onClose}>
+          &times;
+        </button>
+      </div>
+      {children}
+    </AccessibleDialog>
   )
 }
 

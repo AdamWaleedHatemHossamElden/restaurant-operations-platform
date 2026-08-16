@@ -193,4 +193,22 @@ describe('tables page', () => {
     expect(confirm).not.toHaveBeenCalled()
     expect(await screen.findByRole('status')).toHaveTextContent('T-01 was reactivated.')
   })
+
+  it('moves focus into the table dialog and restores it after Escape', async () => {
+    renderPage()
+    await screen.findByRole('heading', { name: 'Window table' })
+    const user = userEvent.setup()
+    const trigger = screen.getByRole('button', { name: 'Add table' })
+
+    await user.click(trigger)
+    expect(screen.getByRole('dialog', { name: 'Create a table' })).toHaveAttribute(
+      'aria-modal',
+      'true',
+    )
+    expect(screen.getByLabelText('Table number')).toHaveFocus()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+  })
 })

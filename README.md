@@ -254,6 +254,7 @@ There is no public registration, account recovery, user administration, customer
 - [Phase 7 employees and staff scheduling testing](docs/testing/phase-7-staff-scheduling.md)
 - [Phase 8 payments, reconciliation, and invoices testing](docs/testing/phase-8-payments-invoices.md)
 - [Phase 9 reports and analytics testing](docs/testing/phase-9-reports-analytics.md)
+- [Phase 10 UI/UX redesign testing](docs/testing/phase-10-ui-ux-redesign.md)
 - [Original project context](docs/original-project-context.md)
 
 ## Independent redesign

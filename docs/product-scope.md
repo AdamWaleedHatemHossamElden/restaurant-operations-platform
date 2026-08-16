@@ -23,6 +23,6 @@ The modular monolith is planned around `auth`, `users`, `employees`, `tables`, `
 
 ## Current delivery boundary
 
-Phases 1 through 8 are merged. Phase 9 is current unmerged work on `phase-9-reports-analytics`. It adds ADMIN-only, read-only operational projections over existing orders, menu snapshots, payments, reservations, kitchen tickets, stock movements, and shifts, plus bounded formula-safe CSV exports and a responsive reports workspace.
+Phases 1 through 9 are merged. Phase 10 is current work on `phase-10-ui-ux-redesign`. It redesigns the frontend presentation layer around the Ember hospitality-operations identity, a shared token system, responsive application navigation, an operational dashboard, and consistent interaction patterns without changing the established business APIs or workflows.
 
-Phase 9 is operational analytics, not formal accounting, profit/loss, tax or VAT reporting, payroll, labor cost, forecasting, AI insight, demand prediction, customer profiling, cross-location or multi-currency analytics, external BI, scheduled email reporting, streaming analytics, a data warehouse, or fiscal reporting. Phase 8 also intentionally does not process funds or collect card/bank credentials.
+Phase 9 is operational analytics, not formal accounting, profit/loss, tax or VAT reporting, payroll, labor cost, forecasting, AI insight, demand prediction, customer profiling, cross-location or multi-currency analytics, external BI, scheduled email reporting, streaming analytics, a data warehouse, or fiscal reporting. Phase 8 also intentionally does not process funds or collect card/bank credentials. Phase 10 changes product presentation and usability only; it does not add new business modules, API semantics, or backend persistence.

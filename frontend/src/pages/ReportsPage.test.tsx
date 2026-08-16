@@ -152,7 +152,7 @@ describe('reports page', () => {
 
   it('loads the overview and switches to server-authoritative report sections', async () => {
     renderPage()
-    expect(await screen.findByText('€360.00')).toBeInTheDocument()
+    expect(await screen.findByText('€360.00 order value')).toBeInTheDocument()
     await userEvent.click(screen.getByRole('tab', { name: 'Sales' }))
     expect(await screen.findByText('T1 · Window')).toBeInTheDocument()
     expect(reportsApi.getSalesReport).toHaveBeenCalledWith(
@@ -170,11 +170,13 @@ describe('reports page', () => {
     const user = userEvent.setup()
     await user.clear(screen.getByLabelText('Start date'))
     await user.type(screen.getByLabelText('Start date'), '2030-01-01')
-    await user.clear(screen.getByLabelText('End date (exclusive)'))
-    await user.type(screen.getByLabelText('End date (exclusive)'), '2030-02-01')
+    await user.clear(screen.getByLabelText('End date'))
+    await user.type(screen.getByLabelText('End date'), '2030-02-01')
     expect(screen.getByRole('button', { name: 'Last 30 days' })).not.toHaveClass('is-active')
     await user.selectOptions(screen.getByLabelText('Group by'), 'MONTH')
     await user.click(screen.getByRole('button', { name: 'Apply dates' }))
+    expect(screen.getByText('Jan 1 – Jan 31, 2030')).toBeInTheDocument()
+    expect(screen.getByText('The end date is excluded from calculations.')).toBeInTheDocument()
     await user.click(screen.getByRole('tab', { name: 'Payments' }))
     await waitFor(() => expect(reportsApi.getPaymentsReport).toHaveBeenCalled())
     const [requestedRange, requestedGroup] = vi.mocked(reportsApi.getPaymentsReport).mock.calls[0]

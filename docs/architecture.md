@@ -47,6 +47,10 @@ Reconciliation locks its payment and has one immutable unique child. Invoice iss
 
 Phase 9 is a read-only projection module over the existing MySQL system of record. `JdbcTemplate` aggregation queries return purpose-built DTOs without JPA entity hydration, N+1 traversal, report tables, ETL, caches, or write locks. Every range is a required, maximum-366-day `[from,to)` UTC interval. DAY, WEEK, and MONTH are allowlisted UTC SQL buckets; bounded top rankings use deterministic secondary ordering.
 
+## Frontend presentation architecture
+
+Phase 10 adds a presentation-only design layer while preserving the existing React Query, Axios, router, and authentication architecture. `design-system.css` defines semantic visual tokens and applies a consistent component vocabulary over the existing feature markup. The authenticated shell owns grouped desktop navigation, a compact-sidebar state, an accessible mobile drawer, and user-session actions. Lucide icons are imported as individual React components for tree-shaking. Existing REST responses remain authoritative, including dashboard report metrics; no operational values are recalculated or persisted by the presentation layer.
+
 Completed-order reporting uses immutable order totals and `completed_at`; payment reporting separately uses successful payment amounts and `received_at`. Menu history uses immutable order-item labels and prices. Current inventory state is explicitly separated from range movement, and quantities are never aggregated across canonical units. Report GETs are transactionally read-only and do not write audit events or mutate business records.
 
 ## Testing strategy

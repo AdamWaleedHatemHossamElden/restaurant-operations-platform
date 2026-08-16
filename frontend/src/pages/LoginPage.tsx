@@ -1,4 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ChefHat, CheckCircle2, LockKeyhole, ShieldCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { useLocation, useNavigate } from 'react-router-dom'
@@ -38,27 +39,46 @@ export function LoginPage() {
       <section className="login-intro" aria-labelledby="login-title">
         <a className="brand brand--login" href="/login" aria-label="Restaurant Operations login">
           <span className="brand-mark" aria-hidden="true">
-            RO
+            <ChefHat size={24} />
           </span>
-          <span>Restaurant Operations</span>
+          <span className="brand-copy">
+            <strong>Ember</strong>
+            <small>Restaurant operations</small>
+          </span>
         </a>
-        <div>
-          <p className="eyebrow">Secure operations access</p>
-          <h1 id="login-title">Welcome back to service.</h1>
+        <div className="login-intro__message">
+          <span className="login-kicker">
+            <ShieldCheck size={16} /> Secure team access
+          </span>
+          <h1 id="login-title">Run every service with clarity.</h1>
           <p>
-            Sign in to reach your restaurant operations workspace. Your session is protected with
-            short-lived access and securely rotated credentials.
+            One focused workspace for the dining room, kitchen, inventory, staff, payments, and the
+            decisions that keep your restaurant moving.
           </p>
         </div>
-        <p className="login-intro__note">Built for focused teams and dependable shifts.</p>
+        <div className="login-proof">
+          <span>
+            <CheckCircle2 size={16} /> Live operational visibility
+          </span>
+          <span>
+            <CheckCircle2 size={16} /> Secure, role-protected access
+          </span>
+          <span>
+            <CheckCircle2 size={16} /> Authoritative business records
+          </span>
+        </div>
+        <p className="login-intro__note">Built for focused teams and dependable service.</p>
       </section>
 
       <section className="login-panel" aria-label="Sign in">
         <div className="login-card">
+          <span className="login-card__icon" aria-hidden="true">
+            <LockKeyhole size={22} />
+          </span>
           <div className="login-card__heading">
-            <p className="eyebrow">Account access</p>
+            <p className="eyebrow">Welcome back</p>
             <h2>Sign in</h2>
-            <p>Use the credentials provided by your administrator.</p>
+            <p>Enter your administrator credentials to continue.</p>
           </div>
 
           {authenticationError && (
@@ -76,6 +96,7 @@ export function LoginPage() {
                 autoComplete="username"
                 autoCapitalize="none"
                 spellCheck="false"
+                placeholder="you@restaurant.com"
                 aria-invalid={errors.email ? 'true' : 'false'}
                 aria-describedby={errors.email ? 'email-error' : undefined}
                 {...register('email')}
@@ -93,6 +114,7 @@ export function LoginPage() {
                 id="password"
                 type="password"
                 autoComplete="current-password"
+                placeholder="Enter your password"
                 aria-invalid={errors.password ? 'true' : 'false'}
                 aria-describedby={errors.password ? 'password-error' : undefined}
                 {...register('password')}
@@ -114,7 +136,7 @@ export function LoginPage() {
           </form>
 
           <p className="login-card__security">
-            Access tokens remain only in this page&rsquo;s memory.
+            <ShieldCheck size={15} /> Secure, memory-only session
           </p>
         </div>
       </section>

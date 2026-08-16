@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -29,10 +30,13 @@ const mockedRefresh = vi.mocked(refreshRequest)
 
 function renderLogin(initialEntry = '/login') {
   const router = createMemoryRouter(routes, { initialEntries: [initialEntry] })
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>,
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </QueryClientProvider>,
   )
   return router
 }
@@ -83,10 +87,8 @@ describe('LoginPage', () => {
     expect(mockedLogin).toHaveBeenCalledTimes(1)
 
     finishLogin?.(testSession)
-    expect(
-      await screen.findByRole('heading', { name: 'Good service starts with a clear view.' }),
-    ).toBeInTheDocument()
-    expect(screen.getByText(testSession.user.email)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Welcome back/ })).toBeInTheDocument()
+    expect(screen.getByText(testSession.user.displayName)).toBeInTheDocument()
   })
 
   it('shows the same safe generic message for rejected authentication', async () => {

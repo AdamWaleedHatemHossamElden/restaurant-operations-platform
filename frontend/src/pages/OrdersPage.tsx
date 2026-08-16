@@ -81,7 +81,7 @@ export function OrdersPage() {
     <div className="page orders-page">
       <section className="tables-hero orders-hero" aria-labelledby="orders-title">
         <div>
-          <p className="eyebrow">Phase 4B order capture</p>
+          <p className="eyebrow">Service & order capture</p>
           <h1 id="orders-title">Orders</h1>
           <p>Capture table orders, preserve commercial snapshots, and follow service status.</p>
         </div>

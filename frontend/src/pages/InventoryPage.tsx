@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo, useState, type ReactNode } from 'react'
 
+import { Dialog } from '../components/ui/Dialog'
 import {
   IngredientDialog,
   InventoryItemDialog,
@@ -287,7 +288,7 @@ export function InventoryPage() {
     <div className="page inventory-page">
       <section className="tables-hero inventory-hero" aria-labelledby="inventory-title">
         <div>
-          <p className="eyebrow">Phase 6 operations</p>
+          <p className="eyebrow">Stock & purchasing</p>
           <h1 id="inventory-title">Inventory</h1>
           <p>Ledger-backed stock, recipes, suppliers, and purchasing.</p>
         </div>
@@ -604,7 +605,11 @@ function StockTab({
             Low stock only
           </label>
         </div>
-        <button className="button button--primary" type="button" onClick={onCreate}>
+        <button
+          className="button button--primary inventory-create-button"
+          type="button"
+          onClick={onCreate}
+        >
           Create item
         </button>
       </div>
@@ -644,16 +649,32 @@ function StockTab({
                 Reorder at ≤ {item.reorderThreshold.toFixed(3)} {unitLabel(item.unit)}
               </p>
               <div className="menu-card__actions menu-card__actions--wrap">
-                <button type="button" onClick={() => onEdit(item)}>
+                <button
+                  className="button button--secondary button--compact"
+                  type="button"
+                  onClick={() => onEdit(item)}
+                >
                   Edit
                 </button>
-                <button type="button" onClick={() => onMovement(item)}>
+                <button
+                  className="button button--secondary button--compact"
+                  type="button"
+                  onClick={() => onMovement(item)}
+                >
                   Movement
                 </button>
-                <button type="button" onClick={() => onHistory(item)}>
+                <button
+                  className="button button--ghost button--compact"
+                  type="button"
+                  onClick={() => onHistory(item)}
+                >
                   History
                 </button>
-                <button type="button" onClick={() => onToggle(item)}>
+                <button
+                  className={`button button--compact ${item.active ? 'button--danger-muted' : 'button--secondary'}`}
+                  type="button"
+                  onClick={() => onToggle(item)}
+                >
                   {item.active ? 'Deactivate' : 'Reactivate'}
                 </button>
               </div>
@@ -736,11 +757,19 @@ function RecipesTab({
               )}
               <div className="menu-card__actions">
                 {recipe && (
-                  <button type="button" onClick={() => onIngredients(recipe)}>
+                  <button
+                    className="button button--secondary button--compact"
+                    type="button"
+                    onClick={() => onIngredients(recipe)}
+                  >
                     Ingredients
                   </button>
                 )}
-                <button type="button" onClick={() => onState(menuItem.id, !recipe?.active, recipe)}>
+                <button
+                  className={`button button--compact ${recipe?.active ? 'button--danger-muted' : 'button--secondary'}`}
+                  type="button"
+                  onClick={() => onState(menuItem.id, !recipe?.active, recipe)}
+                >
                   {recipe?.active ? 'Deactivate' : recipe ? 'Activate' : 'Create recipe'}
                 </button>
               </div>
@@ -879,13 +908,25 @@ function SuppliersTab({
                 )}
               </div>
               <div className="menu-card__actions menu-card__actions--wrap">
-                <button type="button" onClick={() => onEdit(supplier)}>
+                <button
+                  className="button button--secondary button--compact"
+                  type="button"
+                  onClick={() => onEdit(supplier)}
+                >
                   Edit
                 </button>
-                <button type="button" onClick={() => onItem(supplier)}>
+                <button
+                  className="button button--secondary button--compact"
+                  type="button"
+                  onClick={() => onItem(supplier)}
+                >
                   Add price
                 </button>
-                <button type="button" onClick={() => onToggle(supplier)}>
+                <button
+                  className={`button button--compact ${supplier.active ? 'button--danger-muted' : 'button--secondary'}`}
+                  type="button"
+                  onClick={() => onToggle(supplier)}
+                >
                   {supplier.active ? 'Deactivate' : 'Reactivate'}
                 </button>
               </div>
@@ -990,17 +1031,29 @@ function PurchasingTab({
                   <div className="purchase-line__actions">
                     {selected.status === 'DRAFT' && (
                       <>
-                        <button type="button" onClick={() => onLine(line)}>
+                        <button
+                          className="button button--secondary button--compact"
+                          type="button"
+                          onClick={() => onLine(line)}
+                        >
                           Edit
                         </button>
-                        <button type="button" onClick={() => onRemove(line)}>
+                        <button
+                          className="button button--danger-muted button--compact"
+                          type="button"
+                          onClick={() => onRemove(line)}
+                        >
                           Remove
                         </button>
                       </>
                     )}
                     {(selected.status === 'ORDERED' || selected.status === 'PARTIALLY_RECEIVED') &&
                       line.remainingQuantity > 0 && (
-                        <button type="button" onClick={() => onReceive(line)}>
+                        <button
+                          className="button button--secondary button--compact"
+                          type="button"
+                          onClick={() => onReceive(line)}
+                        >
                           Receive
                         </button>
                       )}
@@ -1013,10 +1066,15 @@ function PurchasingTab({
               <div className="menu-card__actions">
                 {selected.status === 'DRAFT' && (
                   <>
-                    <button type="button" onClick={() => onLine(null)}>
+                    <button
+                      className="button button--secondary button--compact"
+                      type="button"
+                      onClick={() => onLine(null)}
+                    >
                       Add item
                     </button>
                     <button
+                      className="button button--primary button--compact"
                       type="button"
                       disabled={!selected.items.length}
                       onClick={() => onStatus('ORDERED')}
@@ -1027,7 +1085,7 @@ function PurchasingTab({
                 )}
                 {!['RECEIVED', 'CANCELLED'].includes(selected.status) && (
                   <button
-                    className="button--danger"
+                    className="button button--danger-muted button--compact"
                     type="button"
                     onClick={() => onStatus('CANCELLED')}
                   >
@@ -1053,42 +1111,39 @@ function HistoryDialog({
   onClose: () => void
 }) {
   return (
-    <div className="dialog-backdrop">
-      <section
-        className="dialog inventory-dialog inventory-dialog--wide"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="history-title"
-      >
-        <div className="dialog__header">
-          <h2 id="history-title">Movement history · {item.name}</h2>
-          <button type="button" aria-label="Close dialog" onClick={onClose}>
-            &times;
-          </button>
-        </div>
-        {query.isPending && <p>Loading history…</p>}
-        {query.isError && <p role="alert">Movement history could not be loaded.</p>}{' '}
-        {!query.isPending && !query.isError && !query.data?.length && <p>No movements recorded.</p>}
-        <div className="movement-list">
-          {query.data?.map((movement) => (
-            <div className="movement-row" key={movement.id}>
-              <time dateTime={movement.occurredAt}>
-                {new Date(movement.occurredAt).toLocaleString()}
-              </time>
-              <strong>{movement.movementType.replaceAll('_', ' ')}</strong>
-              <span className={movement.signedQuantity < 0 ? 'stock-negative' : 'stock-positive'}>
-                {movement.signedQuantity > 0 ? '+' : ''}
-                {movement.signedQuantity.toFixed(3)} {unitLabel(movement.unit)}
-              </span>
-              <span>
-                {movement.referenceType || 'Manual'}
-                {movement.reason ? ` · ${movement.reason}` : ''}
-              </span>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
+    <Dialog
+      className="dialog inventory-dialog inventory-dialog--wide"
+      labelledBy="history-title"
+      onClose={onClose}
+    >
+      <div className="dialog__header">
+        <h2 id="history-title">Movement history · {item.name}</h2>
+        <button className="icon-button" type="button" aria-label="Close dialog" onClick={onClose}>
+          &times;
+        </button>
+      </div>
+      {query.isPending && <p>Loading history…</p>}
+      {query.isError && <p role="alert">Movement history could not be loaded.</p>}{' '}
+      {!query.isPending && !query.isError && !query.data?.length && <p>No movements recorded.</p>}
+      <div className="movement-list">
+        {query.data?.map((movement) => (
+          <div className="movement-row" key={movement.id}>
+            <time dateTime={movement.occurredAt}>
+              {new Date(movement.occurredAt).toLocaleString()}
+            </time>
+            <strong>{movement.movementType.replaceAll('_', ' ')}</strong>
+            <span className={movement.signedQuantity < 0 ? 'stock-negative' : 'stock-positive'}>
+              {movement.signedQuantity > 0 ? '+' : ''}
+              {movement.signedQuantity.toFixed(3)} {unitLabel(movement.unit)}
+            </span>
+            <span>
+              {movement.referenceType || 'Manual'}
+              {movement.reason ? ` · ${movement.reason}` : ''}
+            </span>
+          </div>
+        ))}
+      </div>
+    </Dialog>
   )
 }
 
@@ -1108,7 +1163,7 @@ function QueryState({
     return (
       <div className="table-state table-state--error" role="alert">
         <p>{noun} could not be loaded.</p>
-        <button type="button" onClick={() => query.refetch()}>
+        <button className="button button--secondary" type="button" onClick={() => query.refetch()}>
           Try again
         </button>
       </div>

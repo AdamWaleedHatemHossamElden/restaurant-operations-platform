@@ -1,5 +1,6 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useState, type FormEvent } from 'react'
 
+import { Dialog } from '../../components/ui/Dialog'
 import { formatEur } from '../menu/money'
 import type { Invoice, Payment, PaymentInput, PaymentMethod } from './paymentTypes'
 
@@ -12,32 +13,21 @@ function DialogShell({
   children: React.ReactNode
   onClose: () => void
 }) {
-  useEffect(() => {
-    const close = (event: KeyboardEvent) => event.key === 'Escape' && onClose()
-    document.addEventListener('keydown', close)
-    return () => document.removeEventListener('keydown', close)
-  }, [onClose])
   return (
-    <div
-      className="dialog-backdrop"
-      role="presentation"
-      onMouseDown={(event) => event.target === event.currentTarget && onClose()}
+    <Dialog
+      className="dialog payment-dialog"
+      labelledBy="payment-dialog-title"
+      onClose={onClose}
+      closeOnBackdrop
     >
-      <section
-        className="dialog payment-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="payment-dialog-title"
-      >
-        <div className="dialog__header">
-          <h2 id="payment-dialog-title">{title}</h2>
-          <button type="button" aria-label="Close dialog" onClick={onClose}>
-            &times;
-          </button>
-        </div>
-        {children}
-      </section>
-    </div>
+      <div className="dialog__header">
+        <h2 id="payment-dialog-title">{title}</h2>
+        <button className="icon-button" type="button" aria-label="Close dialog" onClick={onClose}>
+          &times;
+        </button>
+      </div>
+      {children}
+    </Dialog>
   )
 }
 

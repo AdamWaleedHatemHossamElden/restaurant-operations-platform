@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, RouterProvider } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -12,6 +13,18 @@ import {
 } from '../features/auth/authApi'
 import { testSession, testUser } from '../test/authFixtures'
 import { routes } from './router'
+
+vi.mock('../features/reports/reportsApi', () => ({
+  getOverviewReport: vi.fn().mockResolvedValue({
+    completedOrders: 12,
+    completedOrderValue: '420.00',
+    averageCompletedOrderValue: '35.00',
+    paymentsReceived: '390.00',
+    paymentCount: 10,
+    reservations: 8,
+  }),
+  reportKeys: { section: (...parts: unknown[]) => ['reports', ...parts] },
+}))
 
 vi.mock('../features/auth/authApi', () => ({
   currentUserRequest: vi.fn(),
@@ -71,10 +84,13 @@ const mockedRefresh = vi.mocked(refreshRequest)
 
 function renderRoute(initialEntry: string) {
   const router = createMemoryRouter(routes, { initialEntries: [initialEntry] })
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(
-    <AuthProvider>
-      <RouterProvider router={router} />
-    </AuthProvider>,
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <RouterProvider router={router} />
+      </AuthProvider>
+    </QueryClientProvider>,
   )
   return router
 }
@@ -91,9 +107,7 @@ describe('authentication routing', () => {
 
     expect(screen.getByText('Restoring your secure session…')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Sign in' })).not.toBeInTheDocument()
-    expect(
-      screen.queryByRole('heading', { name: 'Good service starts with a clear view.' }),
-    ).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: /Welcome back/ })).not.toBeInTheDocument()
   })
 
   it('redirects an unauthenticated protected request to login', async () => {
@@ -159,18 +173,92 @@ describe('authentication routing', () => {
     mockedCurrentUser.mockResolvedValue(testUser)
     renderRoute('/dashboard')
 
-    expect(
-      await screen.findByRole('heading', { name: 'Good service starts with a clear view.' }),
-    ).toBeInTheDocument()
-    expect(screen.getByText(testUser.email)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Welcome back/ })).toBeInTheDocument()
+    expect(screen.getByText(testUser.displayName)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Kitchen' })).toHaveAttribute('href', '/kitchen')
     expect(screen.getByRole('link', { name: 'Staff' })).toHaveAttribute('href', '/staff')
-    expect(screen.getByRole('link', { name: 'Payments' })).toHaveAttribute('href', '/payments')
-    expect(screen.getByRole('link', { name: 'Reports' })).toHaveAttribute('href', '/reports')
-    expect(screen.getByRole('link', { name: 'Open kitchen display' })).toHaveAttribute(
+    expect(screen.getAllByRole('link', { name: 'Payments' })[0]).toHaveAttribute(
+      'href',
+      '/payments',
+    )
+    expect(screen.getAllByRole('link', { name: 'Reports' })[0]).toHaveAttribute('href', '/reports')
+    expect(screen.getByRole('link', { name: /Kitchen display/ })).toHaveAttribute(
       'href',
       '/kitchen',
     )
+    expect(screen.queryByText(/Phase \d/)).not.toBeInTheDocument()
+  })
+
+  it('gives every primary navigation destination a stable accessible name', async () => {
+    mockedRefresh.mockResolvedValue(testSession)
+    mockedCurrentUser.mockResolvedValue(testUser)
+    renderRoute('/dashboard')
+    await screen.findByRole('heading', { name: /Welcome back/ })
+
+    const navigation = screen.getByRole('navigation', { name: 'Primary navigation' })
+    const destinations = [
+      'Dashboard',
+      'Tables',
+      'Reservations',
+      'Orders',
+      'Kitchen',
+      'Payments',
+      'Menu',
+      'Inventory',
+      'Staff',
+      'Reports',
+    ]
+    destinations.forEach((name) => {
+      expect(within(navigation).getByRole('link', { name })).toBeInTheDocument()
+    })
+  })
+
+  it('keeps the mobile drawer unmounted while closed and restores focus for every close path', async () => {
+    mockedRefresh.mockResolvedValue(testSession)
+    mockedCurrentUser.mockResolvedValue(testUser)
+    const router = renderRoute('/dashboard')
+    await screen.findByRole('heading', { name: /Welcome back/ })
+    const user = userEvent.setup()
+
+    const trigger = screen.getByRole('button', { name: 'Open navigation menu' })
+    expect(screen.queryByLabelText('Mobile application navigation')).not.toBeInTheDocument()
+    await user.click(trigger)
+    expect(trigger).toHaveAttribute('aria-expanded', 'true')
+    const drawer = screen.getByLabelText('Mobile application navigation')
+    expect(drawer).toHaveClass('sidebar--open')
+    expect(within(drawer).getByRole('button', { name: 'Close navigation menu' })).toHaveFocus()
+    expect(document.body.style.overflow).toBe('hidden')
+
+    within(drawer).getByRole('button', { name: 'Sign out' }).focus()
+    await user.tab()
+    expect(
+      within(drawer).getByRole('link', { name: 'Restaurant Operations dashboard' }),
+    ).toHaveFocus()
+    await user.tab({ shift: true })
+    expect(within(drawer).getByRole('button', { name: 'Sign out' })).toHaveFocus()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByLabelText('Mobile application navigation')).not.toBeInTheDocument()
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    expect(trigger).toHaveFocus()
+    expect(document.body.style.overflow).toBe('')
+
+    await user.click(trigger)
+    const reopenedDrawer = screen.getByLabelText('Mobile application navigation')
+    await user.click(within(reopenedDrawer).getByRole('link', { name: 'Tables' }))
+    expect(await screen.findByRole('heading', { name: 'Restaurant tables' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/tables')
+    expect(screen.queryByLabelText('Mobile application navigation')).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+
+    await user.click(trigger)
+    expect(screen.getByLabelText('Mobile application navigation')).toBeInTheDocument()
+    const backdrop = document.querySelector<HTMLButtonElement>('.sidebar-backdrop')
+    expect(backdrop).not.toBeNull()
+    await user.click(backdrop!)
+    expect(screen.queryByLabelText('Mobile application navigation')).not.toBeInTheDocument()
+    expect(trigger).toHaveAttribute('aria-expanded', 'false')
+    expect(trigger).toHaveFocus()
   })
 
   it('redirects an already authenticated user away from login', async () => {
@@ -178,9 +266,7 @@ describe('authentication routing', () => {
     mockedCurrentUser.mockResolvedValue(testUser)
     renderRoute('/login')
 
-    expect(
-      await screen.findByRole('heading', { name: 'Good service starts with a clear view.' }),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Welcome back/ })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Sign in' })).not.toBeInTheDocument()
   })
 
@@ -193,9 +279,7 @@ describe('authentication routing', () => {
     await user.type(screen.getByLabelText('Password'), 'valid-password')
     await user.click(screen.getByRole('button', { name: 'Sign in securely' }))
 
-    expect(
-      await screen.findByRole('heading', { name: 'Good service starts with a clear view.' }),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Welcome back/ })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/dashboard')
     expect(router.state.location.search).toBe('?view=service')
   })
@@ -212,9 +296,7 @@ describe('authentication routing', () => {
       mockedLogout.mockResolvedValue()
     }
     const router = renderRoute('/dashboard')
-    expect(
-      await screen.findByRole('heading', { name: 'Good service starts with a clear view.' }),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /Welcome back/ })).toBeInTheDocument()
 
     await userEvent.click(screen.getByRole('button', { name: 'Sign out' }))
 

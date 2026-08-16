@@ -159,7 +159,7 @@ export function StaffPage() {
     <div className="page staff-page">
       <section className="tables-hero staff-hero" aria-labelledby="staff-title">
         <div>
-          <p className="eyebrow">Phase 7 operations</p>
+          <p className="eyebrow">People & scheduling</p>
           <h1 id="staff-title">Staff scheduling</h1>
           <p>Employee records, date-specific availability, and conflict-safe weekly shifts.</p>
         </div>
@@ -260,6 +260,7 @@ export function StaffPage() {
                   <p>{employee.email || employee.phone || 'No contact details'}</p>
                   <div className="menu-card__actions">
                     <button
+                      className="button button--secondary button--compact"
                       type="button"
                       onClick={() => {
                         setError(null)
@@ -268,7 +269,11 @@ export function StaffPage() {
                     >
                       Edit
                     </button>
-                    <button type="button" onClick={() => employeeToggle.mutate(employee)}>
+                    <button
+                      className={`button button--compact ${employee.active ? 'button--danger-muted' : 'button--secondary'}`}
+                      type="button"
+                      onClick={() => employeeToggle.mutate(employee)}
+                    >
                       {employee.active ? 'Deactivate' : 'Reactivate'}
                     </button>
                   </div>
@@ -327,6 +332,7 @@ export function StaffPage() {
                     </div>
                     <div className="menu-card__actions">
                       <button
+                        className="button button--secondary button--compact"
                         type="button"
                         onClick={() => {
                           setError(null)
@@ -336,7 +342,7 @@ export function StaffPage() {
                         Edit
                       </button>
                       <button
-                        className="button--danger"
+                        className="button button--danger-muted button--compact"
                         type="button"
                         onClick={() => {
                           if (
@@ -526,14 +532,22 @@ function ShiftCard({
       <span className="status-pill">{shift.status}</span>
       {shift.status === 'SCHEDULED' && (
         <div className="shift-card__actions">
-          <button type="button" onClick={onEdit}>
+          <button
+            className="button button--secondary button--compact"
+            type="button"
+            onClick={onEdit}
+          >
             Edit
           </button>
-          <button type="button" onClick={() => onTransition('COMPLETED')}>
+          <button
+            className="button button--secondary button--compact"
+            type="button"
+            onClick={() => onTransition('COMPLETED')}
+          >
             Complete
           </button>
           <button
-            className="button--danger"
+            className="button button--danger-muted button--compact"
             type="button"
             onClick={() => onTransition('CANCELLED')}
           >
@@ -557,13 +571,25 @@ function WeekToolbar({
   return (
     <div className="week-toolbar">
       <div className="week-navigation">
-        <button type="button" onClick={() => onWeek(addLocalDays(week, -7))}>
+        <button
+          className="button button--ghost button--compact"
+          type="button"
+          onClick={() => onWeek(addLocalDays(week, -7))}
+        >
           Previous week
         </button>
-        <button type="button" onClick={() => onWeek(startOfLocalWeek())}>
+        <button
+          className="button button--secondary button--compact"
+          type="button"
+          onClick={() => onWeek(startOfLocalWeek())}
+        >
           Current week
         </button>
-        <button type="button" onClick={() => onWeek(addLocalDays(week, 7))}>
+        <button
+          className="button button--ghost button--compact"
+          type="button"
+          onClick={() => onWeek(addLocalDays(week, 7))}
+        >
           Next week
         </button>
         <strong>
