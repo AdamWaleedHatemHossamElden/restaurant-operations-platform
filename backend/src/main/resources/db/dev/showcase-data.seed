@@ -1,0 +1,563 @@
+-- Opt-in development showcase data for Cedar & Stone Kitchen.
+-- This resource is executed by the development initializer and is never a Flyway location.
+
+SET @now = UTC_TIMESTAMP(6);
+SET @today = DATE(@now);
+SET @week_start = DATE_SUB(@today, INTERVAL WEEKDAY(@today) DAY);
+SET @reference_date = DATE_FORMAT(@today, '%Y%m%d');
+SET @reference_year = DATE_FORMAT(@today, '%Y');
+SET @reservation_prefix = CONCAT('RSV-', @reference_date, '-');
+SET @order_prefix = CONCAT('ORD-', @reference_date, '-');
+SET @payment_prefix = CONCAT('PAY-', @reference_date, '-');
+SET @purchase_order_prefix = CONCAT('PO-', @reference_date, '-');
+SET @pos_prefix = CONCAT('POS-', @reference_date, '-');
+SET @bank_prefix = CONCAT('BANK-', @reference_date, '-');
+SET @actor_user_id = (
+    SELECT MIN(u.id)
+    FROM users u
+    JOIN user_roles ur ON ur.user_id = u.id
+    JOIN roles r ON r.id = ur.role_id
+    WHERE u.enabled = TRUE AND r.enabled = TRUE AND r.name = 'ADMIN'
+);
+
+INSERT INTO restaurants (name, slug, timezone, currency_code, active, created_at, updated_at)
+VALUES ('Cedar & Stone Kitchen', 'cedar-and-stone-kitchen', 'Europe/Berlin', 'EUR', TRUE,
+        DATE_SUB(@now, INTERVAL 420 DAY), DATE_SUB(@now, INTERVAL 2 DAY));
+SET @restaurant_id = LAST_INSERT_ID();
+
+INSERT INTO restaurant_tables
+    (table_number, display_name, capacity, section, status, active, created_at, updated_at, version)
+VALUES
+    ('T01', 'Table 1', 2, 'Window', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 300 DAY), @now, 0),
+    ('T02', 'Table 2', 2, 'Window', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 300 DAY), @now, 0),
+    ('T03', 'Table 3', 4, 'Main Dining', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 300 DAY), @now, 0),
+    ('T04', 'Table 4', 4, 'Main Dining', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 300 DAY), @now, 0),
+    ('T05', 'Table 5', 4, 'Main Dining', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 300 DAY), @now, 0),
+    ('T06', 'Table 6', 6, 'Main Dining', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 300 DAY), @now, 0),
+    ('T07', 'Table 7', 6, 'Main Dining', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 300 DAY), @now, 0),
+    ('T08', 'Table 8', 8, 'Main Dining', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 300 DAY), @now, 0),
+    ('T09', 'Terrace 1', 2, 'Terrace', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 220 DAY), @now, 0),
+    ('T10', 'Terrace 2', 4, 'Terrace', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 220 DAY), @now, 0),
+    ('T11', 'Terrace 3', 4, 'Terrace', 'OUT_OF_SERVICE', TRUE, DATE_SUB(@now, INTERVAL 220 DAY),
+     DATE_SUB(@now, INTERVAL 1 DAY), 1),
+    ('T12', 'Terrace 4', 6, 'Terrace', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 220 DAY), @now, 0),
+    ('B01', 'Bar 1', 2, 'Bar', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 180 DAY), @now, 0),
+    ('B02', 'Bar 2', 2, 'Bar', 'AVAILABLE', TRUE, DATE_SUB(@now, INTERVAL 180 DAY), @now, 0);
+
+INSERT INTO reservations
+    (reservation_code, guest_name, guest_phone, guest_email, party_size, start_at,
+     duration_minutes, restaurant_table_id, status, notes, created_at, updated_at, version)
+VALUES
+    (CONCAT(@reservation_prefix,'001'), 'Elena Fischer', '+49 30 5550 0101', 'elena.fischer@cedarstone.example', 2,
+     TIMESTAMP(DATE_SUB(@today, INTERVAL 2 DAY), '18:00:00'), 90,
+     (SELECT id FROM restaurant_tables WHERE table_number = 'T01'), 'COMPLETED',
+     'Window seat requested.', DATE_SUB(@now, INTERVAL 12 DAY), DATE_SUB(@now, INTERVAL 2 DAY), 2),
+    (CONCAT(@reservation_prefix,'002'), 'Jonas Weber', '+49 30 5550 0102', 'jonas.weber@cedarstone.example', 4,
+     TIMESTAMP(DATE_SUB(@today, INTERVAL 1 DAY), '19:00:00'), 120,
+     (SELECT id FROM restaurant_tables WHERE table_number = 'T04'), 'COMPLETED',
+     'Birthday dinner.', DATE_SUB(@now, INTERVAL 9 DAY), DATE_SUB(@now, INTERVAL 1 DAY), 2),
+    (CONCAT(@reservation_prefix,'003'), 'Maya Rossi', '+49 30 5550 0103', 'maya.rossi@cedarstone.example', 3,
+     TIMESTAMP(@today, '18:30:00'), 90,
+     (SELECT id FROM restaurant_tables WHERE table_number = 'T03'), 'CONFIRMED',
+     'One guest prefers vegetarian dishes.', DATE_SUB(@now, INTERVAL 6 DAY), @now, 1),
+    (CONCAT(@reservation_prefix,'004'), 'Noah Laurent', '+49 30 5550 0104', 'noah.laurent@cedarstone.example', 6,
+     TIMESTAMP(@today, '20:00:00'), 120,
+     (SELECT id FROM restaurant_tables WHERE table_number = 'T07'), 'CONFIRMED',
+     'Anniversary gathering.', DATE_SUB(@now, INTERVAL 8 DAY), @now, 1),
+    (CONCAT(@reservation_prefix,'005'), 'Sofia Marin', '+49 30 5550 0105', 'sofia.marin@cedarstone.example', 2,
+     TIMESTAMP(DATE_ADD(@today, INTERVAL 1 DAY), '19:30:00'), 90,
+     (SELECT id FROM restaurant_tables WHERE table_number = 'T09'), 'CONFIRMED',
+     'Terrace preferred, weather permitting.', DATE_SUB(@now, INTERVAL 3 DAY), @now, 1),
+    (CONCAT(@reservation_prefix,'006'), 'Lucas König', '+49 30 5550 0106', 'lucas.koenig@cedarstone.example', 5,
+     TIMESTAMP(DATE_ADD(@today, INTERVAL 2 DAY), '18:00:00'), 120,
+     (SELECT id FROM restaurant_tables WHERE table_number = 'T06'), 'PENDING',
+     'Awaiting final guest count.', DATE_SUB(@now, INTERVAL 1 DAY), @now, 0),
+    (CONCAT(@reservation_prefix,'007'), 'Amira Haddad', '+49 30 5550 0107', 'amira.haddad@cedarstone.example', 8,
+     TIMESTAMP(DATE_ADD(@today, INTERVAL 3 DAY), '20:00:00'), 150,
+     (SELECT id FROM restaurant_tables WHERE table_number = 'T08'), 'CONFIRMED',
+     'Family celebration.', DATE_SUB(@now, INTERVAL 5 DAY), @now, 1),
+    (CONCAT(@reservation_prefix,'008'), 'Theo Bernard', '+49 30 5550 0108', 'theo.bernard@cedarstone.example', 2,
+     TIMESTAMP(DATE_SUB(@today, INTERVAL 4 DAY), '19:00:00'), 90,
+     NULL, 'CANCELLED', 'Guest cancelled in advance.', DATE_SUB(@now, INTERVAL 10 DAY),
+     DATE_SUB(@now, INTERVAL 5 DAY), 1),
+    (CONCAT(@reservation_prefix,'009'), 'Clara Novak', '+49 30 5550 0109', 'clara.novak@cedarstone.example', 4,
+     TIMESTAMP(DATE_ADD(@today, INTERVAL 5 DAY), '18:30:00'), 120,
+     NULL, 'PENDING', 'Table assignment pending.', @now, @now, 0),
+    (CONCAT(@reservation_prefix,'010'), 'Omar Saleh', '+49 30 5550 0110', 'omar.saleh@cedarstone.example', 2,
+     TIMESTAMP(DATE_SUB(@today, INTERVAL 6 DAY), '20:30:00'), 90,
+     (SELECT id FROM restaurant_tables WHERE table_number = 'B01'), 'NO_SHOW',
+     NULL, DATE_SUB(@now, INTERVAL 9 DAY), DATE_SUB(@now, INTERVAL 6 DAY), 1);
+
+INSERT INTO menu_categories
+    (name, description, display_order, active, created_at, updated_at, version)
+VALUES
+    ('Small Plates', 'Bright, shareable starters from the Mediterranean coast.', 10, TRUE, DATE_SUB(@now, INTERVAL 200 DAY), @now, 0),
+    ('Mains', 'Seasonal plates from the hearth and grill.', 20, TRUE, DATE_SUB(@now, INTERVAL 200 DAY), @now, 0),
+    ('Pasta', 'House-made pasta finished to order.', 30, TRUE, DATE_SUB(@now, INTERVAL 200 DAY), @now, 0),
+    ('Salads', 'Market produce, herbs, and house dressings.', 40, TRUE, DATE_SUB(@now, INTERVAL 200 DAY), @now, 0),
+    ('Desserts', 'Classic desserts with a Cedar & Stone twist.', 50, TRUE, DATE_SUB(@now, INTERVAL 200 DAY), @now, 0),
+    ('Drinks', 'House-made alcohol-free refreshments.', 60, TRUE, DATE_SUB(@now, INTERVAL 200 DAY), @now, 0);
+
+INSERT INTO menu_items
+    (category_id, code, name, description, base_price, display_order, active,
+     available_for_sale, created_at, updated_at, version)
+VALUES
+    ((SELECT id FROM menu_categories WHERE name='Small Plates'),'SP-BURRATA','Burrata & Roasted Tomato','Creamy burrata, slow-roasted tomato, basil oil.',11.50,10,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Small Plates'),'SP-OCTOPUS','Charred Octopus','Tender octopus, lemon potato, smoked paprika.',14.50,20,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Small Plates'),'SP-ZUCCHINI','Crispy Zucchini','Herb crumbs, lemon, whipped yogurt.',8.50,30,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Small Plates'),'SP-FETA','Whipped Feta','Roasted pepper, thyme honey, warm flatbread.',9.00,40,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Mains'),'MN-CHICKEN','Herb-Roasted Chicken','Free-range chicken, rosemary jus, seasonal vegetables.',22.00,10,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Mains'),'MN-SALMON','Seared Salmon','Atlantic salmon, crushed potato, citrus beurre blanc.',25.50,20,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Mains'),'MN-KOFTA','Lamb Kofta','Spiced lamb, saffron rice, cucumber yogurt.',23.00,30,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Mains'),'MN-GRAIN','Mediterranean Grain Bowl','Farro, roasted vegetables, chickpeas, tahini.',17.50,40,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Pasta'),'PA-TRUFFLE','Truffle Mushroom Tagliatelle','Wild mushrooms, truffle cream, aged parmesan.',21.00,10,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Pasta'),'PA-PRAWN','Prawn Linguine','Garlic prawns, tomato, chili, parsley.',23.50,20,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Pasta'),'PA-RIGATONI','Roasted Tomato Rigatoni','Roasted tomato sugo, ricotta, basil.',18.00,30,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Pasta'),'PA-GNOCCHI','Lemon Herb Gnocchi','Potato gnocchi, lemon, herbs, pecorino.',19.00,40,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Salads'),'SA-GARDEN','Cedar Garden Salad','Mixed leaves, cucumber, tomato, house vinaigrette.',12.00,10,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Salads'),'SA-BEET','Roasted Beet Salad','Roasted beetroot, goat cheese, walnut, orange.',14.00,20,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Salads'),'SA-FENNEL','Citrus & Fennel Salad','Shaved fennel, citrus, olives, mint.',13.50,30,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Desserts'),'DE-TIRAMISU','Tiramisu','Espresso, mascarpone, cocoa.',8.50,10,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Desserts'),'DE-PANNA','Pistachio Panna Cotta','Vanilla cream, pistachio praline.',8.00,20,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Desserts'),'DE-CAKE','Olive Oil Cake','Citrus, rosemary sugar, crème fraîche.',7.50,30,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Drinks'),'DR-CITRUS','Sparkling Citrus','Orange, grapefruit, soda, thyme.',5.50,10,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0),
+    ((SELECT id FROM menu_categories WHERE name='Drinks'),'DR-LEMON','Rosemary Lemonade','Fresh lemon, rosemary syrup, soda.',5.00,20,TRUE,TRUE,DATE_SUB(@now,INTERVAL 180 DAY),@now,0);
+
+INSERT INTO modifier_groups
+    (name, description, selection_type, minimum_selections, maximum_selections,
+     display_order, active, created_at, updated_at, version)
+VALUES
+    ('Salad Add-ons','Optional proteins and toppings.','MULTIPLE',0,3,10,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0),
+    ('Pasta Finish','Optional finishing touches.','MULTIPLE',0,2,20,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0),
+    ('Salmon Preparation','Choose the salmon temperature.','SINGLE',1,1,30,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0);
+
+INSERT INTO modifier_options
+    (modifier_group_id, name, price_adjustment, display_order, active, created_at, updated_at, version)
+VALUES
+    ((SELECT id FROM modifier_groups WHERE name='Salad Add-ons'),'Grilled Chicken',5.50,10,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0),
+    ((SELECT id FROM modifier_groups WHERE name='Salad Add-ons'),'Seared Salmon',7.50,20,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0),
+    ((SELECT id FROM modifier_groups WHERE name='Salad Add-ons'),'Avocado',2.50,30,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0),
+    ((SELECT id FROM modifier_groups WHERE name='Salad Add-ons'),'Feta',2.00,40,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0),
+    ((SELECT id FROM modifier_groups WHERE name='Pasta Finish'),'Aged Parmesan',1.50,10,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0),
+    ((SELECT id FROM modifier_groups WHERE name='Pasta Finish'),'Calabrian Chili',0.75,20,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0),
+    ((SELECT id FROM modifier_groups WHERE name='Pasta Finish'),'Gluten-Free Pasta',2.00,30,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0),
+    ((SELECT id FROM modifier_groups WHERE name='Salmon Preparation'),'Medium',0.00,10,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0),
+    ((SELECT id FROM modifier_groups WHERE name='Salmon Preparation'),'Well Done',0.00,20,TRUE,DATE_SUB(@now,INTERVAL 170 DAY),@now,0);
+
+INSERT INTO menu_item_modifier_groups (menu_item_id, modifier_group_id, display_order, created_at)
+SELECT mi.id, mg.id, 10, DATE_SUB(@now, INTERVAL 170 DAY)
+FROM menu_items mi JOIN modifier_groups mg ON mg.name='Salad Add-ons'
+WHERE mi.code IN ('SA-GARDEN','SA-BEET','SA-FENNEL');
+INSERT INTO menu_item_modifier_groups (menu_item_id, modifier_group_id, display_order, created_at)
+SELECT mi.id, mg.id, 10, DATE_SUB(@now, INTERVAL 170 DAY)
+FROM menu_items mi JOIN modifier_groups mg ON mg.name='Pasta Finish'
+WHERE mi.code IN ('PA-TRUFFLE','PA-PRAWN','PA-RIGATONI','PA-GNOCCHI');
+INSERT INTO menu_item_modifier_groups (menu_item_id, modifier_group_id, display_order, created_at)
+SELECT mi.id, mg.id, 10, DATE_SUB(@now, INTERVAL 170 DAY)
+FROM menu_items mi JOIN modifier_groups mg ON mg.name='Salmon Preparation'
+WHERE mi.code='MN-SALMON';
+
+INSERT INTO inventory_items
+    (code, name, unit, reorder_threshold, active, created_at, updated_at, version)
+VALUES
+    ('INV-CHICKEN','Chicken Breast','GRAM',2500,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-SALMON','Atlantic Salmon','GRAM',2500,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-LAMB','Ground Lamb','GRAM',2200,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-PRAWN','Prawns','GRAM',1800,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-PASTA','Fresh Pasta','GRAM',3000,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-GFPASTA','Gluten-Free Pasta','GRAM',900,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-TOMATO','Tomatoes','GRAM',3500,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-GREENS','Mixed Salad Greens','GRAM',4000,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-ZUCCHINI','Zucchini','GRAM',1500,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-MUSHROOM','Wild Mushrooms','GRAM',1200,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-POTATO','Potatoes','GRAM',3000,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-FARRO','Farro','GRAM',1400,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-BURRATA','Burrata','UNIT',12,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-FETA','Feta','GRAM',1200,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-PARMESAN','Aged Parmesan','GRAM',1000,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-AVOCADO','Avocado','UNIT',14,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-OCTOPUS','Octopus','GRAM',900,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-CREAM','Dairy Cream','MILLILITER',2500,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-LEMON','Lemons','UNIT',30,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-OLIVEOIL','Olive Oil','MILLILITER',3000,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-HERBS','Fresh Herbs','GRAM',700,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-CITRUS','Citrus Fruit','UNIT',30,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-COFFEE','Espresso Coffee','GRAM',800,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0),
+    ('INV-PISTACHIO','Pistachios','GRAM',700,TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0);
+
+INSERT INTO recipes (menu_item_id, active, created_at, updated_at, version)
+SELECT id, TRUE, DATE_SUB(@now,INTERVAL 150 DAY), @now, 0 FROM menu_items
+WHERE code IN ('SP-BURRATA','SP-OCTOPUS','SP-ZUCCHINI','MN-CHICKEN','MN-SALMON','MN-KOFTA',
+               'MN-GRAIN','PA-TRUFFLE','PA-PRAWN','PA-RIGATONI','PA-GNOCCHI','SA-GARDEN',
+               'SA-BEET','SA-FENNEL','DE-TIRAMISU','DE-PANNA','DR-CITRUS','DR-LEMON');
+
+INSERT INTO recipe_ingredients
+    (recipe_id, inventory_item_id, quantity, display_order, created_at, updated_at)
+SELECT r.id, ii.id, x.quantity, x.display_order, DATE_SUB(@now,INTERVAL 150 DAY), @now
+FROM (
+    SELECT 'SP-BURRATA' code,'INV-BURRATA' inv,1.000 quantity,10 display_order UNION ALL
+    SELECT 'SP-BURRATA','INV-TOMATO',160.000,20 UNION ALL SELECT 'SP-BURRATA','INV-OLIVEOIL',15.000,30 UNION ALL
+    SELECT 'SP-OCTOPUS','INV-OCTOPUS',170.000,10 UNION ALL SELECT 'SP-OCTOPUS','INV-POTATO',120.000,20 UNION ALL
+    SELECT 'SP-ZUCCHINI','INV-ZUCCHINI',220.000,10 UNION ALL SELECT 'SP-ZUCCHINI','INV-LEMON',0.250,20 UNION ALL
+    SELECT 'MN-CHICKEN','INV-CHICKEN',280.000,10 UNION ALL SELECT 'MN-CHICKEN','INV-POTATO',180.000,20 UNION ALL SELECT 'MN-CHICKEN','INV-HERBS',8.000,30 UNION ALL
+    SELECT 'MN-SALMON','INV-SALMON',220.000,10 UNION ALL SELECT 'MN-SALMON','INV-POTATO',180.000,20 UNION ALL SELECT 'MN-SALMON','INV-CREAM',50.000,30 UNION ALL
+    SELECT 'MN-KOFTA','INV-LAMB',240.000,10 UNION ALL SELECT 'MN-KOFTA','INV-HERBS',8.000,20 UNION ALL
+    SELECT 'MN-GRAIN','INV-FARRO',150.000,10 UNION ALL SELECT 'MN-GRAIN','INV-ZUCCHINI',100.000,20 UNION ALL
+    SELECT 'PA-TRUFFLE','INV-PASTA',180.000,10 UNION ALL SELECT 'PA-TRUFFLE','INV-MUSHROOM',140.000,20 UNION ALL SELECT 'PA-TRUFFLE','INV-CREAM',70.000,30 UNION ALL
+    SELECT 'PA-PRAWN','INV-PASTA',180.000,10 UNION ALL SELECT 'PA-PRAWN','INV-PRAWN',160.000,20 UNION ALL SELECT 'PA-PRAWN','INV-TOMATO',120.000,30 UNION ALL
+    SELECT 'PA-RIGATONI','INV-PASTA',180.000,10 UNION ALL SELECT 'PA-RIGATONI','INV-TOMATO',180.000,20 UNION ALL
+    SELECT 'PA-GNOCCHI','INV-POTATO',250.000,10 UNION ALL SELECT 'PA-GNOCCHI','INV-LEMON',0.500,20 UNION ALL SELECT 'PA-GNOCCHI','INV-HERBS',6.000,30 UNION ALL
+    SELECT 'SA-GARDEN','INV-GREENS',120.000,10 UNION ALL SELECT 'SA-GARDEN','INV-TOMATO',100.000,20 UNION ALL SELECT 'SA-GARDEN','INV-OLIVEOIL',20.000,30 UNION ALL
+    SELECT 'SA-BEET','INV-GREENS',90.000,10 UNION ALL SELECT 'SA-BEET','INV-FETA',60.000,20 UNION ALL
+    SELECT 'SA-FENNEL','INV-GREENS',90.000,10 UNION ALL SELECT 'SA-FENNEL','INV-CITRUS',1.000,20 UNION ALL
+    SELECT 'DE-TIRAMISU','INV-CREAM',100.000,10 UNION ALL SELECT 'DE-TIRAMISU','INV-COFFEE',18.000,20 UNION ALL
+    SELECT 'DE-PANNA','INV-CREAM',140.000,10 UNION ALL SELECT 'DE-PANNA','INV-PISTACHIO',25.000,20 UNION ALL
+    SELECT 'DR-CITRUS','INV-CITRUS',2.000,10 UNION ALL SELECT 'DR-LEMON','INV-LEMON',2.000,10 UNION ALL SELECT 'DR-LEMON','INV-HERBS',3.000,20
+) x
+JOIN menu_items mi ON mi.code=x.code JOIN recipes r ON r.menu_item_id=mi.id JOIN inventory_items ii ON ii.code=x.inv;
+
+INSERT INTO modifier_option_ingredients
+    (modifier_option_id, inventory_item_id, quantity, display_order, created_at, updated_at)
+SELECT mo.id, ii.id, x.quantity, 10, DATE_SUB(@now,INTERVAL 150 DAY), @now
+FROM (
+    SELECT 'Grilled Chicken' option_name,'INV-CHICKEN' inv,140.000 quantity UNION ALL
+    SELECT 'Seared Salmon','INV-SALMON',120.000 UNION ALL SELECT 'Avocado','INV-AVOCADO',1.000 UNION ALL
+    SELECT 'Feta','INV-FETA',50.000 UNION ALL SELECT 'Aged Parmesan','INV-PARMESAN',25.000 UNION ALL
+    SELECT 'Gluten-Free Pasta','INV-GFPASTA',180.000
+) x JOIN modifier_options mo ON mo.name=x.option_name JOIN inventory_items ii ON ii.code=x.inv;
+
+INSERT INTO suppliers
+    (code,name,contact_name,email,phone,notes,active,created_at,updated_at,version)
+VALUES
+    ('SUP-VERDANT','Verdant Fields Produce','Iris Baum','orders@verdant-fields.example','+49 30 5550 0201','Produce delivery Monday, Wednesday, Friday.',TRUE,DATE_SUB(@now,INTERVAL 150 DAY),@now,0),
+    ('SUP-NORTHSHORE','Northshore Seafood','Felix Hart','trade@northshore-seafood.example','+49 30 5550 0202','Morning cold-chain delivery.',TRUE,DATE_SUB(@now,INTERVAL 150 DAY),@now,0),
+    ('SUP-HEARTHLAND','Hearthland Provisions','Lea Winter','service@hearthland.example','+49 30 5550 0203','Meat, dairy, and pantry staples.',TRUE,DATE_SUB(@now,INTERVAL 150 DAY),@now,0),
+    ('SUP-MERIDIAN','Meridian Beverage Co.','Milo Stern','orders@meridian-beverage.example','+49 30 5550 0204','Beverage and citrus supply.',TRUE,DATE_SUB(@now,INTERVAL 150 DAY),@now,0);
+
+INSERT INTO supplier_inventory_items
+    (supplier_id,inventory_item_id,supplier_item_code,unit_cost,active,created_at,updated_at,version)
+SELECT s.id, i.id, CONCAT(s.code,'-',i.code), x.cost, TRUE, DATE_SUB(@now,INTERVAL 145 DAY), @now, 0
+FROM (
+    SELECT 'SUP-VERDANT' supplier,'INV-TOMATO' item,0.0032 cost UNION ALL SELECT 'SUP-VERDANT','INV-GREENS',0.0085 UNION ALL
+    SELECT 'SUP-VERDANT','INV-ZUCCHINI',0.0030 UNION ALL SELECT 'SUP-VERDANT','INV-MUSHROOM',0.0120 UNION ALL
+    SELECT 'SUP-VERDANT','INV-POTATO',0.0018 UNION ALL SELECT 'SUP-VERDANT','INV-AVOCADO',1.1000 UNION ALL
+    SELECT 'SUP-VERDANT','INV-LEMON',0.4500 UNION ALL SELECT 'SUP-VERDANT','INV-HERBS',0.0180 UNION ALL
+    SELECT 'SUP-VERDANT','INV-CITRUS',0.6500 UNION ALL SELECT 'SUP-NORTHSHORE','INV-SALMON',0.0195 UNION ALL
+    SELECT 'SUP-NORTHSHORE','INV-PRAWN',0.0180 UNION ALL SELECT 'SUP-NORTHSHORE','INV-OCTOPUS',0.0165 UNION ALL
+    SELECT 'SUP-HEARTHLAND','INV-CHICKEN',0.0095 UNION ALL SELECT 'SUP-HEARTHLAND','INV-LAMB',0.0135 UNION ALL
+    SELECT 'SUP-HEARTHLAND','INV-PASTA',0.0040 UNION ALL SELECT 'SUP-HEARTHLAND','INV-FETA',0.0100 UNION ALL
+    SELECT 'SUP-HEARTHLAND','INV-PARMESAN',0.0160 UNION ALL SELECT 'SUP-HEARTHLAND','INV-CREAM',0.0028 UNION ALL
+    SELECT 'SUP-MERIDIAN','INV-CITRUS',0.6200 UNION ALL SELECT 'SUP-MERIDIAN','INV-COFFEE',0.0180
+) x JOIN suppliers s ON s.code=x.supplier JOIN inventory_items i ON i.code=x.item;
+
+INSERT INTO purchase_orders
+    (purchase_order_number,supplier_id,status,notes,subtotal,total,ordered_at,received_at,created_at,updated_at,version)
+VALUES
+    (CONCAT(@purchase_order_prefix,'001'),(SELECT id FROM suppliers WHERE code='SUP-VERDANT'),'RECEIVED','Weekly produce replenishment.',94.0000,94.0000,DATE_SUB(@now,INTERVAL 8 DAY),DATE_SUB(@now,INTERVAL 7 DAY),DATE_SUB(@now,INTERVAL 9 DAY),DATE_SUB(@now,INTERVAL 7 DAY),2),
+    (CONCAT(@purchase_order_prefix,'002'),(SELECT id FROM suppliers WHERE code='SUP-NORTHSHORE'),'PARTIALLY_RECEIVED','Weekend seafood order; salmon received first.',210.0000,210.0000,DATE_SUB(@now,INTERVAL 3 DAY),NULL,DATE_SUB(@now,INTERVAL 4 DAY),DATE_SUB(@now,INTERVAL 1 DAY),2),
+    (CONCAT(@purchase_order_prefix,'003'),(SELECT id FROM suppliers WHERE code='SUP-HEARTHLAND'),'ORDERED','Core pantry and protein restock.',185.0000,185.0000,DATE_SUB(@now,INTERVAL 1 DAY),NULL,DATE_SUB(@now,INTERVAL 2 DAY),DATE_SUB(@now,INTERVAL 1 DAY),1),
+    (CONCAT(@purchase_order_prefix,'004'),(SELECT id FROM suppliers WHERE code='SUP-MERIDIAN'),'DRAFT','Next beverage delivery draft.',72.0000,72.0000,NULL,NULL,@now,@now,0);
+
+INSERT INTO purchase_order_items
+    (purchase_order_id,inventory_item_id,inventory_code_snapshot,inventory_name_snapshot,unit_snapshot,
+     ordered_quantity,received_quantity,unit_cost_snapshot,line_total,display_order,created_at,updated_at)
+SELECT po.id,i.id,i.code,i.name,i.unit,x.ordered,x.received,x.cost,x.ordered*x.cost,x.ord,po.created_at,po.updated_at
+FROM (
+    SELECT CONCAT(@purchase_order_prefix,'001') po,'INV-TOMATO' item,10000.000 ordered,10000.000 received,0.0032 cost,10 ord UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'001'),'INV-GREENS',4000.000,4000.000,0.0085,20 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'001'),'INV-ZUCCHINI',5000.000,5000.000,0.0030,30 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'001'),'INV-LEMON',20.000,20.000,0.4500,40 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'001'),'INV-CITRUS',6.000,6.000,0.6667,50 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'002'),'INV-SALMON',6000.000,3000.000,0.0195,10 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'002'),'INV-PRAWN',4000.000,0.000,0.0180,20 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'002'),'INV-OCTOPUS',3000.000,0.000,0.0165,30 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'003'),'INV-CHICKEN',8000.000,0.000,0.0095,10 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'003'),'INV-LAMB',5000.000,0.000,0.0135,20 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'003'),'INV-PASTA',6000.000,0.000,0.0040,30 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'003'),'INV-CREAM',6000.000,0.000,0.0028,40 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'004'),'INV-CITRUS',60.000,0.000,0.6200,10 UNION ALL
+    SELECT CONCAT(@purchase_order_prefix,'004'),'INV-COFFEE',1900.000,0.000,0.0180,20
+) x JOIN purchase_orders po ON po.purchase_order_number=x.po JOIN inventory_items i ON i.code=x.item;
+
+UPDATE purchase_orders po
+JOIN (
+    SELECT purchase_order_id, SUM(line_total) calculated_total
+    FROM purchase_order_items
+    GROUP BY purchase_order_id
+) totals ON totals.purchase_order_id=po.id
+SET po.subtotal=totals.calculated_total, po.total=totals.calculated_total;
+
+INSERT INTO stock_movements
+    (inventory_item_id,movement_type,quantity,occurred_at,actor_user_id,reference_type,reference_id,
+     source_key,reason,unit_cost,total_cost)
+SELECT i.id,'ADJUSTMENT_IN',x.qty,DATE_SUB(@now,INTERVAL 30 DAY),@actor_user_id,'OPENING_BALANCE',NULL,
+       CONCAT('OPENING:',i.code),'Opening showcase balance',NULL,NULL
+FROM inventory_items i JOIN (
+    SELECT 'INV-CHICKEN' code,6500.000 qty UNION ALL SELECT 'INV-SALMON',1200.000 UNION ALL SELECT 'INV-LAMB',5200.000 UNION ALL
+    SELECT 'INV-PRAWN',4200.000 UNION ALL SELECT 'INV-PASTA',9000.000 UNION ALL SELECT 'INV-GFPASTA',1800.000 UNION ALL
+    SELECT 'INV-TOMATO',5000.000 UNION ALL SELECT 'INV-GREENS',1100.000 UNION ALL SELECT 'INV-ZUCCHINI',2500.000 UNION ALL
+    SELECT 'INV-MUSHROOM',2800.000 UNION ALL SELECT 'INV-POTATO',8000.000 UNION ALL SELECT 'INV-FARRO',3500.000 UNION ALL
+    SELECT 'INV-BURRATA',28.000 UNION ALL SELECT 'INV-FETA',3200.000 UNION ALL SELECT 'INV-PARMESAN',2600.000 UNION ALL
+    SELECT 'INV-AVOCADO',28.000 UNION ALL SELECT 'INV-OCTOPUS',2400.000 UNION ALL SELECT 'INV-CREAM',7000.000 UNION ALL
+    SELECT 'INV-LEMON',42.000 UNION ALL SELECT 'INV-OLIVEOIL',6500.000 UNION ALL SELECT 'INV-HERBS',1800.000 UNION ALL
+    SELECT 'INV-CITRUS',48.000 UNION ALL SELECT 'INV-COFFEE',2400.000 UNION ALL SELECT 'INV-PISTACHIO',1800.000
+) x ON x.code=i.code;
+
+INSERT INTO stock_movements
+    (inventory_item_id,movement_type,quantity,occurred_at,actor_user_id,reference_type,reference_id,
+     source_key,reason,unit_cost,total_cost)
+SELECT poi.inventory_item_id,'RECEIPT',poi.received_quantity,po.updated_at,@actor_user_id,'PURCHASE_ORDER',po.id,
+       CONCAT('PO_RECEIPT:',po.id,':',poi.id),'Showcase purchase-order receipt',poi.unit_cost_snapshot,
+       poi.received_quantity*poi.unit_cost_snapshot
+FROM purchase_order_items poi JOIN purchase_orders po ON po.id=poi.purchase_order_id
+WHERE poi.received_quantity>0;
+
+INSERT INTO employees
+    (employee_code,first_name,last_name,email,phone,default_operational_role,employment_start_date,
+     active,created_at,updated_at,version)
+VALUES
+    ('EMP-1001','Marta','Klein','marta.klein@cedarstone.example','+49 30 5550 0301','MANAGER',DATE_SUB(@today,INTERVAL 900 DAY),TRUE,DATE_SUB(@now,INTERVAL 900 DAY),@now,0),
+    ('EMP-1002','Leo','Martins','leo.martins@cedarstone.example','+49 30 5550 0302','HOST',DATE_SUB(@today,INTERVAL 520 DAY),TRUE,DATE_SUB(@now,INTERVAL 520 DAY),@now,0),
+    ('EMP-1003','Nina','Petrov','nina.petrov@cedarstone.example','+49 30 5550 0303','WAITER',DATE_SUB(@today,INTERVAL 480 DAY),TRUE,DATE_SUB(@now,INTERVAL 480 DAY),@now,0),
+    ('EMP-1004','Samir','Costa','samir.costa@cedarstone.example','+49 30 5550 0304','WAITER',DATE_SUB(@today,INTERVAL 390 DAY),TRUE,DATE_SUB(@now,INTERVAL 390 DAY),@now,0),
+    ('EMP-1005','Eva','Schmidt','eva.schmidt@cedarstone.example','+49 30 5550 0305','CASHIER',DATE_SUB(@today,INTERVAL 360 DAY),TRUE,DATE_SUB(@now,INTERVAL 360 DAY),@now,0),
+    ('EMP-1006','Daniel','Moretti','daniel.moretti@cedarstone.example','+49 30 5550 0306','KITCHEN',DATE_SUB(@today,INTERVAL 700 DAY),TRUE,DATE_SUB(@now,INTERVAL 700 DAY),@now,0),
+    ('EMP-1007','Lina','Hoffmann','lina.hoffmann@cedarstone.example','+49 30 5550 0307','KITCHEN',DATE_SUB(@today,INTERVAL 310 DAY),TRUE,DATE_SUB(@now,INTERVAL 310 DAY),@now,0),
+    ('EMP-1008','Yusuf','Demir','yusuf.demir@cedarstone.example','+49 30 5550 0308','INVENTORY',DATE_SUB(@today,INTERVAL 420 DAY),TRUE,DATE_SUB(@now,INTERVAL 420 DAY),@now,0),
+    ('EMP-1009','Hanna','Lind','hanna.lind@cedarstone.example','+49 30 5550 0309','WAITER',DATE_SUB(@today,INTERVAL 200 DAY),TRUE,DATE_SUB(@now,INTERVAL 200 DAY),@now,0),
+    ('EMP-1010','Marco','Silva','marco.silva@cedarstone.example','+49 30 5550 0310','KITCHEN',DATE_SUB(@today,INTERVAL 160 DAY),TRUE,DATE_SUB(@now,INTERVAL 160 DAY),@now,0);
+
+INSERT INTO employee_availability
+    (employee_id,start_at,end_at,notes,created_at,updated_at,version)
+SELECT e.id,TIMESTAMP(DATE_ADD(@week_start,INTERVAL d.day_offset DAY),x.start_time),
+       TIMESTAMP(DATE_ADD(@week_start,INTERVAL d.day_offset DAY),x.end_time),
+       'Regular showcase-week availability',DATE_SUB(@now,INTERVAL 14 DAY),@now,0
+FROM employees e
+JOIN (SELECT 0 day_offset UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6) d
+JOIN (
+    SELECT 'EMP-1001' code,'10:00:00' start_time,'22:00:00' end_time UNION ALL
+    SELECT 'EMP-1002','15:00:00','23:30:00' UNION ALL SELECT 'EMP-1003','16:00:00','23:59:59' UNION ALL
+    SELECT 'EMP-1004','16:00:00','23:59:59' UNION ALL SELECT 'EMP-1005','16:00:00','23:59:59' UNION ALL
+    SELECT 'EMP-1006','12:00:00','23:30:00' UNION ALL SELECT 'EMP-1007','12:00:00','23:30:00' UNION ALL
+    SELECT 'EMP-1008','08:00:00','18:00:00' UNION ALL SELECT 'EMP-1009','16:00:00','23:59:59' UNION ALL
+    SELECT 'EMP-1010','12:00:00','23:30:00'
+) x ON x.code=e.employee_code;
+
+INSERT INTO shifts
+    (employee_id,operational_role,start_at,end_at,status,notes,completed_at,cancelled_at,created_at,updated_at,version)
+SELECT e.id,e.default_operational_role,
+       TIMESTAMP(DATE_ADD(@week_start,INTERVAL d.day_offset DAY),x.start_time),
+       TIMESTAMP(DATE_ADD(@week_start,INTERVAL d.day_offset DAY),x.end_time),
+       CASE WHEN DATE_ADD(@week_start,INTERVAL d.day_offset DAY)<@today THEN 'COMPLETED' ELSE 'SCHEDULED' END,
+       x.notes,
+       CASE WHEN DATE_ADD(@week_start,INTERVAL d.day_offset DAY)<@today
+            THEN TIMESTAMP(DATE_ADD(@week_start,INTERVAL d.day_offset DAY),x.end_time) ELSE NULL END,
+       NULL,DATE_SUB(@now,INTERVAL 12 DAY),@now,0
+FROM employees e
+JOIN (SELECT 0 day_offset UNION ALL SELECT 1 UNION ALL SELECT 2 UNION ALL SELECT 3 UNION ALL SELECT 4 UNION ALL SELECT 5 UNION ALL SELECT 6) d
+JOIN (
+    SELECT 'EMP-1001' code,'12:00:00' start_time,'20:00:00' end_time,'Floor leadership' notes UNION ALL
+    SELECT 'EMP-1002','16:00:00','22:30:00','Dinner host' UNION ALL
+    SELECT 'EMP-1003','17:00:00','23:00:00','Main dining service' UNION ALL
+    SELECT 'EMP-1006','13:00:00','21:00:00','Kitchen lead' UNION ALL
+    SELECT 'EMP-1007','15:00:00','23:00:00','Hot line' UNION ALL
+    SELECT 'EMP-1008','09:00:00','15:00:00','Receiving and stock control'
+) x ON x.code=e.employee_code
+WHERE NOT (d.day_offset=0 AND e.employee_code='EMP-1008');
+
+INSERT INTO shifts
+    (employee_id,operational_role,start_at,end_at,status,notes,completed_at,cancelled_at,created_at,updated_at,version)
+SELECT e.id,e.default_operational_role,TIMESTAMP(DATE_ADD(@week_start,INTERVAL d.day_offset DAY),'17:00:00'),
+       TIMESTAMP(DATE_ADD(@week_start,INTERVAL d.day_offset DAY),'23:30:00'),
+       CASE WHEN DATE_ADD(@week_start,INTERVAL d.day_offset DAY)<@today THEN 'COMPLETED' ELSE 'SCHEDULED' END,
+       'Evening service',CASE WHEN DATE_ADD(@week_start,INTERVAL d.day_offset DAY)<@today
+       THEN TIMESTAMP(DATE_ADD(@week_start,INTERVAL d.day_offset DAY),'23:30:00') ELSE NULL END,
+       NULL,DATE_SUB(@now,INTERVAL 10 DAY),@now,0
+FROM employees e
+JOIN (SELECT 4 day_offset UNION ALL SELECT 5 UNION ALL SELECT 6) d
+WHERE e.employee_code IN ('EMP-1004','EMP-1005','EMP-1009','EMP-1010');
+
+INSERT INTO orders
+    (order_number,restaurant_table_id,reservation_id,status,notes,subtotal,total,created_at,updated_at,
+     submitted_at,completed_at,cancelled_at,version)
+VALUES
+    (CONCAT(@order_prefix,'001'),(SELECT id FROM restaurant_tables WHERE table_number='T03'),NULL,'COMPLETED','Dinner service',0,0,DATE_SUB(@now,INTERVAL 27 DAY),DATE_SUB(@now,INTERVAL 27 DAY),DATE_SUB(@now,INTERVAL 27 DAY),DATE_ADD(DATE_SUB(@now,INTERVAL 27 DAY),INTERVAL 65 MINUTE),NULL,2),
+    (CONCAT(@order_prefix,'002'),(SELECT id FROM restaurant_tables WHERE table_number='T06'),NULL,'COMPLETED',NULL,0,0,DATE_SUB(@now,INTERVAL 23 DAY),DATE_SUB(@now,INTERVAL 23 DAY),DATE_SUB(@now,INTERVAL 23 DAY),DATE_ADD(DATE_SUB(@now,INTERVAL 23 DAY),INTERVAL 72 MINUTE),NULL,2),
+    (CONCAT(@order_prefix,'003'),(SELECT id FROM restaurant_tables WHERE table_number='T01'),NULL,'COMPLETED',NULL,0,0,DATE_SUB(@now,INTERVAL 20 DAY),DATE_SUB(@now,INTERVAL 20 DAY),DATE_SUB(@now,INTERVAL 20 DAY),DATE_ADD(DATE_SUB(@now,INTERVAL 20 DAY),INTERVAL 48 MINUTE),NULL,2),
+    (CONCAT(@order_prefix,'004'),(SELECT id FROM restaurant_tables WHERE table_number='T08'),NULL,'COMPLETED','Family table',0,0,DATE_SUB(@now,INTERVAL 16 DAY),DATE_SUB(@now,INTERVAL 16 DAY),DATE_SUB(@now,INTERVAL 16 DAY),DATE_ADD(DATE_SUB(@now,INTERVAL 16 DAY),INTERVAL 88 MINUTE),NULL,2),
+    (CONCAT(@order_prefix,'005'),(SELECT id FROM restaurant_tables WHERE table_number='T04'),NULL,'COMPLETED',NULL,0,0,DATE_SUB(@now,INTERVAL 13 DAY),DATE_SUB(@now,INTERVAL 13 DAY),DATE_SUB(@now,INTERVAL 13 DAY),DATE_ADD(DATE_SUB(@now,INTERVAL 13 DAY),INTERVAL 62 MINUTE),NULL,2),
+    (CONCAT(@order_prefix,'006'),(SELECT id FROM restaurant_tables WHERE table_number='B01'),NULL,'COMPLETED',NULL,0,0,DATE_SUB(@now,INTERVAL 10 DAY),DATE_SUB(@now,INTERVAL 10 DAY),DATE_SUB(@now,INTERVAL 10 DAY),DATE_ADD(DATE_SUB(@now,INTERVAL 10 DAY),INTERVAL 44 MINUTE),NULL,2),
+    (CONCAT(@order_prefix,'007'),(SELECT id FROM restaurant_tables WHERE table_number='T05'),NULL,'COMPLETED',NULL,0,0,DATE_SUB(@now,INTERVAL 8 DAY),DATE_SUB(@now,INTERVAL 8 DAY),DATE_SUB(@now,INTERVAL 8 DAY),DATE_ADD(DATE_SUB(@now,INTERVAL 8 DAY),INTERVAL 59 MINUTE),NULL,2),
+    (CONCAT(@order_prefix,'008'),(SELECT id FROM restaurant_tables WHERE table_number='T02'),NULL,'COMPLETED',NULL,0,0,DATE_SUB(@now,INTERVAL 6 DAY),DATE_SUB(@now,INTERVAL 6 DAY),DATE_SUB(@now,INTERVAL 6 DAY),DATE_ADD(DATE_SUB(@now,INTERVAL 6 DAY),INTERVAL 51 MINUTE),NULL,2),
+    (CONCAT(@order_prefix,'009'),(SELECT id FROM restaurant_tables WHERE table_number='T07'),NULL,'COMPLETED',NULL,0,0,DATE_SUB(@now,INTERVAL 4 DAY),DATE_SUB(@now,INTERVAL 4 DAY),DATE_SUB(@now,INTERVAL 4 DAY),DATE_ADD(DATE_SUB(@now,INTERVAL 4 DAY),INTERVAL 83 MINUTE),NULL,2),
+    (CONCAT(@order_prefix,'010'),(SELECT id FROM restaurant_tables WHERE table_number='T01'),(SELECT id FROM reservations WHERE reservation_code=CONCAT(@reservation_prefix,'001')),'COMPLETED',NULL,0,0,DATE_SUB(@now,INTERVAL 2 DAY),DATE_SUB(@now,INTERVAL 2 DAY),DATE_SUB(@now,INTERVAL 2 DAY),DATE_ADD(DATE_SUB(@now,INTERVAL 2 DAY),INTERVAL 66 MINUTE),NULL,2),
+    (CONCAT(@order_prefix,'011'),(SELECT id FROM restaurant_tables WHERE table_number='T04'),(SELECT id FROM reservations WHERE reservation_code=CONCAT(@reservation_prefix,'002')),'COMPLETED','Birthday dessert candle',0,0,DATE_SUB(@now,INTERVAL 1 DAY),DATE_SUB(@now,INTERVAL 1 DAY),DATE_SUB(@now,INTERVAL 1 DAY),DATE_ADD(DATE_SUB(@now,INTERVAL 1 DAY),INTERVAL 78 MINUTE),NULL,2),
+    (CONCAT(@order_prefix,'012'),(SELECT id FROM restaurant_tables WHERE table_number='T09'),NULL,'COMPLETED',NULL,0,0,DATE_SUB(@now,INTERVAL 7 HOUR),DATE_SUB(@now,INTERVAL 5 HOUR),DATE_SUB(@now,INTERVAL 7 HOUR),DATE_SUB(@now,INTERVAL 5 HOUR),NULL,2),
+    (CONCAT(@order_prefix,'013'),(SELECT id FROM restaurant_tables WHERE table_number='T03'),NULL,'SUBMITTED','No nuts on salad',0,0,DATE_SUB(@now,INTERVAL 28 MINUTE),DATE_SUB(@now,INTERVAL 27 MINUTE),DATE_SUB(@now,INTERVAL 27 MINUTE),NULL,NULL,1),
+    (CONCAT(@order_prefix,'014'),(SELECT id FROM restaurant_tables WHERE table_number='T06'),NULL,'SUBMITTED',NULL,0,0,DATE_SUB(@now,INTERVAL 19 MINUTE),DATE_SUB(@now,INTERVAL 18 MINUTE),DATE_SUB(@now,INTERVAL 18 MINUTE),NULL,NULL,1),
+    (CONCAT(@order_prefix,'015'),(SELECT id FROM restaurant_tables WHERE table_number='T02'),NULL,'SUBMITTED','Dessert after mains',0,0,DATE_SUB(@now,INTERVAL 11 MINUTE),DATE_SUB(@now,INTERVAL 10 MINUTE),DATE_SUB(@now,INTERVAL 10 MINUTE),NULL,NULL,1),
+    (CONCAT(@order_prefix,'016'),(SELECT id FROM restaurant_tables WHERE table_number='B02'),NULL,'OPEN','Draft walk-in order',0,0,DATE_SUB(@now,INTERVAL 4 MINUTE),@now,NULL,NULL,NULL,0);
+
+INSERT INTO order_items
+    (order_id,menu_item_id,item_code_snapshot,item_name_snapshot,base_price_snapshot,quantity,notes,
+     unit_total_snapshot,line_total,display_order,created_at,updated_at)
+SELECT o.id,mi.id,mi.code,mi.name,mi.base_price,x.qty,x.notes,mi.base_price,mi.base_price*x.qty,x.ord,o.created_at,o.updated_at
+FROM (
+    SELECT CONCAT(@order_prefix,'001') ono,'MN-CHICKEN' code,2 qty,NULL notes,10 ord UNION ALL SELECT CONCAT(@order_prefix,'001'),'SA-GARDEN',1,NULL,20 UNION ALL
+    SELECT CONCAT(@order_prefix,'002'),'MN-SALMON',2,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'002'),'PA-TRUFFLE',1,NULL,20 UNION ALL SELECT CONCAT(@order_prefix,'002'),'DE-TIRAMISU',2,NULL,30 UNION ALL
+    SELECT CONCAT(@order_prefix,'003'),'PA-PRAWN',1,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'003'),'DR-CITRUS',2,NULL,20 UNION ALL
+    SELECT CONCAT(@order_prefix,'004'),'MN-KOFTA',3,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'004'),'MN-GRAIN',2,NULL,20 UNION ALL SELECT CONCAT(@order_prefix,'004'),'SP-FETA',2,NULL,30 UNION ALL
+    SELECT CONCAT(@order_prefix,'005'),'PA-RIGATONI',2,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'005'),'SA-BEET',1,NULL,20 UNION ALL
+    SELECT CONCAT(@order_prefix,'006'),'SP-OCTOPUS',1,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'006'),'DR-LEMON',2,NULL,20 UNION ALL
+    SELECT CONCAT(@order_prefix,'007'),'MN-CHICKEN',2,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'007'),'PA-GNOCCHI',1,NULL,20 UNION ALL SELECT CONCAT(@order_prefix,'007'),'DE-PANNA',2,NULL,30 UNION ALL
+    SELECT CONCAT(@order_prefix,'008'),'SA-FENNEL',1,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'008'),'MN-SALMON',1,NULL,20 UNION ALL SELECT CONCAT(@order_prefix,'008'),'DR-CITRUS',2,NULL,30 UNION ALL
+    SELECT CONCAT(@order_prefix,'009'),'MN-KOFTA',2,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'009'),'PA-PRAWN',2,NULL,20 UNION ALL SELECT CONCAT(@order_prefix,'009'),'SP-ZUCCHINI',1,NULL,30 UNION ALL
+    SELECT CONCAT(@order_prefix,'010'),'MN-SALMON',1,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'010'),'SA-GARDEN',1,NULL,20 UNION ALL SELECT CONCAT(@order_prefix,'010'),'DE-TIRAMISU',2,NULL,30 UNION ALL
+    SELECT CONCAT(@order_prefix,'011'),'PA-TRUFFLE',2,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'011'),'MN-CHICKEN',2,NULL,20 UNION ALL SELECT CONCAT(@order_prefix,'011'),'DE-CAKE',1,'Add birthday candle',30 UNION ALL
+    SELECT CONCAT(@order_prefix,'012'),'MN-GRAIN',1,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'012'),'SP-BURRATA',1,NULL,20 UNION ALL SELECT CONCAT(@order_prefix,'012'),'DR-LEMON',2,NULL,30 UNION ALL
+    SELECT CONCAT(@order_prefix,'013'),'MN-SALMON',1,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'013'),'SA-GARDEN',1,'No nuts',20 UNION ALL
+    SELECT CONCAT(@order_prefix,'014'),'PA-PRAWN',2,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'014'),'SP-ZUCCHINI',1,NULL,20 UNION ALL
+    SELECT CONCAT(@order_prefix,'015'),'MN-CHICKEN',1,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'015'),'DE-PANNA',1,NULL,20 UNION ALL
+    SELECT CONCAT(@order_prefix,'016'),'PA-RIGATONI',1,NULL,10 UNION ALL SELECT CONCAT(@order_prefix,'016'),'DR-CITRUS',1,NULL,20
+) x JOIN orders o ON o.order_number=x.ono JOIN menu_items mi ON mi.code=x.code;
+
+INSERT INTO order_item_modifiers
+    (order_item_id,modifier_group_id,modifier_option_id,group_name_snapshot,option_name_snapshot,
+     price_adjustment_snapshot,display_order,created_at)
+SELECT oi.id,mg.id,mo.id,mg.name,mo.name,mo.price_adjustment,10,oi.created_at
+FROM (
+    SELECT CONCAT(@order_prefix,'002') ono,'MN-SALMON' item,'Medium' option_name UNION ALL
+    SELECT CONCAT(@order_prefix,'005'),'PA-RIGATONI','Aged Parmesan' UNION ALL
+    SELECT CONCAT(@order_prefix,'008'),'MN-SALMON','Well Done' UNION ALL
+    SELECT CONCAT(@order_prefix,'010'),'MN-SALMON','Medium' UNION ALL
+    SELECT CONCAT(@order_prefix,'010'),'SA-GARDEN','Avocado' UNION ALL
+    SELECT CONCAT(@order_prefix,'011'),'PA-TRUFFLE','Aged Parmesan' UNION ALL
+    SELECT CONCAT(@order_prefix,'013'),'MN-SALMON','Medium' UNION ALL
+    SELECT CONCAT(@order_prefix,'013'),'SA-GARDEN','Grilled Chicken' UNION ALL
+    SELECT CONCAT(@order_prefix,'014'),'PA-PRAWN','Calabrian Chili'
+) x JOIN orders o ON o.order_number=x.ono JOIN order_items oi ON oi.order_id=o.id
+     JOIN menu_items mi ON mi.id=oi.menu_item_id AND mi.code=x.item
+     JOIN modifier_options mo ON mo.name=x.option_name JOIN modifier_groups mg ON mg.id=mo.modifier_group_id;
+
+UPDATE order_items oi
+LEFT JOIN (SELECT order_item_id,SUM(price_adjustment_snapshot) mods FROM order_item_modifiers GROUP BY order_item_id) m
+  ON m.order_item_id=oi.id
+SET oi.unit_total_snapshot=oi.base_price_snapshot+COALESCE(m.mods,0),
+    oi.line_total=(oi.base_price_snapshot+COALESCE(m.mods,0))*oi.quantity;
+UPDATE orders o JOIN (SELECT order_id,SUM(line_total) amount FROM order_items GROUP BY order_id) x ON x.order_id=o.id
+SET o.subtotal=x.amount,o.total=x.amount;
+
+INSERT INTO order_status_history (order_id,from_status,to_status,changed_at,changed_by_user_id)
+SELECT id,NULL,'OPEN',created_at,@actor_user_id FROM orders;
+INSERT INTO order_status_history (order_id,from_status,to_status,changed_at,changed_by_user_id)
+SELECT id,'OPEN','SUBMITTED',submitted_at,@actor_user_id FROM orders WHERE submitted_at IS NOT NULL;
+INSERT INTO order_status_history (order_id,from_status,to_status,changed_at,changed_by_user_id)
+SELECT id,'SUBMITTED','COMPLETED',completed_at,@actor_user_id FROM orders WHERE status='COMPLETED';
+
+INSERT INTO kitchen_tickets
+    (order_id,status,created_at,updated_at,started_at,ready_at,cancelled_at,version)
+SELECT id,
+       CASE order_number WHEN CONCAT(@order_prefix,'013') THEN 'PREPARING' WHEN CONCAT(@order_prefix,'014') THEN 'QUEUED'
+                         WHEN CONCAT(@order_prefix,'015') THEN 'READY' ELSE 'READY' END,
+       submitted_at,
+       CASE WHEN status='COMPLETED' THEN DATE_SUB(completed_at,INTERVAL 25 MINUTE)
+            WHEN order_number=CONCAT(@order_prefix,'013') THEN DATE_SUB(@now,INTERVAL 21 MINUTE)
+            WHEN order_number=CONCAT(@order_prefix,'014') THEN submitted_at ELSE DATE_SUB(@now,INTERVAL 2 MINUTE) END,
+       CASE WHEN order_number=CONCAT(@order_prefix,'014') THEN NULL ELSE DATE_ADD(submitted_at,INTERVAL 4 MINUTE) END,
+       CASE WHEN status='COMPLETED' THEN DATE_SUB(completed_at,INTERVAL 25 MINUTE)
+            WHEN order_number=CONCAT(@order_prefix,'015') THEN DATE_SUB(@now,INTERVAL 2 MINUTE) ELSE NULL END,
+       NULL,CASE WHEN status='COMPLETED' OR order_number=CONCAT(@order_prefix,'015') THEN 2
+                 WHEN order_number=CONCAT(@order_prefix,'013') THEN 1 ELSE 0 END
+FROM orders WHERE status IN ('COMPLETED','SUBMITTED');
+
+INSERT INTO kitchen_ticket_items
+    (kitchen_ticket_id,order_item_id,status,created_at,updated_at,started_at,ready_at)
+SELECT kt.id,oi.id,
+       CASE WHEN o.status='COMPLETED' OR o.order_number=CONCAT(@order_prefix,'015') THEN 'READY'
+            WHEN o.order_number=CONCAT(@order_prefix,'013') THEN 'PREPARING' ELSE 'QUEUED' END,
+       kt.created_at,kt.updated_at,
+       CASE WHEN o.order_number=CONCAT(@order_prefix,'014') THEN NULL ELSE DATE_ADD(kt.created_at,INTERVAL 4 MINUTE) END,
+       CASE WHEN o.status='COMPLETED' THEN kt.ready_at
+            WHEN o.order_number=CONCAT(@order_prefix,'015') THEN kt.ready_at ELSE NULL END
+FROM kitchen_tickets kt JOIN orders o ON o.id=kt.order_id JOIN order_items oi ON oi.order_id=o.id;
+
+INSERT INTO stock_movements
+    (inventory_item_id,movement_type,quantity,occurred_at,actor_user_id,reference_type,reference_id,
+     source_key,reason,unit_cost,total_cost)
+SELECT ri.inventory_item_id,'USAGE',ri.quantity*oi.quantity,kti.ready_at,@actor_user_id,'KITCHEN_ITEM',kti.id,
+       CONCAT('KITCHEN_ITEM:',kti.id,':INVENTORY_ITEM:',ri.inventory_item_id),'Recipe consumption',NULL,NULL
+FROM kitchen_ticket_items kti JOIN order_items oi ON oi.id=kti.order_item_id
+JOIN recipes r ON r.menu_item_id=oi.menu_item_id AND r.active=TRUE JOIN recipe_ingredients ri ON ri.recipe_id=r.id
+WHERE kti.status='READY';
+
+INSERT INTO stock_movements
+    (inventory_item_id,movement_type,quantity,occurred_at,actor_user_id,reference_type,reference_id,
+     source_key,reason,unit_cost,total_cost)
+SELECT moi.inventory_item_id,'USAGE',moi.quantity*oi.quantity,kti.ready_at,@actor_user_id,'KITCHEN_ITEM',kti.id,
+       CONCAT('KITCHEN_ITEM:',kti.id,':INVENTORY_ITEM:',moi.inventory_item_id),'Modifier consumption',NULL,NULL
+FROM kitchen_ticket_items kti JOIN order_items oi ON oi.id=kti.order_item_id
+JOIN order_item_modifiers oim ON oim.order_item_id=oi.id
+JOIN modifier_option_ingredients moi ON moi.modifier_option_id=oim.modifier_option_id
+WHERE kti.status='READY'
+ON DUPLICATE KEY UPDATE quantity=stock_movements.quantity+VALUES(quantity);
+
+INSERT INTO stock_movements
+    (inventory_item_id,movement_type,quantity,occurred_at,actor_user_id,reference_type,reference_id,
+     source_key,reason,unit_cost,total_cost)
+VALUES
+    ((SELECT id FROM inventory_items WHERE code='INV-SALMON'),'WASTE',1050.000,DATE_SUB(@now,INTERVAL 1 DAY),@actor_user_id,'WASTE_LOG',NULL,'WASTE:SALMON','Quality-control trim and spoilage',NULL,NULL),
+    ((SELECT id FROM inventory_items WHERE code='INV-GREENS'),'WASTE',900.000,DATE_SUB(@now,INTERVAL 8 HOUR),@actor_user_id,'WASTE_LOG',NULL,'WASTE:GREENS','Wilted leaves removed during prep',NULL,NULL);
+
+INSERT INTO payments
+    (payment_number,order_id,idempotency_key,method,status,amount,currency,external_reference,
+     received_at,actor_user_id,created_at)
+SELECT CONCAT(@payment_prefix,LPAD(x.seq,3,'0')),o.id,CONCAT('payment-import-',@reference_date,'-',LPAD(x.seq,3,'0')),
+       x.method,'SUCCEEDED',CASE WHEN x.amount_type='FULL' THEN o.total ELSE x.amount END,'EUR',x.ext,
+       DATE_ADD(o.completed_at,INTERVAL x.delay_min MINUTE),@actor_user_id,DATE_ADD(o.completed_at,INTERVAL x.delay_min MINUTE)
+FROM (
+    SELECT 1 seq,CONCAT(@order_prefix,'001') ono,'CARD' method,'FULL' amount_type,0.00 amount,CONCAT(@pos_prefix,'001') ext,5 delay_min UNION ALL
+    SELECT 2,CONCAT(@order_prefix,'002'),'CASH','FULL',0.00,NULL,7 UNION ALL
+    SELECT 3,CONCAT(@order_prefix,'003'),'CARD','FULL',0.00,CONCAT(@pos_prefix,'003'),4 UNION ALL
+    SELECT 4,CONCAT(@order_prefix,'004'),'BANK_TRANSFER','FULL',0.00,CONCAT(@bank_prefix,'004'),12 UNION ALL
+    SELECT 6,CONCAT(@order_prefix,'006'),'CASH','FULL',0.00,NULL,3 UNION ALL
+    SELECT 7,CONCAT(@order_prefix,'007'),'CARD','FIXED',40.00,CONCAT(@pos_prefix,'007'),4 UNION ALL
+    SELECT 8,CONCAT(@order_prefix,'008'),'CARD','FULL',0.00,CONCAT(@pos_prefix,'008'),5 UNION ALL
+    SELECT 9,CONCAT(@order_prefix,'009'),'CASH','FIXED',50.00,NULL,6 UNION ALL
+    SELECT 10,CONCAT(@order_prefix,'010'),'CARD','FULL',0.00,CONCAT(@pos_prefix,'010'),5 UNION ALL
+    SELECT 11,CONCAT(@order_prefix,'011'),'CARD','FIXED',50.00,CONCAT(@pos_prefix,'011'),5 UNION ALL
+    SELECT 12,CONCAT(@order_prefix,'011'),'CASH','FIXED',43.00,NULL,7 UNION ALL
+    SELECT 13,CONCAT(@order_prefix,'012'),'CARD','FULL',0.00,CONCAT(@pos_prefix,'013'),5
+) x JOIN orders o ON o.order_number=x.ono;
+
+INSERT INTO payment_reconciliations
+    (payment_id,reconciliation_reference,reconciled_at,actor_user_id,created_at)
+SELECT p.id,CONCAT('SETTLEMENT-',DATE_FORMAT(p.received_at,'%Y%m%d'),'-',LPAD(p.id,4,'0')),
+       DATE_ADD(p.received_at,INTERVAL 1 DAY),@actor_user_id,DATE_ADD(p.received_at,INTERVAL 1 DAY)
+FROM payments p WHERE p.method IN ('CARD','BANK_TRANSFER') AND p.received_at<DATE_SUB(@now,INTERVAL 1 DAY);
+
+INSERT INTO invoices
+    (invoice_number,order_id,order_number_snapshot,currency,subtotal,total,paid_total,issued_at,actor_user_id,created_at)
+SELECT CONCAT('INV-',@reference_year,'-',RIGHT(o.order_number,3)),o.id,o.order_number,'EUR',o.subtotal,o.total,o.total,
+       DATE_ADD(o.completed_at,INTERVAL 15 MINUTE),@actor_user_id,DATE_ADD(o.completed_at,INTERVAL 15 MINUTE)
+FROM orders o
+JOIN (SELECT order_id,SUM(amount) paid FROM payments GROUP BY order_id) p ON p.order_id=o.id AND p.paid=o.total
+WHERE o.order_number IN (CONCAT(@order_prefix,'001'),CONCAT(@order_prefix,'003'),CONCAT(@order_prefix,'004'),CONCAT(@order_prefix,'006'),CONCAT(@order_prefix,'008'),CONCAT(@order_prefix,'010'),CONCAT(@order_prefix,'011'),CONCAT(@order_prefix,'012'));
+
+INSERT INTO invoice_items
+    (invoice_id,source_order_item_id,item_code,item_name,quantity,base_price,unit_total,line_total,
+     display_order,created_at)
+SELECT inv.id,oi.id,oi.item_code_snapshot,oi.item_name_snapshot,oi.quantity,oi.base_price_snapshot,
+       oi.unit_total_snapshot,oi.line_total,oi.display_order,inv.issued_at
+FROM invoices inv JOIN order_items oi ON oi.order_id=inv.order_id;
+INSERT INTO invoice_item_modifiers
+    (invoice_item_id,group_name,option_name,price_adjustment,display_order,created_at)
+SELECT ii.id,oim.group_name_snapshot,oim.option_name_snapshot,oim.price_adjustment_snapshot,oim.display_order,inv.issued_at
+FROM invoice_items ii JOIN invoices inv ON inv.id=ii.invoice_id
+JOIN order_item_modifiers oim ON oim.order_item_id=ii.source_order_item_id;
+
+INSERT INTO audit_logs
+    (actor_user_id,restaurant_id,action,entity_type,entity_id,occurred_at,details,ip_address)
+VALUES
+    (@actor_user_id,@restaurant_id,'SHOWCASE_DATA_SEEDED','SHOWCASE_DATASET','cedar-and-stone-v1',@now,
+     JSON_OBJECT('dataset','Cedar & Stone Kitchen','purpose','local portfolio showcase','relativeTo',DATE_FORMAT(@today,'%Y-%m-%d')),
+     '127.0.0.1');

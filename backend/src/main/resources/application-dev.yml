@@ -12,3 +12,7 @@ spring:
 logging:
   level:
     com.adam.restaurantoperations: DEBUG
+
+app:
+  demo-data:
+    enabled: ${DEMO_DATA_ENABLED:false}

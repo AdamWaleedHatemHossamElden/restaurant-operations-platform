@@ -220,6 +220,56 @@ class KitchenManagementIT {
     }
 
     @Test
+    void activeListContainsOnlySubmittedOrderTicketsWhileHistoricalAccessRemainsAvailable() throws Exception {
+        MvcResult queued = createSubmittedOrder();
+
+        MvcResult preparing = createSubmittedOrder();
+        long preparingTicketId = ticketId(preparing);
+        transitionItem(
+                        preparingTicketId,
+                        itemId(preparingTicketId),
+                        ticketVersion(preparingTicketId),
+                        "PREPARING")
+                .andExpect(status().isOk());
+
+        MvcResult ready = createSubmittedOrder();
+        readyTicket(ready);
+
+        MvcResult completed = createSubmittedOrder();
+        readyTicket(completed);
+        transitionOrder(number(completed, "$.id"), number(completed, "$.version"), "COMPLETED")
+                .andExpect(status().isOk());
+
+        MvcResult cancelled = createSubmittedOrder();
+        transitionOrder(number(cancelled, "$.id"), number(cancelled, "$.version"), "CANCELLED")
+                .andExpect(status().isOk());
+
+        MvcResult active = mockMvc.perform(get("/api/v1/kitchen/tickets").with(adminJwt()))
+                .andExpect(status().isOk())
+                .andReturn();
+        List<String> activeOrders = com.jayway.jsonpath.JsonPath.read(
+                active.getResponse().getContentAsString(), "$[*].orderNumber");
+        assertThat(activeOrders).containsExactlyInAnyOrder(
+                text(queued, "$.orderNumber"),
+                text(preparing, "$.orderNumber"),
+                text(ready, "$.orderNumber"));
+        assertThat(activeOrders).doesNotContain(
+                text(completed, "$.orderNumber"),
+                text(cancelled, "$.orderNumber"));
+
+        MvcResult historical = mockMvc.perform(get("/api/v1/kitchen/tickets")
+                        .param("includeCancelled", "true")
+                        .with(adminJwt()))
+                .andExpect(status().isOk())
+                .andReturn();
+        List<String> historicalOrders = com.jayway.jsonpath.JsonPath.read(
+                historical.getResponse().getContentAsString(), "$[*].orderNumber");
+        assertThat(historicalOrders).contains(
+                text(completed, "$.orderNumber"),
+                text(cancelled, "$.orderNumber"));
+    }
+
+    @Test
     void failedOrDuplicateSubmissionDoesNotCreateDuplicateKitchenState() throws Exception {
         MvcResult empty = createOrder().andReturn();
         transitionOrder(number(empty, "$.id"), number(empty, "$.version"), "SUBMITTED")
@@ -283,6 +333,34 @@ class KitchenManagementIT {
                 .content("{\"restaurantTableId\":" + tableId + ",\"notes\":\"Kitchen test\"}"));
     }
 
+    private MvcResult createSubmittedOrder() throws Exception {
+        MvcResult created = createOrder().andExpect(status().isCreated()).andReturn();
+        MvcResult added = addItem(number(created, "$.id"), number(created, "$.version"), 1, null)
+                .andExpect(status().isOk())
+                .andReturn();
+        return transitionOrder(number(created, "$.id"), number(added, "$.version"), "SUBMITTED")
+                .andExpect(status().isOk())
+                .andReturn();
+    }
+
+    private void readyTicket(MvcResult submitted) throws Exception {
+        long ticketId = ticketId(submitted);
+        long itemId = itemId(ticketId);
+        MvcResult preparing = transitionItem(ticketId, itemId, ticketVersion(ticketId), "PREPARING")
+                .andExpect(status().isOk())
+                .andReturn();
+        transitionItem(ticketId, itemId, number(preparing, "$.version"), "READY")
+                .andExpect(status().isOk());
+    }
+
+    private long ticketId(MvcResult order) throws java.io.UnsupportedEncodingException {
+        return id("SELECT id FROM kitchen_tickets WHERE order_id = " + number(order, "$.id"));
+    }
+
+    private long itemId(long ticketId) {
+        return id("SELECT id FROM kitchen_ticket_items WHERE kitchen_ticket_id = " + ticketId);
+    }
+
     private org.springframework.test.web.servlet.ResultActions addItem(
             long orderId,
             long version,
@@ -344,5 +422,9 @@ class KitchenManagementIT {
     private long number(MvcResult result, String path) throws java.io.UnsupportedEncodingException {
         Number value = com.jayway.jsonpath.JsonPath.read(result.getResponse().getContentAsString(), path);
         return value.longValue();
+    }
+
+    private String text(MvcResult result, String path) throws java.io.UnsupportedEncodingException {
+        return com.jayway.jsonpath.JsonPath.read(result.getResponse().getContentAsString(), path);
     }
 }
