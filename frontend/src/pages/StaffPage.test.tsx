@@ -144,6 +144,24 @@ describe('staff page', () => {
     await waitFor(() => expect(staffApi.saveEmployee).toHaveBeenCalled())
   })
 
+  it('uses the shared modal focus behavior for employee dialogs', async () => {
+    renderPage()
+    await screen.findByRole('heading', { name: 'Maria Rossi' })
+    const user = userEvent.setup()
+    const trigger = screen.getByRole('button', { name: 'Create employee' })
+
+    await user.click(trigger)
+    expect(screen.getByRole('dialog', { name: 'Create employee' })).toHaveAttribute(
+      'aria-modal',
+      'true',
+    )
+    expect(screen.getByLabelText('Employee code')).toHaveFocus()
+
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(trigger).toHaveFocus()
+  })
+
   it('shows the future-shift conflict when employee deactivation is rejected', async () => {
     vi.mocked(staffApi.toggleEmployee).mockRejectedValue({
       isAxiosError: true,

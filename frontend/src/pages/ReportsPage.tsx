@@ -120,6 +120,24 @@ function label(value: string) {
     .replace(/^./, (first) => first.toUpperCase())
 }
 
+function selectedPeriodLabel(range: ReportRange) {
+  const start = new Date(range.from)
+  const includedEnd = new Date(range.to)
+  includedEnd.setDate(includedEnd.getDate() - 1)
+  const endFormatter = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  })
+  if (start.toDateString() === includedEnd.toDateString()) return endFormatter.format(start)
+  const startFormatter = new Intl.DateTimeFormat('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: start.getFullYear() === includedEnd.getFullYear() ? undefined : 'numeric',
+  })
+  return `${startFormatter.format(start)} – ${endFormatter.format(includedEnd)}`
+}
+
 export function ReportsPage() {
   const [tab, setTab] = useState<ReportTab>('overview')
   const [preset, setPreset] = useState<ReportPreset | 'CUSTOM'>('LAST_30_DAYS')
@@ -171,11 +189,7 @@ export function ReportsPage() {
     queryFn: () => getStaffReport(range),
     enabled: tab === 'staff',
   })
-  const displayPeriod = useMemo(
-    () =>
-      `${new Date(range.from).toLocaleDateString()} – ${new Date(range.to).toLocaleDateString()} (exclusive)`,
-    [range],
-  )
+  const displayPeriod = useMemo(() => selectedPeriodLabel(range), [range])
 
   const choosePreset = (next: ReportPreset) => {
     const nextRange = presetRange(next)
@@ -210,7 +224,7 @@ export function ReportsPage() {
     <div className="page reports-page">
       <section className="page-heading reports-hero">
         <div>
-          <p className="eyebrow">Phase 9 · decision support</p>
+          <p className="eyebrow">Operational intelligence</p>
           <h1>Reports & analytics</h1>
           <p>
             Read-only operational summaries built from authoritative historical and current records.
@@ -219,7 +233,7 @@ export function ReportsPage() {
         <div className="report-period">
           <span>Selected period</span>
           <strong>{displayPeriod}</strong>
-          <small>All API ranges are half-open [from, to).</small>
+          <small>The end date is excluded from calculations.</small>
         </div>
       </section>
 
@@ -256,7 +270,7 @@ export function ReportsPage() {
             />
           </label>
           <label>
-            End date (exclusive)
+            End date
             <input
               type="date"
               value={toInput}
@@ -317,7 +331,7 @@ export function ReportsPage() {
                 <Kpi
                   label="Completed orders"
                   value={overview.data.completedOrders}
-                  note={formatEur(overview.data.completedOrderValue)}
+                  note={`${formatEur(overview.data.completedOrderValue)} order value`}
                 />
                 <Kpi
                   label="Payments received"

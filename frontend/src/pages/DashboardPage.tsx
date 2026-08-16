@@ -1,192 +1,218 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
+import {
+  ArrowRight,
+  BarChart3,
+  CalendarDays,
+  ChefHat,
+  ClipboardList,
+  CreditCard,
+  Euro,
+  PackageOpen,
+  ReceiptText,
+  TableProperties,
+  TrendingUp,
+  Users,
+} from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { useAuth } from '../features/auth/authContext'
 import { HealthStatus } from '../features/health/HealthStatus'
+import { formatEur } from '../features/menu/money'
+import { getOverviewReport, reportKeys } from '../features/reports/reportsApi'
+import { presetRange } from '../features/reports/reportTime'
+
+const quickActions = [
+  {
+    to: '/orders',
+    label: 'Open orders',
+    description: 'Capture service and manage active checks.',
+    icon: ClipboardList,
+  },
+  {
+    to: '/reservations',
+    label: 'Reservations',
+    description: 'Review arrivals and table assignments.',
+    icon: CalendarDays,
+  },
+  {
+    to: '/kitchen',
+    label: 'Kitchen display',
+    description: 'Monitor live preparation and ticket flow.',
+    icon: ChefHat,
+  },
+  {
+    to: '/inventory',
+    label: 'Inventory',
+    description: 'Check stock levels and purchasing.',
+    icon: PackageOpen,
+  },
+]
+
+const managementLinks = [
+  { to: '/tables', label: 'Dining room', icon: TableProperties },
+  { to: '/menu', label: 'Menu catalog', icon: ReceiptText },
+  { to: '/staff', label: 'Staff schedule', icon: Users },
+  { to: '/payments', label: 'Payments', icon: CreditCard },
+  { to: '/reports', label: 'Reports', icon: BarChart3 },
+]
 
 export function DashboardPage() {
   const auth = useAuth()
-  const navigate = useNavigate()
-  const [isSigningOut, setIsSigningOut] = useState(false)
+  const range = presetRange('LAST_30_DAYS')
+  const overview = useQuery({
+    queryKey: reportKeys.section('dashboard-overview', range),
+    queryFn: () => getOverviewReport(range),
+  })
 
-  if (!auth.user) {
-    return null
-  }
+  if (!auth.user) return null
 
-  const signOut = async () => {
-    if (isSigningOut) {
-      return
-    }
-    setIsSigningOut(true)
-    await auth.logout()
-    navigate('/login', { replace: true })
-  }
+  const firstName = auth.user.displayName.split(' ')[0]
+  const metrics = overview.data
+    ? [
+        {
+          label: 'Completed order value',
+          value: formatEur(overview.data.completedOrderValue),
+          detail: `${overview.data.completedOrders} completed orders`,
+          icon: Euro,
+        },
+        {
+          label: 'Average order',
+          value: formatEur(overview.data.averageCompletedOrderValue),
+          detail: 'Last 30 days',
+          icon: TrendingUp,
+        },
+        {
+          label: 'Payments received',
+          value: formatEur(overview.data.paymentsReceived),
+          detail: `${overview.data.paymentCount} settlements`,
+          icon: CreditCard,
+        },
+        {
+          label: 'Reservations',
+          value: overview.data.reservations,
+          detail: 'Planned in this period',
+          icon: CalendarDays,
+        },
+      ]
+    : []
 
   return (
     <div className="page dashboard-page">
-      <section className="dashboard-welcome" aria-labelledby="dashboard-title">
+      <header className="dashboard-welcome">
         <div>
-          <p className="eyebrow">Operations workspace</p>
-          <h1 id="dashboard-title">Good service starts with a clear view.</h1>
+          <p className="eyebrow">Operations overview</p>
+          <h1>Welcome back, {firstName}.</h1>
           <p>
-            Welcome, <strong>{auth.user.displayName}</strong>. Authentication is active; restaurant
-            workflows will arrive in their planned phases.
+            Here is the current pulse of your restaurant and the tools for today&rsquo;s service.
           </p>
         </div>
-        <button
-          className="button button--secondary"
-          type="button"
-          onClick={signOut}
-          disabled={isSigningOut}
-        >
-          {isSigningOut ? 'Signing out…' : 'Sign out'}
-        </button>
-      </section>
-
-      <section className="identity-card" aria-labelledby="identity-title">
-        <div className="identity-card__header">
-          <span className="identity-avatar" aria-hidden="true">
-            {auth.user.displayName.charAt(0).toUpperCase()}
+        <div className="dashboard-date" aria-label="Current date">
+          <CalendarDays size={18} aria-hidden="true" />
+          <span>
+            {new Intl.DateTimeFormat(undefined, {
+              weekday: 'long',
+              month: 'long',
+              day: 'numeric',
+            }).format(new Date())}
           </span>
-          <div>
-            <p className="eyebrow">Current session</p>
-            <h2 id="identity-title">{auth.user.displayName}</h2>
-          </div>
         </div>
-        <dl className="identity-details">
+      </header>
+
+      <section className="dashboard-section" aria-labelledby="dashboard-performance-title">
+        <div className="section-heading">
           <div>
-            <dt>Email</dt>
-            <dd>{auth.user.email}</dd>
+            <p className="eyebrow">Last 30 days</p>
+            <h2 id="dashboard-performance-title">Performance at a glance</h2>
           </div>
-          <div>
-            <dt>Roles</dt>
-            <dd className="role-list">
-              {auth.user.roles.map((role) => (
-                <span className="role-chip" key={role}>
-                  {role}
-                </span>
-              ))}
-            </dd>
+          <Link className="text-link" to="/reports">
+            View all reports <ArrowRight size={16} aria-hidden="true" />
+          </Link>
+        </div>
+        {overview.isPending ? (
+          <div className="metric-grid" aria-label="Loading performance metrics" aria-busy="true">
+            {[0, 1, 2, 3].map((item) => (
+              <div className="metric-card metric-card--loading" key={item} />
+            ))}
           </div>
-        </dl>
+        ) : overview.isError ? (
+          <div className="inline-state inline-state--error" role="alert">
+            <div>
+              <strong>Performance data is unavailable</strong>
+              <span>Your operational tools are still available.</span>
+            </div>
+            <button
+              className="button button--secondary"
+              type="button"
+              onClick={() => overview.refetch()}
+            >
+              Retry
+            </button>
+          </div>
+        ) : (
+          <div className="metric-grid">
+            {metrics.map((metric) => {
+              const Icon = metric.icon
+              return (
+                <article className="metric-card" key={metric.label}>
+                  <div className="metric-card__icon" aria-hidden="true">
+                    <Icon size={20} />
+                  </div>
+                  <span>{metric.label}</span>
+                  <strong>{metric.value}</strong>
+                  <small>{metric.detail}</small>
+                </article>
+              )
+            })}
+          </div>
+        )}
       </section>
 
-      <HealthStatus />
+      <div className="dashboard-columns">
+        <section className="dashboard-section" aria-labelledby="quick-actions-title">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Start here</p>
+              <h2 id="quick-actions-title">Quick access</h2>
+            </div>
+          </div>
+          <div className="quick-action-grid">
+            {quickActions.map((action) => {
+              const Icon = action.icon
+              return (
+                <Link className="quick-action" to={action.to} key={action.to}>
+                  <span className="quick-action__icon" aria-hidden="true">
+                    <Icon size={21} />
+                  </span>
+                  <span>
+                    <strong>{action.label}</strong>
+                    <small>{action.description}</small>
+                  </span>
+                  <ArrowRight size={17} aria-hidden="true" />
+                </Link>
+              )
+            })}
+          </div>
+        </section>
 
-      <section className="phase-notice" aria-labelledby="reports-workspace-title">
-        <p className="eyebrow">Phase 9</p>
-        <h2 id="reports-workspace-title">Turn operations into trustworthy decisions.</h2>
-        <p>
-          Compare completed sales, payments, reservations, kitchen throughput, stock movement, and
-          scheduled labor across one consistent reporting period.
-        </p>
-        <Link className="button button--primary button--link" to="/reports">
-          Open reports workspace
-        </Link>
-      </section>
-
-      <section className="phase-notice" aria-labelledby="payments-workspace-title">
-        <p className="eyebrow">Phase 8</p>
-        <h2 id="payments-workspace-title">Settle service with an auditable ledger.</h2>
-        <p>
-          Record confirmed EUR payments, reconcile settlement records, and issue immutable invoices
-          from completed order snapshots.
-        </p>
-        <Link className="button button--primary button--link" to="/payments">
-          Open payments workspace
-        </Link>
-      </section>
-
-      <section className="phase-notice" aria-labelledby="staff-workspace-title">
-        <p className="eyebrow">Phase 7</p>
-        <h2 id="staff-workspace-title">Build a conflict-safe weekly schedule.</h2>
-        <p>
-          Manage employees, date-specific availability, operational assignments, and terminal shift
-          outcomes without mixing scheduling roles with application authorization.
-        </p>
-        <Link className="button button--primary button--link" to="/staff">
-          Open staff workspace
-        </Link>
-      </section>
-
-      <section className="phase-notice" aria-labelledby="inventory-workspace-title">
-        <p className="eyebrow">Phase 6</p>
-        <h2 id="inventory-workspace-title">Connect preparation to stock and purchasing.</h2>
-        <p>
-          Track immutable stock movements, configure recipes, manage suppliers, and receive purchase
-          orders without blocking kitchen operations on negative balances.
-        </p>
-        <Link className="button button--primary button--link" to="/inventory">
-          Open inventory workspace
-        </Link>
-      </section>
-
-      <section className="phase-notice" aria-labelledby="kitchen-workspace-title">
-        <p className="eyebrow">Phase 5</p>
-        <h2 id="kitchen-workspace-title">Keep preparation visible in real time.</h2>
-        <p>
-          Follow submitted tickets, progress individual items, and recover authoritative kitchen
-          state after reconnecting.
-        </p>
-        <Link className="button button--primary button--link" to="/kitchen">
-          Open kitchen display
-        </Link>
-      </section>
-
-      <section className="phase-notice" aria-labelledby="orders-workspace-title">
-        <p className="eyebrow">Phase 4B</p>
-        <h2 id="orders-workspace-title">Capture service without losing price history.</h2>
-        <p>
-          Create table orders, select menu modifiers, preserve pricing snapshots, and progress each
-          order through its controlled lifecycle.
-        </p>
-        <Link className="button button--primary button--link" to="/orders">
-          Manage orders
-        </Link>
-      </section>
-
-      <section className="phase-notice" aria-labelledby="menu-workspace-title">
-        <p className="eyebrow">Phase 4A</p>
-        <h2 id="menu-workspace-title">Shape the menu catalog.</h2>
-        <p>
-          Configure categories, decimal prices, sale availability, and reusable modifier choices.
-        </p>
-        <Link className="button button--primary button--link" to="/menu">
-          Manage menu
-        </Link>
-      </section>
-
-      <section className="phase-notice" aria-labelledby="reservations-workspace-title">
-        <p className="eyebrow">Phase 3B</p>
-        <h2 id="reservations-workspace-title">Plan the next arrival.</h2>
-        <p>
-          Create reservations, find suitable tables, and move guests through a controlled service
-          workflow.
-        </p>
-        <Link className="button button--primary button--link" to="/reservations">
-          Manage reservations
-        </Link>
-      </section>
-
-      <section className="phase-notice" aria-labelledby="tables-workspace-title">
-        <p className="eyebrow">Phase 3A</p>
-        <h2 id="tables-workspace-title">Shape the dining room.</h2>
-        <p>
-          Manage table capacity, sections, service status, and active records from one workspace.
-        </p>
-        <Link className="button button--primary button--link" to="/tables">
-          Manage tables
-        </Link>
-      </section>
-
-      <section className="phase-notice" aria-labelledby="phase-notice-title">
-        <p className="eyebrow">Secure foundation</p>
-        <h2 id="phase-notice-title">Your authenticated workspace is ready.</h2>
-        <p>
-          Access remains protected by memory-only access tokens and backend-managed refresh cookies.
-        </p>
-      </section>
+        <aside className="dashboard-side-column" aria-label="Workspace status and links">
+          <HealthStatus />
+          <section className="management-links" aria-labelledby="management-links-title">
+            <div className="section-heading">
+              <h2 id="management-links-title">Manage</h2>
+            </div>
+            {managementLinks.map((item) => {
+              const Icon = item.icon
+              return (
+                <Link to={item.to} key={item.to}>
+                  <Icon size={18} aria-hidden="true" />
+                  <span>{item.label}</span>
+                  <ArrowRight size={15} aria-hidden="true" />
+                </Link>
+              )
+            })}
+          </section>
+        </aside>
+      </div>
     </div>
   )
 }

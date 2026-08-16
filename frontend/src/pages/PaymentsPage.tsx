@@ -79,7 +79,7 @@ export function PaymentsPage() {
     <div className="page payments-page">
       <section className="page-heading payments-heading">
         <div>
-          <p className="eyebrow">Phase 8 · EUR settlement ledger</p>
+          <p className="eyebrow">EUR settlement ledger</p>
           <h1>Payments & invoices</h1>
           <p>
             Record confirmed settlements, reconcile them once, and issue immutable paid-order

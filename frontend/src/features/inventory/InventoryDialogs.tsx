@@ -1,5 +1,6 @@
 import { useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react'
 
+import { Dialog as AccessibleDialog } from '../../components/ui/Dialog'
 import type {
   Ingredient,
   InventoryItem,
@@ -21,22 +22,19 @@ function Dialog({
   onClose: () => void
 }) {
   return (
-    <div className="dialog-backdrop" role="presentation">
-      <section
-        className="dialog inventory-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="inventory-dialog-title"
-      >
-        <div className="dialog__header">
-          <h2 id="inventory-dialog-title">{title}</h2>
-          <button type="button" aria-label="Close dialog" onClick={onClose}>
-            &times;
-          </button>
-        </div>
-        {children}
-      </section>
-    </div>
+    <AccessibleDialog
+      className="dialog inventory-dialog"
+      labelledBy="inventory-dialog-title"
+      onClose={onClose}
+    >
+      <div className="dialog__header">
+        <h2 id="inventory-dialog-title">{title}</h2>
+        <button className="icon-button" type="button" aria-label="Close dialog" onClick={onClose}>
+          &times;
+        </button>
+      </div>
+      {children}
+    </AccessibleDialog>
   )
 }
 

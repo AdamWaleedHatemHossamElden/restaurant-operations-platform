@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useForm } from 'react-hook-form'
 
+import { Dialog } from '../../components/ui/Dialog'
 import {
   categoryFormSchema,
   groupFormSchema,
@@ -25,35 +26,28 @@ function DialogFrame({
   children,
 }: CommonProps & { title: string; label: string; children: ReactNode }) {
   return (
-    <div className="dialog-backdrop" role="presentation">
-      <section
-        className="table-dialog menu-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="menu-dialog-title"
-      >
-        <div className="table-dialog__heading">
-          <div>
-            <p className="eyebrow">{label}</p>
-            <h2 id="menu-dialog-title">{title}</h2>
-          </div>
-          <button
-            className="icon-button"
-            type="button"
-            onClick={onClose}
-            aria-label="Close menu form"
-          >
-            &times;
-          </button>
+    <Dialog className="table-dialog menu-dialog" labelledBy="menu-dialog-title" onClose={onClose}>
+      <div className="table-dialog__heading">
+        <div>
+          <p className="eyebrow">{label}</p>
+          <h2 id="menu-dialog-title">{title}</h2>
         </div>
-        {error && (
-          <div className="form-alert" role="alert">
-            {error}
-          </div>
-        )}
-        {children}
-      </section>
-    </div>
+        <button
+          className="icon-button"
+          type="button"
+          onClick={onClose}
+          aria-label="Close menu form"
+        >
+          &times;
+        </button>
+      </div>
+      {error && (
+        <div className="form-alert" role="alert">
+          {error}
+        </div>
+      )}
+      {children}
+    </Dialog>
   )
 }
 

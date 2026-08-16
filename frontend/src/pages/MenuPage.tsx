@@ -195,11 +195,10 @@ export function MenuPage() {
     <div className="page menu-page">
       <section className="menu-hero" aria-labelledby="menu-title">
         <div>
-          <p className="eyebrow">Phase 4A · Catalog configuration</p>
+          <p className="eyebrow">Catalog configuration</p>
           <h1 id="menu-title">Menu management</h1>
           <p>
-            Build the categories, sellable items, and reusable modifiers that later ordering
-            workflows will consume.
+            Build the categories, sellable items, and reusable modifiers used throughout service.
           </p>
         </div>
         <span className="currency-note">Prices displayed in EUR</span>

@@ -2,6 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useMemo, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 
+import { Dialog } from '../../components/ui/Dialog'
 import { formatEur } from '../menu/money'
 import type { MenuItem, ModifierGroup } from '../menu/menuTypes'
 import { estimatedLineTotal } from './orderMoney'
@@ -123,124 +124,121 @@ export function OrderItemDialog({
   }
 
   return (
-    <div className="dialog-backdrop" role="presentation">
-      <section
-        className="table-dialog order-item-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="order-item-dialog-title"
-      >
-        <div className="table-dialog__heading">
-          <div>
-            <p className="eyebrow">{menuItem.code}</p>
-            <h2 id="order-item-dialog-title">
-              {orderItem ? 'Edit' : 'Add'} {menuItem.name}
-            </h2>
-          </div>
-          <button
-            className="icon-button"
-            type="button"
-            onClick={onClose}
-            aria-label="Close item form"
-          >
-            &times;
+    <Dialog
+      className="table-dialog order-item-dialog"
+      labelledBy="order-item-dialog-title"
+      onClose={onClose}
+    >
+      <div className="table-dialog__heading">
+        <div>
+          <p className="eyebrow">{menuItem.code}</p>
+          <h2 id="order-item-dialog-title">
+            {orderItem ? 'Edit' : 'Add'} {menuItem.name}
+          </h2>
+        </div>
+        <button
+          className="icon-button"
+          type="button"
+          onClick={onClose}
+          aria-label="Close item form"
+        >
+          &times;
+        </button>
+      </div>
+      {(error || selectionError) && (
+        <div className="form-alert" role="alert">
+          {error ?? selectionError}
+        </div>
+      )}
+      <form className="order-item-form" onSubmit={handleSubmit(submit)} noValidate>
+        <div className="form-field">
+          <label htmlFor="order-item-quantity">Quantity</label>
+          <input
+            id="order-item-quantity"
+            type="number"
+            min="1"
+            max="99"
+            {...register('quantity', { valueAsNumber: true })}
+          />
+          {errors.quantity && <p className="field-error">{errors.quantity.message}</p>}
+        </div>
+        <div className="form-field order-item-form__wide">
+          <label htmlFor="order-item-notes">Item notes (optional)</label>
+          <textarea id="order-item-notes" rows={2} {...register('notes')} />
+          {errors.notes && <p className="field-error">{errors.notes.message}</p>}
+        </div>
+        {assignedGroups.map((group) => {
+          const activeOptions = group.options.filter((option) => option.active)
+          const selected = selections[group.id] ?? []
+          return (
+            <fieldset
+              className="modifier-fieldset order-item-form__wide"
+              key={group.id}
+              disabled={!group.active}
+            >
+              <legend>
+                {group.name}{' '}
+                <span>
+                  {group.minimumSelections}–{group.maximumSelections}
+                </span>
+              </legend>
+              {!group.active && (
+                <p className="field-hint">This historical group is currently inactive.</p>
+              )}
+              {group.selectionType === 'SINGLE' && group.minimumSelections === 0 && (
+                <label className="modifier-choice">
+                  <input
+                    type="radio"
+                    name={`modifier-${group.id}`}
+                    checked={selected.length === 0}
+                    onChange={() => chooseSingle(group.id, null)}
+                  />
+                  <span>No selection</span>
+                </label>
+              )}
+              {activeOptions.map((option) => (
+                <label className="modifier-choice" key={option.id}>
+                  <input
+                    type={group.selectionType === 'SINGLE' ? 'radio' : 'checkbox'}
+                    name={`modifier-${group.id}`}
+                    checked={selected.includes(option.id)}
+                    disabled={
+                      group.selectionType === 'MULTIPLE' &&
+                      !selected.includes(option.id) &&
+                      selected.length >= group.maximumSelections
+                    }
+                    onChange={(event) =>
+                      group.selectionType === 'SINGLE'
+                        ? chooseSingle(group.id, option.id)
+                        : chooseMultiple(group, option.id, event.target.checked)
+                    }
+                  />
+                  <span>{option.name}</span>
+                  <strong>+{formatEur(option.priceAdjustment)}</strong>
+                </label>
+              ))}
+            </fieldset>
+          )
+        })}
+        <div className="order-item-estimate order-item-form__wide" aria-live="polite">
+          <span>{orderItem && !changed ? 'Snapshot total' : 'Estimated total'}</span>
+          <strong>{formatEur(estimate)}</strong>
+          <small>The backend recalculates and returns the authoritative price.</small>
+        </div>
+        {orderItem && changed && (
+          <p className="form-alert order-item-form__wide" role="status">
+            Modifier changes refresh the full line snapshot from the current menu.
+          </p>
+        )}
+        <div className="dialog-actions order-item-form__wide">
+          <button className="button button--secondary" type="button" onClick={onClose}>
+            Cancel
+          </button>
+          <button className="button button--primary" type="submit" disabled={isSaving}>
+            {isSaving ? 'Saving…' : orderItem ? 'Save item' : 'Add item'}
           </button>
         </div>
-        {(error || selectionError) && (
-          <div className="form-alert" role="alert">
-            {error ?? selectionError}
-          </div>
-        )}
-        <form className="order-item-form" onSubmit={handleSubmit(submit)} noValidate>
-          <div className="form-field">
-            <label htmlFor="order-item-quantity">Quantity</label>
-            <input
-              id="order-item-quantity"
-              type="number"
-              min="1"
-              max="99"
-              {...register('quantity', { valueAsNumber: true })}
-            />
-            {errors.quantity && <p className="field-error">{errors.quantity.message}</p>}
-          </div>
-          <div className="form-field order-item-form__wide">
-            <label htmlFor="order-item-notes">Item notes (optional)</label>
-            <textarea id="order-item-notes" rows={2} {...register('notes')} />
-            {errors.notes && <p className="field-error">{errors.notes.message}</p>}
-          </div>
-          {assignedGroups.map((group) => {
-            const activeOptions = group.options.filter((option) => option.active)
-            const selected = selections[group.id] ?? []
-            return (
-              <fieldset
-                className="modifier-fieldset order-item-form__wide"
-                key={group.id}
-                disabled={!group.active}
-              >
-                <legend>
-                  {group.name}{' '}
-                  <span>
-                    {group.minimumSelections}–{group.maximumSelections}
-                  </span>
-                </legend>
-                {!group.active && (
-                  <p className="field-hint">This historical group is currently inactive.</p>
-                )}
-                {group.selectionType === 'SINGLE' && group.minimumSelections === 0 && (
-                  <label className="modifier-choice">
-                    <input
-                      type="radio"
-                      name={`modifier-${group.id}`}
-                      checked={selected.length === 0}
-                      onChange={() => chooseSingle(group.id, null)}
-                    />
-                    <span>No selection</span>
-                  </label>
-                )}
-                {activeOptions.map((option) => (
-                  <label className="modifier-choice" key={option.id}>
-                    <input
-                      type={group.selectionType === 'SINGLE' ? 'radio' : 'checkbox'}
-                      name={`modifier-${group.id}`}
-                      checked={selected.includes(option.id)}
-                      disabled={
-                        group.selectionType === 'MULTIPLE' &&
-                        !selected.includes(option.id) &&
-                        selected.length >= group.maximumSelections
-                      }
-                      onChange={(event) =>
-                        group.selectionType === 'SINGLE'
-                          ? chooseSingle(group.id, option.id)
-                          : chooseMultiple(group, option.id, event.target.checked)
-                      }
-                    />
-                    <span>{option.name}</span>
-                    <strong>+{formatEur(option.priceAdjustment)}</strong>
-                  </label>
-                ))}
-              </fieldset>
-            )
-          })}
-          <div className="order-item-estimate order-item-form__wide" aria-live="polite">
-            <span>{orderItem && !changed ? 'Snapshot total' : 'Estimated total'}</span>
-            <strong>{formatEur(estimate)}</strong>
-            <small>The backend recalculates and returns the authoritative price.</small>
-          </div>
-          {orderItem && changed && (
-            <p className="form-alert order-item-form__wide" role="status">
-              Modifier changes refresh the full line snapshot from the current menu.
-            </p>
-          )}
-          <div className="dialog-actions order-item-form__wide">
-            <button className="button button--secondary" type="button" onClick={onClose}>
-              Cancel
-            </button>
-            <button className="button button--primary" type="submit" disabled={isSaving}>
-              {isSaving ? 'Saving…' : orderItem ? 'Save item' : 'Add item'}
-            </button>
-          </div>
-        </form>
-      </section>
-    </div>
+      </form>
+    </Dialog>
   )
 }
