@@ -281,6 +281,11 @@ public class KitchenService {
             boolean includeCancelled) {
         return (root, query, builder) -> {
             Predicate predicate = builder.conjunction();
+            if (!includeCancelled) {
+                predicate = builder.and(
+                        predicate,
+                        builder.equal(root.get("order").get("status"), OrderStatus.SUBMITTED));
+            }
             if (status != null) {
                 predicate = builder.and(predicate, builder.equal(root.get("status"), status));
             } else if (!includeCancelled) {

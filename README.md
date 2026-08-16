@@ -1,6 +1,6 @@
 # Restaurant Operations Platform
 
-A modern full-stack restaurant operations platform. Phases 1 through 10 are merged into `main`; Phase 11A production-readiness work is in progress on `phase-11-finalization`. The application is not deployed yet.
+A modern full-stack restaurant operations platform. Phases 1 through 11A are merged into `main`; portfolio finalization is in progress on `phase-11-portfolio-finalization`. Public deployment is optional and currently deferred.
 
 ## Current status
 
@@ -91,8 +91,11 @@ A global Maven installation is not required; use the included wrapper.
    - `JWT_REFRESH_TOKEN_TTL` (default `7d`)
    - `AUTH_COOKIE_SECURE` and `AUTH_COOKIE_SAME_SITE`
    - optional dev-only `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`, and `BOOTSTRAP_ADMIN_DISPLAY_NAME`
+   - optional dev-only `DEMO_DATA_ENABLED=true` to load the documented fictional showcase dataset
 
 Do not commit real environment files.
+
+For a portfolio-ready local showcase, follow [docs/demo-data.md](docs/demo-data.md). The dataset is opt-in, development-only, and excluded from production Flyway locations.
 
 The development JDBC URL for the Compose database is:
 
