@@ -1,277 +1,281 @@
 # Restaurant Operations Platform
 
-A modern full-stack restaurant operations platform. Phases 1 through 11A are merged into `main`; portfolio finalization is in progress on `phase-11-portfolio-finalization`. Public deployment is optional and currently deferred.
+**A full-stack restaurant operations platform connecting reservations, table service, orders, kitchen workflow, inventory, staff scheduling, payments, invoicing, and operational analytics.**
 
-## Current status
+[![CI](https://github.com/AdamWaleedHatemHossamElden/restaurant-operations-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/AdamWaleedHatemHossamElden/restaurant-operations-platform/actions/workflows/ci.yml)
+![Java 21](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
+![Spring Boot 4.1](https://img.shields.io/badge/Spring_Boot-4.1-6DB33F?logo=springboot&logoColor=white)
+![React 19](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=101820)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-- React + TypeScript frontend with a responsive login, startup session recovery, protected routing, authenticated dashboard, and health states
-- Java 21 + Spring Boot modular-monolith backend foundation
-- Versioned `/api/v1/health` endpoint and Actuator health endpoint
-- Deny-by-default, stateless Spring Security configuration
-- MySQL 8.4 local service and Flyway schema migrations
-- Unit, MVC, frontend, and opt-in Testcontainers integration-test foundations
-- Architecture, database, security, scope, and roadmap documentation
-- BCrypt password storage, HS256 JWT access tokens, hashed rotating refresh tokens, and authentication audit events
-- Backend login, refresh, logout, and current-user endpoints
-- Development-only, environment-driven initial administrator bootstrap
-- Required-claim JWT validation, timing-resistant login failure handling, and database-serialized refresh rotation
-- Development OpenAPI Bearer authorization for the protected current-user endpoint
-- Memory-only frontend access tokens, credentialed HttpOnly refresh-cookie requests, and single-flight 401 recovery
-- ADMIN-only restaurant table CRUD, filtering, sorting, soft activation, optimistic locking, and audit events
-- Responsive table-management workspace with validated create/edit forms and safe conflict handling
-- ADMIN-only reservation creation, filtering, assignment, status workflow, optimistic locking, and audit events
-- MySQL-serialized table availability checks with UTC storage and browser-local time display
-- Responsive reservation agenda with live suitable-table loading and safe conflict recovery
-- ADMIN-only menu category, item, modifier-group, modifier-option, and ordered assignment management
-- Decimal-string EUR pricing, effective item availability, optimistic locking, and safe menu audit events
-- Responsive protected menu workspace with categories, menu items, and modifiers sections
-- ADMIN-only order creation, filtering, item capture, lifecycle transitions, and immutable status history
-- Server-authoritative `BigDecimal` pricing snapshots and transactionally recalculated order totals
-- Responsive order list and capture workspace with menu browsing, modifier selection, and conflict handling
-- Transactional kitchen-ticket creation, item preparation, derived ticket status, cancellation, and READY-gated order completion
-- ADMIN-authenticated STOMP notifications with after-commit publication and REST-authoritative recovery
-- Responsive kitchen display with queue filters, snapshot instructions, conflict recovery, and order-detail status
-- ADMIN-only inventory items, immutable stock ledger, low-stock alerts, recipes, modifier ingredients, suppliers, and purchase orders
-- Atomic recipe consumption when kitchen preparation begins, with database-backed exactly-once usage and negative-stock visibility
-- Exact supplier pricing snapshots, partial receiving, concurrency-safe final receipts, and a responsive protected inventory workspace
-- ADMIN-only employee records, scheduling-domain operational roles, date-specific availability, and terminal shift lifecycle
-- MySQL-serialized availability and shift overlap protection with a responsive protected weekly staff workspace
-- ADMIN-only confirmed EUR payments with partial and split settlement, stable idempotency keys, and overpayment protection
-- Immutable one-time reconciliation and invoice snapshots, plus responsive payment, invoice, and order-detail settlement views
-- ADMIN-only read-only reports for completed orders, menu performance, payments, reservations, kitchen, inventory, and staff
-- Half-open bounded reporting periods, UTC time-series aggregation, accessible summaries, and formula-safe CSV exports
-- Ember design system, responsive application shell, accessible dialogs, and route-level production code splitting
-- GitHub Actions quality gates, weekly dependency updates, an explicit production profile, and a non-root backend image
+This project was built as a deep software-engineering portfolio piece rather than a collection of disconnected CRUD screens. It emphasizes secure session design, transactional business workflows, database-backed concurrency control, immutable history, real-time state recovery, maintainable module boundaries, and automated verification.
+
+> **Status:** Feature-complete for portfolio review. Production configuration, Docker, health checks, and CI foundations are implemented; public hosting is intentionally optional and currently deferred.
+
+## Why this project stands out
+
+| Engineering focus           | What is implemented                                                                                                                                                                                                                          |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Secure authentication**   | BCrypt credentials, short-lived JWT access tokens, rotating opaque refresh tokens stored only as hashes, reuse detection and family revocation, an HttpOnly refresh cookie, memory-only browser access tokens, and startup session recovery. |
+| **Transactional workflows** | Connected reservations, orders, kitchen preparation, stock consumption, purchasing, scheduling, settlement, invoicing, and reporting with server-owned business rules.                                                                       |
+| **Concurrency correctness** | Optimistic versions for stale-client protection and pessimistic MySQL row locks for reservation conflicts, aggregate order mutations, refresh rotation, schedule overlaps, purchase receipts, and payment races.                             |
+| **Immutable history**       | Order and modifier price snapshots, chronological status history, an append-only stock ledger, confirmed payments, one-time reconciliation, and invoice snapshots.                                                                           |
+| **Real-time recovery**      | Authenticated STOMP kitchen notifications publish after commit and trigger REST refetches; MySQL remains authoritative through reconnects or missed events.                                                                                  |
+| **Quality gates**           | Frontend behavior tests, backend unit/security tests, real MySQL 8.4 Testcontainers integration tests, Checkstyle, ESLint, Prettier, production builds, Flyway validation, and GitHub Actions CI.                                            |
+
+## Application Preview
+
+The showcase dataset presents a connected service day across front-of-house, kitchen, back-office, and reporting workflows.
+
+### Operations overview
+
+![Restaurant operations dashboard with populated performance metrics and quick access cards](docs/screenshots/dashboard.webp)
+
+_Dashboard — Operational overview across orders, payments, reservations, and current service._
+
+### Order-to-kitchen workflow
+
+| Completed order detail                                                                                                         | Live kitchen workflow                                                                             |
+| ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------- |
+| ![Completed order detail showing kitchen status, payment summary, and immutable snapshots](docs/screenshots/order-detail.webp) | ![Kitchen display with queued, preparing, and ready order tickets](docs/screenshots/kitchen.webp) |
+| _Order Detail — Completed-order workflow combining Kitchen state, immutable snapshots, and partial settlement._                | _Kitchen — Real-time submitted-order preparation across queued, preparing, and ready states._     |
+
+### Back-office operations
+
+| Inventory control                                                                                                   | Payment settlement                                                                                                                      |
+| ------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| ![Inventory stock workspace showing ingredients, quantities, and low-stock alerts](docs/screenshots/inventory.webp) | ![Payments and invoices workspace showing settlement methods, linked orders, and reconciliation status](docs/screenshots/payments.webp) |
+| _Inventory — Ledger-backed stock visibility with configurable low-stock thresholds._                                | _Payments — Confirmed settlements, multiple payment methods, linked orders, and reconciliation state._                                  |
+
+### Operational analytics
+
+![Reports and analytics overview for the last 30 days](docs/screenshots/reports.webp)
+
+_Reports — Read-only operational analytics across completed orders, payments, Kitchen, staff, and invoices._
+
+## What the system does
+
+| Area                       | User-facing capabilities and important rules                                                                                                                                                 |
+| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Dashboard**              | Live operational summaries and direct entry points into active restaurant workflows.                                                                                                         |
+| **Tables & reservations**  | Manage table capacity and availability, create assigned or unassigned reservations, check suitable tables, and follow controlled reservation states with conflict-safe overlap checks.       |
+| **Menu & modifiers**       | Configure categories, menu items, reusable modifier groups, selection rules, exact EUR prices, sale availability, and ordered assignments.                                                   |
+| **Orders**                 | Capture table-service orders, select modifiers, preserve commercial snapshots, calculate totals on the server, and follow an explicit open/submitted/completed/cancelled lifecycle.          |
+| **Kitchen**                | Work a current-service queue through queued, preparing, and ready states; receive authenticated real-time change notifications; retain historical preparation data.                          |
+| **Inventory & recipes**    | Track canonical-unit ingredients through an immutable movement ledger, configure recipes and modifier usage, surface low stock, and record exactly-once consumption when preparation begins. |
+| **Suppliers & purchasing** | Maintain supplier catalogs and exact costs, create purchase orders, receive partial deliveries, and append receipt movements without rewriting stock history.                                |
+| **Staff & scheduling**     | Manage employees, operational scheduling roles, date-specific availability, weekly shifts, overlap prevention, and terminal shift states.                                                    |
+| **Payments & invoices**    | Record confirmed partial or split EUR payments with idempotency and overpayment protection, reconcile settlements once, and issue one immutable invoice for a fully paid completed order.    |
+| **Reports & exports**      | Review completed-order sales, menu performance, payments, reservations, kitchen throughput, inventory, and staffing over bounded UTC periods; export formula-safe CSV files.                 |
+
+## Operational flow
+
+The application keeps deliberate user actions explicit while connecting the records needed by downstream operations.
+
+```mermaid
+flowchart LR
+    Reservations["Reservations"] -->|table assignment| Tables["Restaurant tables"]
+    Tables -->|service context| Orders["Orders"]
+    Reservations -.->|optional traceability| Orders
+    Orders -->|explicit submission| Kitchen["Kitchen workflow"]
+    Kitchen -->|preparation appends usage| Inventory["Inventory ledger"]
+
+    Suppliers["Suppliers"] -->|priced catalog| PurchaseOrders["Purchase orders"]
+    PurchaseOrders -->|receipts append stock| Inventory
+
+    Orders -->|completed order| Payments["Confirmed payments"]
+    Payments -->|full settlement enables| Invoices["Invoice snapshots"]
+
+    Staff["Employees"] --> Scheduling["Availability & shifts"]
+
+    Reservations -.-> Reports["Operational reports"]
+    Orders -.-> Reports
+    Kitchen -.-> Reports
+    Inventory -.-> Reports
+    Payments -.-> Reports
+    Scheduling -.-> Reports
+```
+
+## Technical architecture
+
+The application is a modular monolith: one deployable backend with explicit domain packages and transaction boundaries, paired with an independent React client.
+
+```mermaid
+flowchart TB
+    Browser["Browser<br/>React 19 + TypeScript + Vite"]
+    API["Spring Boot 4.1 modular monolith<br/>Security · operational domains · reporting"]
+    Database[("MySQL 8.4<br/>system of record")]
+    Flyway["Flyway V1–V11"]
+    Compose["Docker Compose<br/>local MySQL"]
+    Image["Multi-stage non-root<br/>backend image"]
+
+    Browser -->|"REST /api/v1"| API
+    Browser <-->|"authenticated STOMP /ws"| API
+    API -->|"JPA + JdbcTemplate"| Database
+    Flyway -->|"schema migrations"| Database
+    Compose -.->|"local provisioning"| Database
+    API -.->|"packaged as"| Image
+
+    Actions["GitHub Actions CI"] --> FrontendChecks["Frontend checks"]
+    Actions --> BackendChecks["Backend checks"]
+    Actions --> IntegrationChecks["MySQL integration"]
+    IntegrationChecks --> Testcontainers["Testcontainers"]
+    Testcontainers --> TestDatabase[("Disposable MySQL 8.4")]
+```
+
+See [Architecture](docs/architecture.md) and [Database design](docs/database-plan.md) for the module and persistence rationale.
+
+## Engineering decisions
+
+1. **REST and MySQL are authoritative.** WebSocket events carry safe identifiers and trigger invalidation; they do not replace durable state.
+2. **Commercial values are snapshotted.** Existing order and invoice lines do not change when today's menu names or prices change.
+3. **Stock is a ledger.** Receipts, usage, waste, and adjustments append movements instead of mutating a quantity field.
+4. **The database settles races.** Concurrency-sensitive commands lock stable aggregate rows and return controlled conflicts rather than trusting cached UI state.
+5. **Terminal financial records are immutable.** Confirmed payments, reconciliation, and invoices preserve the evidence used to produce them.
+6. **Time boundaries are explicit.** Persisted/API instants use UTC where applicable, browser-local scheduling is converted at the boundary, and report ranges are half-open `[from,to)` intervals.
+7. **Operational value and cash received are different metrics.** Reports keep completed-order totals separate from successful payment receipts instead of calling both “revenue.”
+
+## Security and correctness
+
+- Spring Security denies unmatched backend routes by default and requires `ADMIN` authority for operational APIs.
+- BCrypt uses strength 12; unknown-user login performs a timing-resistant dummy verification.
+- Access tokens are short-lived JWTs with required-claim validation. Refresh tokens are opaque, hashed at rest, rotated atomically, and grouped for reuse-triggered family revocation.
+- The browser stores the access token only in memory. The refresh credential is a backend-managed HttpOnly cookie and is never exposed through application JavaScript.
+- Refresh and logout require the custom CSRF header across MVC-equivalent paths; credentialed CORS accepts one configured origin.
+- Safe API errors distinguish validation, authentication, authorization, missing data, and conflicts without returning request bodies, stack traces, credentials, or token values.
+- Production forces secure refresh cookies, disables Swagger, limits Actuator exposure to health, hides framework error details, and receives secrets from environment configuration.
+
+The detailed threat boundaries and deferred deployment controls are documented in the [Security plan](docs/security-plan.md).
+
+## Testing and CI
+
+| Suite                                          |                                                                                         Verified baseline |
+| ---------------------------------------------- | --------------------------------------------------------------------------------------------------------: |
+| Frontend — Vitest + React Testing Library      |                                                                             **127 tests across 34 files** |
+| Backend — JUnit 5, Mockito, MVC/security tests |                                                                                              **82 tests** |
+| MySQL — Testcontainers integration suite       |                                                                                 **41 tests on MySQL 8.4** |
+| Static/build gates                             | Checkstyle: **0 violations**; ESLint, Prettier, Maven packaging, and the frontend production build passed |
+
+The CI workflow runs three independent jobs on pull requests and `main`: **Frontend**, **Backend**, and **MySQL integration**. Dependabot proposes reviewed weekly updates for npm, Maven, and GitHub Actions.
+
+```powershell
+# frontend/
+npm ci
+npm run format:check
+npm run lint
+npm run test
+npm run build
+
+# backend/ (Windows)
+.\mvnw.cmd test
+.\mvnw.cmd verify
+.\mvnw.cmd -Pintegration-test verify
+```
 
 ## Technology stack
 
-Frontend: React 19, TypeScript, Vite, React Router, TanStack Query, Axios, React Hook Form, Zod, ESLint, Prettier, Vitest, React Testing Library, and jsdom.
+| Layer               | Technologies                                                                                                                                                                                            |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Frontend**        | React 19, TypeScript, Vite, React Router, TanStack Query, Axios, React Hook Form, Zod, Lucide React, Vitest, React Testing Library                                                                      |
+| **Backend**         | Java 21, Spring Boot 4.1, Spring MVC, Spring Data JPA, Spring Security, Bean Validation, JdbcTemplate reporting, Spring WebSocket/STOMP, Actuator, development OpenAPI, Maven Wrapper, JUnit 5, Mockito |
+| **Data & delivery** | MySQL 8.4, Flyway, Docker, Docker Compose, Testcontainers, GitHub Actions, Dependabot                                                                                                                   |
 
-Backend: Java 21, Spring Boot 4.1, Maven Wrapper, Spring MVC, Spring Data JPA, Spring Security, Bean Validation, MySQL Connector/J, Flyway, Spring WebSocket, Actuator, Springdoc OpenAPI, JUnit 5, Mockito, Spring Boot Test, and Testcontainers MySQL.
+## Run locally
 
-Infrastructure: GitHub Actions, Dependabot, a multi-stage backend Docker image, and Docker Compose with MySQL 8.4 using InnoDB, `utf8mb4`, UTC, a persistent named volume, and a health check.
+### Prerequisites
 
-## Project structure
+- Java 21
+- Node.js 22.12 or newer and npm 10+
+- Docker with Compose
 
-```text
-.
-├── backend/                 Spring Boot API and migrations
-├── frontend/                React/Vite client
-├── docs/                    Product and technical plans
-├── .editorconfig
-├── .env.example
-├── .gitignore
-├── docker-compose.yml
-├── LICENSE
-└── README.md
+### 1. Configure the environment
+
+```powershell
+Copy-Item .env.example .env
 ```
 
-## Requirements
+Replace every placeholder in the ignored `.env`, then load the required values into the backend terminal session. Spring Boot does not automatically import the root file. At minimum configure the database connection, a 32-byte-or-longer `JWT_SECRET`, and the optional development administrator values. Never put secrets in a `VITE_` variable.
 
-- Java Development Kit 21
-- Docker Desktop or a compatible Docker Engine with Compose
-- Node.js 22.12 or newer (the current Vite template requirement)
-- npm 10 or newer
-
-A global Maven installation is not required; use the included wrapper.
-
-## Environment setup
-
-1. Copy `.env.example` to `.env` and replace both example database passwords for local use.
-2. Copy `frontend/.env.example` to `frontend/.env.local` if the API does not use the development default `http://localhost:8080/api/v1`. Production builds require `VITE_API_BASE_URL`. Do not place secrets in any `VITE_` variable because Vite exposes them to browser code.
-3. Set backend variables if their defaults do not match your local environment:
-   - `MYSQL_HOST_PORT` (defaults to `3307` for the host; MySQL remains on `3306` inside the container)
-   - `DB_URL`
-   - `DB_USERNAME`
-   - `DB_PASSWORD`
-   - `SERVER_PORT`
-   - `FRONTEND_ORIGIN`
-   - `JWT_SECRET` (required; at least 32 UTF-8 bytes)
-   - `JWT_ACCESS_TOKEN_TTL` (default `15m`)
-   - `JWT_REFRESH_TOKEN_TTL` (default `7d`)
-   - `AUTH_COOKIE_SECURE` and `AUTH_COOKIE_SAME_SITE`
-   - optional dev-only `BOOTSTRAP_ADMIN_EMAIL`, `BOOTSTRAP_ADMIN_PASSWORD`, and `BOOTSTRAP_ADMIN_DISPLAY_NAME`
-   - optional dev-only `DEMO_DATA_ENABLED=true` to load the documented fictional showcase dataset
-
-Do not commit real environment files.
-
-For a portfolio-ready local showcase, follow [docs/demo-data.md](docs/demo-data.md). The dataset is opt-in, development-only, and excluded from production Flyway locations.
-
-The development JDBC URL for the Compose database is:
-
-```text
-jdbc:mysql://localhost:3307/restaurant_operations?useUnicode=true&characterEncoding=utf8&serverTimezone=UTC
-```
-
-## MySQL with Docker
+### 2. Start MySQL
 
 ```powershell
 docker compose up -d mysql
 docker compose ps
 ```
 
-Stop the local container without deleting its named data volume:
+The project maps MySQL to `localhost:3307`; port `3306` remains inside the container.
+
+### 3. Start the backend
 
 ```powershell
-docker compose down
-```
-
-## Backend commands
-
-From `backend/` on Windows:
-
-```powershell
-.\mvnw.cmd test
-.\mvnw.cmd verify
-$env:SPRING_PROFILES_ACTIVE='dev'
+cd backend
+$env:SPRING_PROFILES_ACTIVE = "dev"
 .\mvnw.cmd spring-boot:run
 ```
 
-Run the Docker-backed Flyway integration smoke test separately:
+### 4. Start the frontend
 
 ```powershell
-.\mvnw.cmd -Pintegration-test verify
-```
-
-The backend has development-only fallbacks, but explicit environment variables are preferred. When using a copied root `.env`, export the `DB_*` values into the backend process and keep `DB_PASSWORD` equal to `MYSQL_PASSWORD`.
-
-## Frontend commands
-
-From `frontend/`:
-
-```powershell
+cd frontend
 npm ci
-npm run format:check
-npm run lint
-npm test
-npm run build
 npm run dev
 ```
 
-The frontend starts at `http://localhost:5173`. Development defaults to `http://localhost:8080/api/v1`; production builds fail fast unless `VITE_API_BASE_URL` is an explicit absolute URL. The kitchen WebSocket URL is derived from that API origin and automatically uses `wss:` for HTTPS.
+| Local service          | URL                                           |
+| ---------------------- | --------------------------------------------- |
+| Frontend               | `http://localhost:5173`                       |
+| Backend                | `http://localhost:8080`                       |
+| API health             | `http://localhost:8080/api/v1/health`         |
+| Actuator health        | `http://localhost:8080/actuator/health`       |
+| Development Swagger UI | `http://localhost:8080/swagger-ui/index.html` |
 
-## Production readiness
+## Optional showcase data
 
-Run the backend with `SPRING_PROFILES_ACTIVE=prod` and deployment-injected `DB_URL`, `DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, and `FRONTEND_ORIGIN`. The production profile enforces secure refresh cookies, schema-only Flyway locations, forwarded-header handling, minimal Actuator exposure with liveness/readiness probes, safe error settings, production logging, and disabled Swagger. Development bootstrap credentials are ignored because the bootstrap component exists only in the `dev` profile.
+The repository includes an opt-in fictional dataset for **Cedar & Stone Kitchen**. It provides coherent current and historical records across every implemented module, with relative timestamps and production-like identifiers suitable for local demonstrations.
 
-The backend production image can be built with `docker build -t restaurant-operations-backend:local backend`. It runs the packaged Java 21 application as a non-root user and contains no configured secrets. The React build remains provider-neutral static output for Phase 11B; its host must provide SPA fallback and security headers. See the [production-readiness runbook](docs/production-readiness.md) before selecting or configuring a deployment platform.
+- It loads only with the Spring `dev` profile **and** `DEMO_DATA_ENABLED=true`.
+- Initialization is transactional and guarded by an idempotency marker.
+- Guests, employees, suppliers, contacts, references, and payment records are fictional; no credentials, real PII, card data, or provider secrets are included.
+- The seed resource is outside production Flyway locations and cannot load under the `prod` profile.
 
-CI runs frontend formatting, linting, tests, and the production build in parallel with backend verification and the Docker-backed MySQL/Testcontainers integration suite. Dependabot proposes weekly npm, Maven, and GitHub Actions updates without automatic merging.
+The showcase requires the configured development administrator to exist. Follow the reset, startup, and safety steps in [Local showcase data](docs/demo-data.md) rather than targeting unrelated Docker volumes.
 
-## Frontend authentication flow
+## Production-readiness foundations
 
-On startup, the client shows a session-initialization screen while it calls `/auth/refresh` with credentials and `X-CSRF-Protection: 1`. If the backend refresh cookie is valid, the rotated response supplies a short-lived access token, `/auth/me` validates the current user, and the protected dashboard renders. If recovery fails, the in-memory session is cleared and protected routes redirect to `/login` while preserving the requested internal destination.
+The repository provides a provider-neutral deployment foundation, not a claim of a live public service:
 
-Login uses React Hook Form and Zod, sends credentials only to `/auth/login`, and shows the same generic error for invalid credentials, disabled users, malformed responses, unavailable services, and unexpected failures. The returned access token exists only in JavaScript memory. Axios attaches it as a Bearer credential to API requests; one shared refresh operation may retry simultaneous 401 responses once. A failed refresh clears authentication and cannot loop indefinitely.
+- explicit `prod` Spring profile with mandatory environment-injected database, JWT, and exact-origin settings;
+- secure refresh cookies, production-safe errors/logging, forwarded-header handling, disabled Swagger, and health-only Actuator exposure;
+- liveness and readiness probes;
+- authoritative production Flyway locations that exclude development fixtures;
+- multi-stage Java 21 backend image running as a non-root user;
+- production frontend API URL validation and route-level code splitting;
+- CI and reviewed dependency-update automation.
 
-The browser never writes access or refresh tokens to localStorage, sessionStorage, IndexedDB, or script-readable cookies. The backend alone creates, rotates, and clears the HttpOnly refresh cookie. Logout calls `/auth/logout` with the CSRF header and always clears local memory, even if the network request fails.
-
-## Health and API documentation
-
-- Application health: `GET http://localhost:8080/api/v1/health`
-- Actuator health: `GET http://localhost:8080/actuator/health`
-- Development Swagger UI: `http://localhost:8080/swagger-ui.html` when the `dev` profile is active
-- Swagger Authorize uses the Bearer JWT returned by login; current-user and restaurant-management operations are marked as Bearer-protected
-- Authentication: `POST /api/v1/auth/login`, `POST /api/v1/auth/refresh`, `POST /api/v1/auth/logout`, and `GET /api/v1/auth/me`
-- Table management: `GET/POST /api/v1/tables`, `GET/PUT /api/v1/tables/{id}`, and `PATCH /api/v1/tables/{id}/activation`
-- Reservation management: `GET/POST /api/v1/reservations`, `GET/PUT /api/v1/reservations/{id}`, `PATCH /api/v1/reservations/{id}/status`, and `GET /api/v1/reservations/availability`
-- Menu management: category, item, modifier-group, modifier-option, activation, availability, and ordered-assignment operations below `/api/v1/menu`
-- Order management: `GET/POST /api/v1/orders`, `GET/PUT /api/v1/orders/{id}`, item operations below `/api/v1/orders/{id}/items`, `PATCH /api/v1/orders/{id}/status`, and `GET /api/v1/orders/{id}/history`
-- Kitchen management: `GET /api/v1/kitchen/tickets`, `GET /api/v1/kitchen/tickets/{id}`, `GET /api/v1/kitchen/orders/{orderId}`, and `PATCH /api/v1/kitchen/tickets/{ticketId}/items/{itemId}/status`
-- Kitchen real-time endpoint: native STOMP over `/ws`, with ADMIN Bearer authentication in `CONNECT` and server notifications on `/topic/kitchen`
-- Inventory: item and movement operations below `/api/v1/inventory`, recipe operations below `/api/v1/recipes`, supplier operations below `/api/v1/suppliers`, and purchasing below `/api/v1/purchase-orders`
-- Staff scheduling: employee, availability, shift, activation, and lifecycle operations below `/api/v1/staff`
-- Reports: operational aggregates below `/api/v1/reports` and bounded CSV exports below `/api/v1/reports/exports`
-
-## Restaurant table management
-
-Authenticated administrators can open `/tables` to search by table number, filter by active state, operational status, and section, and create or edit table records. Deactivation is a soft state change: records and their audit history remain available and can be reactivated.
-
-Table numbers are unique and normalized to uppercase. Every update and activation request includes the version returned by the latest read. A stale version returns HTTP 409 so a concurrent change is never silently overwritten. Write operations record `TABLE_CREATED`, `TABLE_UPDATED`, `TABLE_DEACTIVATED`, or `TABLE_REACTIVATED` without storing request bodies or sensitive session data.
-
-## Reservation management
-
-Authenticated administrators can open `/reservations` to create unassigned or table-assigned reservations, search and filter an agenda, edit guest and timing details, reassign tables, and apply the controlled pending, confirmed, seated, completed, cancelled, and no-show workflow.
-
-Reservation instants are stored in UTC and converted at the browser boundary for local input and display. A table is suitable only when it is active, operationally available, large enough, and free of overlapping `CONFIRMED` or `SEATED` reservations. The write transaction locks the target table row before its final overlap check, so simultaneous assignments are serialized by MySQL rather than trusted to frontend state. `PENDING`, `COMPLETED`, `CANCELLED`, and `NO_SHOW` reservations do not block availability. Every edit and status request carries the latest optimistic-lock version.
-
-## Menu management
-
-Authenticated administrators can open `/menu` to manage normalized categories, uniquely coded menu items, reusable modifier groups, and their options. Records use soft activation and versioned updates. Item activation and `availableForSale` are independent; effective availability also requires an active category. Category deactivation therefore hides its items from effective sale without rewriting them.
-
-Prices and adjustments travel through the API as decimal strings and are stored as `DECIMAL(12,2)`. The frontend formats them centrally in EUR without floating-point calculations. Modifier groups support `SINGLE` and `MULTIPLE` selection rules, ordered reusable assignments, and active-option validation. An unsafe assigned configuration returns HTTP 409 instead of becoming unusable.
-
-## Order management
-
-Authenticated administrators can open `/orders` to search, filter, sort, and create table-service orders, then use `/orders/{id}` for responsive order capture. Every order requires an active, operationally `AVAILABLE` table and may optionally reference a `SEATED` reservation assigned to that same table. Order workflows never mutate table or reservation status automatically.
-
-The backend generates each unique order number and owns every monetary calculation. Adding an item snapshots its code, name, base price, selected modifier labels, and modifier adjustments into `DECIMAL(12,2)` fields. Later menu changes do not rewrite existing lines. Quantity-only and notes-only edits retain the stored snapshot; changing modifiers revalidates the current menu and refreshes the complete line snapshot. `subtotal` is the sum of line totals and Phase 4B defines `total = subtotal` because taxes, discounts, tips, service charges, and payments are not implemented.
-
-New orders begin `OPEN`. Open orders can change metadata and items, and may transition to `SUBMITTED` or `CANCELLED`. Submitted orders are commercially immutable and may transition only to `COMPLETED` or `CANCELLED`; terminal orders cannot reopen. Phase 5 creates the kitchen aggregate in the submission transaction and requires its ticket to be `READY` before explicit completion. MySQL order-row locks serialize item and status mutations, while optimistic versions reject stale clients. Separate chronological status history and safe audit events record successful changes.
-
-## Kitchen and real-time updates
-
-Authenticated administrators can open `/kitchen` to view active tickets grouped as `QUEUED`, `PREPARING`, and `READY`, inspect immutable submitted item/modifier snapshots, and progress each item through `QUEUED → PREPARING → READY`. Ticket state is derived transactionally from its items; submitted-order cancellation marks the ticket `CANCELLED` without erasing preparation history. Cancelled tickets leave the active queue and reject further preparation.
-
-All commands and reads use the REST API and MySQL remains authoritative. A single native STOMP client connects with the current memory-only Bearer access token and subscribes to `/topic/kitchen`. Small, safe notifications trigger React Query invalidation; initial load, every reconnect, and every event refetch REST state, so temporary delivery loss cannot permanently desynchronize the UI. Notifications publish only after a successful database commit, and delivery failure cannot roll back committed work. The client reconnects with a current token through the existing single-flight session recovery, stores no token, and disconnects on logout.
-
-Kitchen item mutations follow the database lock order `orders → kitchen_tickets → kitchen_ticket_items`. The request ticket version is checked while those locks are held; invalid transitions, stale state, lock contention, cancellation races, and premature completion return safe HTTP 409 responses.
-
-## Inventory, recipes, suppliers, and purchasing
-
-Authenticated administrators can open `/inventory` for four integrated workspaces: Stock, Recipes, Suppliers, and Purchasing. Inventory items use one canonical unit (`GRAM`, `MILLILITER`, or `UNIT`), a reorder threshold, soft activation, and optimistic versions. Current on-hand is derived only from immutable positive-magnitude ledger entries; movement type determines the signed effect. Manual adjustments and waste append history rather than rewriting it, and negative stock remains visible and counts as low stock.
-
-An active menu-item recipe and selected modifier-option ingredient mappings are read when a kitchen item first moves from `QUEUED` to `PREPARING`. Quantities are multiplied by the order-line quantity and aggregated into one `USAGE` movement per kitchen item and inventory item. The kitchen transition and usage entries commit atomically, while a database-unique source key prevents duplicate consumption. Missing recipes do not block preparation. Later recipe changes, cancellation, or reconnects do not alter or reverse historical usage.
-
-Suppliers have soft activation and versioned item-price relationships. Draft purchase orders snapshot the current inventory code, name, canonical unit, and exact `DECIMAL(12,4)` supplier cost. Commercial data freezes after ordering. Receipts may be partial, append immutable `RECEIPT` movements, and advance the purchase order through `ORDERED`, `PARTIALLY_RECEIVED`, and `RECEIVED`. Purchase-order and line locks plus request versions ensure simultaneous final receipts produce one successful ledger change and one safe conflict.
-
-## Employees and staff scheduling
-
-Authenticated administrators can open `/staff` for employee records, exact availability windows, and a browser-local weekly schedule. Employee codes are normalized and unique, employee records use soft activation and optimistic versions, and operational roles such as `WAITER`, `KITCHEN`, or `MANAGER` describe scheduled work only. They never create Spring Security authorities or application accounts; every Phase 7 operation remains ADMIN-only.
-
-Availability and shift timestamps are stored as UTC instants and converted at the browser boundary. New scheduled shifts must fit completely inside one date-specific availability window and cannot overlap another non-cancelled shift under half-open `[start, end)` rules. MySQL write-locks the employee before availability and shift checks, so concurrent contenders serialize as one success and one safe conflict. Availability changes preserve existing shifts. Employees with future scheduled shifts cannot be deactivated until those shifts are cancelled or completed. Shifts progress only from `SCHEDULED` to `COMPLETED` or `CANCELLED`; terminal shifts remain read-only.
-
-## Payments, reconciliation, and invoices
-
-Authenticated administrators can open `/payments` or a completed order to record money already confirmed outside the platform. Payments use exact `DECIMAL(12,2)` EUR amounts and the methods `CASH`, `CARD`, `BANK_TRANSFER`, and `OTHER`; the API accepts a confirmation reference but no card number, security code, bank credential, or provider payload. The server derives unpaid, partially paid, and paid state from immutable successful records. A required `Idempotency-Key` makes safe retries return the original record, while reuse with another payload fails safely.
-
-## Reports and analytics
-
-Authenticated administrators can open `/reports` to view read-only operational projections for one bounded `[from,to)` period. Browser-local day boundaries are converted to UTC instants; server-side day, week, and month buckets are explicitly UTC. Completed order value uses immutable totals and `completed_at`, while payments received uses successful payment amounts and `received_at`; the two are intentionally separate and are not described as accounting revenue.
-
-Menu performance reads immutable completed-order item snapshots. Reservations omit guest contact data, kitchen preparation duration includes only tickets with a supported READY timestamp, inventory quantities remain grouped by item and canonical unit, and shift hours use the full planned duration of shifts whose `start_at` belongs to the range. Reports hydrate purpose-built DTOs from bounded SQL aggregates and never mutate business state.
-
-Sales, menu, payment, reservation, inventory, and staff summaries can be downloaded as authenticated UTF-8 CSV files. Every cell is quoted and user-controlled formula prefixes are neutralized. Phase 9 remains single-restaurant and uses the browser's local timezone only to choose UTC boundaries; it is operational reporting, not formal accounting, payroll, forecasting, or fiscal reporting.
-
-Payment creation locks the order before deriving its remaining balance, so simultaneous final-payment attempts cannot overpay it. Reconciliation is an immutable, one-per-payment confirmation against an external report or cash drawer. A fully paid completed order can issue exactly one immutable invoice whose lines and modifiers are copied from the order's existing commercial snapshots. The `/payments` workspace provides searchable payment, reconciliation, and invoice tabs; invoice views are print-friendly and the browser generates no payment identifiers beyond a per-submission idempotency key.
-
-## Current limitations
-
-There is no public registration, account recovery, user administration, customer CRM, multi-restaurant tenancy, live occupancy automation, unit conversion, stock transfers, payroll, salary management, time clock, attendance, timesheets, recurring availability, shift swaps, employee self-service, account provisioning, labor-law engine, automatic scheduling, staffing notifications, payment-provider integration, refunds, voids, chargebacks, taxation, discounting, tipping, durable external messaging, or customer ordering. Phase 9 reporting is read-only operational analytics over existing application data; it is not formal accounting, tax or VAT reporting, payroll, forecasting, or external BI. The system assumes one logical restaurant and does not hard-delete operational history. Inventory consumption intentionally permits negative balances, and cancellation after preparation does not automatically restore stock. EUR is the only supported settlement currency. ADMIN remains the only application authority; operational staff roles are scheduling data only. Authentication rate limiting, managed secret rotation, TLS termination, backups, monitoring, and live deployment validation remain Phase 11B infrastructure work; MFA remains outside the current portfolio scope.
+Hosting, TLS termination, trusted proxy rules, DNS, managed secrets, backup/restore, monitoring, rate limiting, and final live validation remain deployment-specific decisions. See the [Production-readiness runbook](docs/production-readiness.md).
 
 ## Documentation
 
-- [Product scope](docs/product-scope.md)
-- [Architecture](docs/architecture.md)
-- [Database plan](docs/database-plan.md)
-- [Security plan](docs/security-plan.md)
-- [Roadmap](docs/roadmap.md)
-- [Phase 2A authentication testing](docs/testing/phase-2a-authentication.md)
-- [Phase 2B frontend authentication testing](docs/testing/phase-2b-frontend-authentication.md)
-- [Phase 3A table-management testing](docs/testing/phase-3a-table-management.md)
-- [Phase 3B reservation-management testing](docs/testing/phase-3b-reservation-management.md)
-- [Phase 4A menu-management testing](docs/testing/phase-4a-menu-management.md)
-- [Phase 4B order-management testing](docs/testing/phase-4b-order-management.md)
-- [Phase 5 kitchen and real-time testing](docs/testing/phase-5-kitchen-realtime.md)
-- [Phase 6 inventory, recipes, suppliers, and purchasing testing](docs/testing/phase-6-inventory-suppliers.md)
-- [Phase 7 employees and staff scheduling testing](docs/testing/phase-7-staff-scheduling.md)
-- [Phase 8 payments, reconciliation, and invoices testing](docs/testing/phase-8-payments-invoices.md)
-- [Phase 9 reports and analytics testing](docs/testing/phase-9-reports-analytics.md)
-- [Phase 10 UI/UX redesign testing](docs/testing/phase-10-ui-ux-redesign.md)
-- [Production-readiness runbook](docs/production-readiness.md)
-- [Phase 11 production-readiness testing](docs/testing/phase-11-production-readiness.md)
-- [Original project context](docs/original-project-context.md)
+| Document                                                     | Purpose                                                                                               |
+| ------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| [Architecture](docs/architecture.md)                         | Runtime boundaries, module ownership, transaction design, real-time behavior, and testing strategy    |
+| [Database design](docs/database-plan.md)                     | Flyway schema, relationships, snapshots, ledgers, constraints, and indexes                            |
+| [Security plan](docs/security-plan.md)                       | Authentication, authorization, token/cookie boundaries, safe APIs, and remaining controls             |
+| [Product scope](docs/product-scope.md)                       | Product problem, intended users, implemented boundary, and deliberate exclusions                      |
+| [Production readiness](docs/production-readiness.md)         | Deployment contract, administrator provisioning, TLS/proxy requirements, health, backup, and rollback |
+| [Local showcase data](docs/demo-data.md)                     | Fictional dataset contents, safe activation, reset procedure, and visual checklist                    |
+| [Roadmap](docs/roadmap.md)                                   | Incremental delivery history and final presentation status                                            |
+| [Testing records](docs/testing/)                             | Phase-by-phase automated, integration, browser, responsive, and security verification notes           |
+| [Original project context](docs/original-project-context.md) | Provenance and boundaries of the independent redesign                                                 |
 
-## Independent redesign
+## Project status and boundaries
 
-The idea has historical roots in a three-person second-year university team project. This repository is an independent redesign: no old source code is copied, and the architecture, schema, interface, security, and advanced workflows are being designed and implemented anew.
+The implemented product scope is feature-complete for portfolio purposes. The flagship README and approved screenshot gallery are complete; only final repository review and sign-off remain. Public deployment may be added later, but it is not required to run or evaluate the project locally.
+
+This is a single-restaurant, administrator-operated system. It records confirmed payments but does not process funds or collect card/bank credentials. Customer ordering, multi-restaurant tenancy, employee login/self-service, payroll, taxes, discounts, tips, refunds, and payment-provider integration are intentionally outside the implemented scope.
+
+Development history remains available in the [Roadmap](docs/roadmap.md).
+
+## License
+
+Licensed under the [MIT License](LICENSE).
