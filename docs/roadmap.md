@@ -10,6 +10,10 @@
 8. **Phase 8 — Payments and invoices:** merged into `main`, including confirmed EUR payment recording, partial and split settlement, idempotency and overpayment protection, immutable reconciliation and invoices, audit, and responsive settlement views. Provider integration, refunds, taxes, discounts, and tips remain outside the implemented scope.
 9. **Phase 9 — Reports and analytics:** merged into `main`, including ADMIN-only read projections, bounded half-open periods, exact operational metrics, UTC time series, responsive summaries, and safe CSV exports.
 10. **Phase 10 — UI/UX redesign and product polish:** merged into `main`, establishing the Ember visual identity, token system, Lucide iconography, grouped responsive navigation, live operational dashboard, polished login, and consistent responsive and accessible controls, forms, tables, dialogs, cards, charts, and states across every implemented workspace.
-11. **Phase 11 — Production readiness and portfolio finalization:** production configuration, container and CI foundations, dependency hygiene, a realistic development-only showcase dataset, and final local visual QA are complete and merged into `main`. The flagship README presentation draft and final screenshots are complete and inserted; final repository review and sign-off remain. Public deployment remains optional and deliberately deferred.
+11. **Phase 11 — Production readiness and portfolio finalization:** production configuration, container and CI foundations, dependency hygiene, a realistic development-only showcase dataset, final local visual QA, the flagship README rewrite, approved screenshot capture and insertion, rendered GitHub README review, successful final CI, the PR #23 presentation merge, and final repository review and sign-off are complete. Public deployment remains optional and deliberately deferred.
 
-The implemented product scope is feature-complete for portfolio purposes. Each phase shipped tested vertical behavior without claiming later modules were complete; only final repository review and sign-off remain.
+## Final status
+
+**COMPLETED**
+
+The defined portfolio-project scope, portfolio presentation, manual QA, CI verification, and repository sign-off are complete. Each phase shipped tested vertical behavior without claiming later modules were complete. Public deployment remains optional and deferred; future commercial expansion remains outside the current scope.
