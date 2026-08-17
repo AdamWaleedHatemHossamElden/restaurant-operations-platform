@@ -10,7 +10,7 @@
 
 This project was built as a deep software-engineering portfolio piece rather than a collection of disconnected CRUD screens. It emphasizes secure session design, transactional business workflows, database-backed concurrency control, immutable history, real-time state recovery, maintainable module boundaries, and automated verification.
 
-> **Status:** Feature-complete for portfolio review. Production configuration, Docker, health checks, and CI foundations are implemented; public hosting is intentionally optional and currently deferred.
+> **Status:** Completed as a portfolio project. Production configuration, Docker, health checks, and CI foundations are implemented; public hosting is intentionally optional and currently deferred.
 
 ## Why this project stands out
 
@@ -270,7 +270,7 @@ Hosting, TLS termination, trusted proxy rules, DNS, managed secrets, backup/rest
 
 ## Project status and boundaries
 
-The implemented product scope is feature-complete for portfolio purposes. The flagship README and approved screenshot gallery are complete; only final repository review and sign-off remain. Public deployment may be added later, but it is not required to run or evaluate the project locally.
+The implemented product scope and repository presentation are complete for portfolio purposes. Public deployment may be added later, but it is not required to run or evaluate the project locally.
 
 This is a single-restaurant, administrator-operated system. It records confirmed payments but does not process funds or collect card/bank credentials. Customer ordering, multi-restaurant tenancy, employee login/self-service, payroll, taxes, discounts, tips, refunds, and payment-provider integration are intentionally outside the implemented scope.
 
